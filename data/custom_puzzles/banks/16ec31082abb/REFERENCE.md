@@ -1,0 +1,3112 @@
+# ARC-style Additional Puzzle Bank — Volume 5 (21 puzzles)
+
+This fifth volume adds **21 more puzzles** grouped into **7 easy, 7 medium, and 7 hard**.
+Each puzzle includes **exactly 4 train/example pairs**, a test input, the expected test output, a written rule, and a compact reference-program solution.
+To widen the mechanism spread, this set leans harder into motion, negative space, packing, local transposition, legend-based color remapping, line-of-sight overlap, BFS parity filling, maze routing, and interior layer depth.
+It also introduces an explicit new solver primitive: **`slide_component(cells, occupied, dir)`**, used for rigid-body motion in **E29, M29, and H29**.
+
+# Easy (7)
+
+## E29 — Slide every red singleton downward
+
+**What it tests:** rigid falling motion for isolated cells using the new slide_component primitive
+
+**Train A input**
+```text
+02000000
+00002000
+00000020
+00000000
+00000000
+05000000
+00005000
+00000050
+```
+
+**Train A output**
+```text
+00000000
+00000000
+00000000
+00000000
+02000000
+05002000
+00005020
+00000050
+```
+
+**Train B input**
+```text
+200000002
+000200000
+000000000
+000000000
+500000000
+000000005
+000000000
+000500000
+000000000
+```
+
+**Train B output**
+```text
+000000000
+000000000
+000000000
+200000000
+500000002
+000000005
+000200000
+000500000
+000000000
+```
+
+**Train C input**
+```text
+0020000000
+0000000020
+0000020000
+0000000000
+0000000000
+0000050000
+0000000050
+0050000000
+```
+
+**Train C output**
+```text
+0000000000
+0000000000
+0000000000
+0000000000
+0000020000
+0000050020
+0020000050
+0050000000
+```
+
+**Train D input**
+```text
+00002000
+02000000
+00000020
+00000000
+00000000
+00000000
+00005000
+00000050
+05000000
+```
+
+**Train D output**
+```text
+00000000
+00000000
+00000000
+00000000
+00000000
+00002000
+00005020
+02000050
+05000000
+```
+
+**Test input**
+```text
+002000000
+000002000
+000000020
+000000000
+000000000
+000000000
+005000000
+000000050
+000005000
+```
+
+**Expected test output**
+```text
+000000000
+000000000
+000000000
+000000000
+000000000
+002000000
+005000020
+000002050
+000005000
+```
+
+**Written solution**
+Remove the red(2) singletons from the grid, then let each one fall straight downward until the next step would hit the border, a blocker, or another settled red cell. Put the red cells back at their landing spots; everything else stays the same.
+
+**Program solution**
+```text
+def solve(grid):
+    remove all red singletons from the grid
+    occupied = all remaining nonzero cells
+    for each red cell from bottom to top:
+        landing = slide_component({cell}, occupied, dir=down)
+        place a red cell at landing
+        add landing to occupied
+    return grid
+```
+
+## E30 — Recolor the corners of hollow rectangles
+
+**What it tests:** rectangle corner detection
+
+**Train A input**
+```text
+0000000000
+0333330000
+0300030000
+0300030000
+0333330333
+0000000303
+0000000303
+0000000333
+0000000000
+```
+
+**Train A output**
+```text
+0000000000
+0433340000
+0300030000
+0300030000
+0433340434
+0000000303
+0000000303
+0000000434
+0000000000
+```
+
+**Train B input**
+```text
+333300000
+300300000
+300300333
+300300303
+333300303
+000000303
+000000333
+000000000
+```
+
+**Train B output**
+```text
+433400000
+300300000
+300300434
+300300303
+433400303
+000000303
+000000434
+000000000
+```
+
+**Train C input**
+```text
+0000000000
+0000000000
+0033333300
+0030000300
+0030000300
+0030000300
+0030000300
+0033333300
+0000000000
+0000000000
+```
+
+**Train C output**
+```text
+0000000000
+0000000000
+0043333400
+0030000300
+0030000300
+0030000300
+0030000300
+0043333400
+0000000000
+0000000000
+```
+
+**Train D input**
+```text
+000000000
+000033330
+000030030
+000030030
+000033330
+333300000
+300300000
+300300000
+333300000
+```
+
+**Train D output**
+```text
+000000000
+000043340
+000030030
+000030030
+000043340
+433400000
+300300000
+300300000
+433400000
+```
+
+**Test input**
+```text
+0000000000
+0333300000
+0300300000
+0300303330
+0300303030
+0333303030
+0000003030
+0000003030
+0000003330
+0000000000
+```
+
+**Expected test output**
+```text
+0000000000
+0433400000
+0300300000
+0300304340
+0300303030
+0433403030
+0000003030
+0000003030
+0000004340
+0000000000
+```
+
+**Written solution**
+Find each green(3) hollow rectangle. Leave its border alone except for the four corner cells, which become yellow(4).
+
+**Program solution**
+```text
+def solve(grid):
+    for each green component:
+        if it is exactly a 1-cell-thick rectangular border:
+            recolor its four bbox corners to yellow(4)
+    return grid
+```
+
+## E31 — Fill the span between aligned endpoints
+
+**What it tests:** line completion from sparse endpoints
+
+**Train A input**
+```text
+000000000
+010001000
+000000000
+000000010
+000000000
+000000000
+000000010
+000000000
+```
+
+**Train A output**
+```text
+000000000
+022222000
+000000000
+000000020
+000000020
+000000020
+000000020
+000000000
+```
+
+**Train B input**
+```text
+000010000
+000000000
+000000000
+000000000
+000010000
+000000000
+010000100
+000000000
+000000000
+```
+
+**Train B output**
+```text
+000020000
+000020000
+000020000
+000020000
+000020000
+000000000
+022222200
+000000000
+000000000
+```
+
+**Train C input**
+```text
+0000000000
+1000000000
+0010000010
+0000000000
+0000000000
+1000000000
+0000000000
+0000000000
+```
+
+**Train C output**
+```text
+0000000000
+2000000000
+2022222220
+2000000000
+2000000000
+2000000000
+0000000000
+0000000000
+```
+
+**Train D input**
+```text
+0000000000
+0000000001
+0000000000
+0000000000
+0000000000
+0000000000
+0000000001
+0000000000
+0001000100
+0000000000
+```
+
+**Train D output**
+```text
+0000000000
+0000000002
+0000000002
+0000000002
+0000000002
+0000000002
+0000000002
+0000000000
+0002222200
+0000000000
+```
+
+**Test input**
+```text
+0000000000
+0100000100
+0000000001
+0000000000
+0000000000
+0000000000
+0001001000
+0000000001
+0000000000
+```
+
+**Expected test output**
+```text
+0000000000
+0222222200
+0000000002
+0000000002
+0000000002
+0000000002
+0002222002
+0000000002
+0000000000
+```
+
+**Written solution**
+Whenever two blue(1) endpoints lie in the same row or column with only background between them, fill the whole straight segment from one endpoint to the other with red(2).
+
+**Program solution**
+```text
+def solve(grid):
+    for each row and each column:
+        find endpoint pairs with only zeros between them
+        fill the inclusive straight segment with red(2)
+    return grid
+```
+
+## E32 — Complete orange L-trominoes to 2x2 blocks
+
+**What it tests:** local 2x2 completion
+
+**Train A input**
+```text
+000000000
+007000000
+077000000
+000000000
+000007700
+000007000
+000000000
+000000000
+```
+
+**Train A output**
+```text
+000000000
+077000000
+077000000
+000000000
+000007700
+000007700
+000000000
+000000000
+```
+
+**Train B input**
+```text
+000000770
+000000070
+000000000
+000007000
+000077000
+070000000
+077000000
+000000000
+000000000
+```
+
+**Train B output**
+```text
+000000770
+000000770
+000000000
+000077000
+000077000
+077000000
+077000000
+000000000
+000000000
+```
+
+**Train C input**
+```text
+0000000000
+0000000000
+0077000070
+0070000770
+0000000000
+0000000000
+0000000000
+0000000000
+```
+
+**Train C output**
+```text
+0000000000
+0000000000
+0077000770
+0077000770
+0000000000
+0000000000
+0000000000
+0000000000
+```
+
+**Train D input**
+```text
+0000000000
+0007700000
+0000700000
+0000000000
+7700000000
+7000000000
+0000007000
+0000007700
+0000000000
+0000000000
+```
+
+**Train D output**
+```text
+0000000000
+0007700000
+0007700000
+0000000000
+7700000000
+7700000000
+0000007700
+0000007700
+0000000000
+0000000000
+```
+
+**Test input**
+```text
+000000000
+077000000
+070000000
+000000000
+000000700
+000007700
+007000000
+007700000
+000000000
+```
+
+**Expected test output**
+```text
+000000000
+077000000
+077000000
+000000000
+000007700
+000007700
+007700000
+007700000
+000000000
+```
+
+**Written solution**
+Look at every 2x2 window. If it has exactly three orange(7) cells and one empty cell, fill the missing cell with orange(7).
+
+**Program solution**
+```text
+def solve(grid):
+    for each 2x2 window:
+        if window contains three orange(7) cells and one zero:
+            change the zero to orange(7)
+    return grid
+```
+
+## E33 — Recolor elbow joints in green paths
+
+**What it tests:** turn detection in orthogonal polylines
+
+**Train A input**
+```text
+000000000
+033300000
+000300000
+000300000
+000000000
+000003000
+000003330
+000000000
+```
+
+**Train A output**
+```text
+000000000
+033600000
+000300000
+000300000
+000000000
+000003000
+000006330
+000000000
+```
+
+**Train B input**
+```text
+000000030
+000000030
+000003330
+000000000
+033000000
+003000000
+003000000
+000000000
+000000000
+```
+
+**Train B output**
+```text
+000000030
+000000030
+000003360
+000000000
+036000000
+003000000
+003000000
+000000000
+000000000
+```
+
+**Train C input**
+```text
+0000000000
+0000000330
+0300000030
+0300000030
+0333300000
+0000000000
+0000000000
+0000000000
+```
+
+**Train C output**
+```text
+0000000000
+0000000360
+0300000030
+0300000030
+0633300000
+0000000000
+0000000000
+0000000000
+```
+
+**Train D input**
+```text
+0000000000
+0000030000
+0000030000
+0000330000
+0000000000
+0033300000
+0030000000
+0330000000
+0000000000
+0000000000
+```
+
+**Train D output**
+```text
+0000000000
+0000030000
+0000030000
+0000360000
+0000000000
+0063300000
+0030000000
+0360000000
+0000000000
+0000000000
+```
+
+**Test input**
+```text
+0000000000
+0300000000
+0300000000
+0333000000
+0000000000
+0000003300
+0000000300
+0000000300
+0000000000
+```
+
+**Expected test output**
+```text
+0000000000
+0300000000
+0300000000
+0633000000
+0000000000
+0000003600
+0000000300
+0000000300
+0000000000
+```
+
+**Written solution**
+In each green(3) path, recolor the turning cells — the cells with exactly one horizontal green neighbor and exactly one vertical green neighbor — to magenta(6). Straight cells stay green.
+
+**Program solution**
+```text
+def solve(grid):
+    for each green cell:
+        count orthogonal green neighbors
+        if it has exactly two neighbors and they form a right angle:
+            recolor that cell to magenta(6)
+    return grid
+```
+
+## E34 — Mark the intersections of blue lines
+
+**What it tests:** plus-center detection
+
+**Train A input**
+```text
+000000000
+000010000
+000010000
+001111100
+000010000
+000010000
+011100000
+000000000
+000000000
+```
+
+**Train A output**
+```text
+000000000
+000010000
+000010000
+001121100
+000010000
+000010000
+011100000
+000000000
+000000000
+```
+
+**Train B input**
+```text
+0000000000
+0000000010
+0000100010
+0000100010
+0000100000
+0111111100
+0000100000
+0000100000
+0000100000
+0000000000
+```
+
+**Train B output**
+```text
+0000000000
+0000000010
+0000100010
+0000100010
+0000100000
+0111211100
+0000100000
+0000100000
+0000100000
+0000000000
+```
+
+**Train C input**
+```text
+0000100000
+0000100000
+0011111000
+0000100000
+0000100000
+0000000010
+0000000010
+0000000000
+```
+
+**Train C output**
+```text
+0000100000
+0000100000
+0011211000
+0000100000
+0000100000
+0000000010
+0000000010
+0000000000
+```
+
+**Train D input**
+```text
+00000000000
+01000000000
+01000000100
+01000000100
+11110111110
+01000000100
+01000000100
+01000000000
+00000000000
+```
+
+**Train D output**
+```text
+00000000000
+01000000000
+01000000100
+01000000100
+12110111210
+01000000100
+01000000100
+01000000000
+00000000000
+```
+
+**Test input**
+```text
+0000000000
+0000010000
+0000010000
+0000010000
+0011111110
+0000010000
+0000010000
+0000010000
+0111000000
+0000000000
+```
+
+**Expected test output**
+```text
+0000000000
+0000010000
+0000010000
+0000010000
+0011121110
+0000010000
+0000010000
+0000010000
+0111000000
+0000000000
+```
+
+**Written solution**
+Recolor a blue(1) cell to red(2) exactly when it is the crossing point of a horizontal and a vertical blue line, so it has blue on all four cardinal sides.
+
+**Program solution**
+```text
+def solve(grid):
+    for each blue cell:
+        if left,right,up,down are all blue:
+            recolor the center cell to red(2)
+    return grid
+```
+
+## E35 — Reflect singletons across the main diagonal
+
+**What it tests:** global transpose symmetry on single cells
+
+**Train A input**
+```text
+0000000
+0000200
+0000000
+0004000
+0000000
+0030000
+0000000
+```
+
+**Train A output**
+```text
+0000000
+0000200
+0000030
+0004000
+0200000
+0030000
+0000000
+```
+
+**Train B input**
+```text
+00000050
+00000000
+07000000
+00000000
+00000000
+00000000
+00000020
+00000000
+```
+
+**Train B output**
+```text
+00000050
+00700000
+07000000
+00000000
+00000000
+00000000
+50000020
+00000000
+```
+
+**Train C input**
+```text
+000000000
+000000080
+000000000
+000000000
+006000000
+000000000
+000000000
+300000000
+000000000
+```
+
+**Train C output**
+```text
+000000030
+000000080
+000060000
+000000000
+006000000
+000000000
+000000000
+380000000
+000000000
+```
+
+**Train D input**
+```text
+0006000000
+0000000000
+0000000040
+0000000000
+0000000000
+0000070000
+0000000000
+0000000000
+0200000000
+0000000000
+```
+
+**Train D output**
+```text
+0006000000
+0000000020
+0000000040
+6000000000
+0000000000
+0000070000
+0000000000
+0000000000
+0240000000
+0000000000
+```
+
+**Test input**
+```text
+00000200
+00000000
+00000000
+07000000
+00000000
+00000000
+00400000
+00000000
+```
+
+**Expected test output**
+```text
+00000200
+00070000
+00000040
+07000000
+00000000
+20000000
+00400000
+00000000
+```
+
+**Written solution**
+Copy every nonzero cell to its transposed position across the main diagonal. The original cell remains, diagonal cells stay where they are, and colors are preserved.
+
+**Program solution**
+```text
+def solve(grid):
+    out = copy(grid)
+    for each nonzero cell at (r,c):
+        out[c][r] = its color
+    return out
+```
+
+# Medium (7)
+
+## M29 — Slide the object in the marker's direction
+
+**What it tests:** rigid-body motion with a control marker and blockers
+
+**Train A input**
+```text
+3000000000
+0000700000
+0000770000
+0000000000
+0000000000
+0000000000
+0000000000
+0000500000
+0000550000
+```
+
+**Train A output**
+```text
+3000000000
+0000000000
+0000000000
+0000000000
+0000000000
+0000700000
+0000770000
+0000500000
+0000550000
+```
+
+**Train B input**
+```text
+000000002
+000000000
+000000000
+007700000
+000770050
+000000050
+000000050
+000000000
+000000000
+000000000
+```
+
+**Train B output**
+```text
+000000002
+000000000
+000000000
+000077000
+000007750
+000000050
+000000050
+000000000
+000000000
+000000000
+```
+
+**Train C input**
+```text
+000500000
+000500000
+000500000
+000000000
+000000000
+007700000
+007700000
+000000000
+000000001
+```
+
+**Train C output**
+```text
+000500000
+000500000
+000500000
+007700000
+007700000
+000000000
+000000000
+000000000
+000000001
+```
+
+**Train D input**
+```text
+0000000000
+0000000000
+0000007770
+0000000700
+0500000000
+0500000000
+0000000000
+0000000004
+```
+
+**Train D output**
+```text
+0000000000
+0000000000
+7770000000
+0700000000
+0500000000
+0500000000
+0000000000
+0000000004
+```
+
+**Test input**
+```text
+00000000000
+00000500000
+00000500000
+00000500000
+00000000000
+00000000000
+00000077000
+00000007700
+00000000000
+10000000000
+```
+
+**Expected test output**
+```text
+00000077000
+00000507700
+00000500000
+00000500000
+00000000000
+00000000000
+00000000000
+00000000000
+00000000000
+10000000000
+```
+
+**Written solution**
+There is one colored object and one directional marker. The marker color chooses a direction (1=up, 2=right, 3=down, 4=left). Slide the whole object rigidly in that direction until the next step would hit a blocker, the marker, or the border.
+
+**Program solution**
+```text
+def solve(grid):
+    find the direction marker
+    collect the object's cells
+    remove the object from the grid
+    landing_cells = slide_component(object_cells, occupied=blockers+marker, dir=marker_direction)
+    place the object at landing_cells
+    return grid
+```
+
+## M30 — Extract the holes of hollow objects
+
+**What it tests:** negative-space extraction
+
+**Train A input**
+```text
+0000000000
+0222220000
+0200020333
+0200020303
+0200020303
+0222220333
+0000000000
+0000000000
+0000000000
+0000000000
+```
+
+**Train A output**
+```text
+0000000000
+0000000000
+0022200000
+0022200030
+0022200030
+0000000000
+0000000000
+0000000000
+0000000000
+0000000000
+```
+
+**Train B input**
+```text
+44444400000
+40000400000
+40000400000
+44444400000
+00000011111
+00000010001
+00000010001
+00000010001
+00000011111
+```
+
+**Train B output**
+```text
+00000000000
+04444000000
+04444000000
+00000000000
+00000000000
+00000001110
+00000001110
+00000001110
+00000000000
+```
+
+**Train C input**
+```text
+0000000000
+0000000000
+0077777700
+0070000700
+0070000700
+0070000700
+0070000700
+0077777700
+0000000000
+0000000000
+```
+
+**Train C output**
+```text
+0000000000
+0000000000
+0000000000
+0007777000
+0007777000
+0007777000
+0007777000
+0000000000
+0000000000
+0000000000
+```
+
+**Train D input**
+```text
+000000000
+000066660
+000060060
+000060060
+222266660
+200200000
+200200000
+222200000
+000000000
+```
+
+**Train D output**
+```text
+000000000
+000000000
+000006600
+000006600
+000000000
+022000000
+022000000
+000000000
+000000000
+```
+
+**Test input**
+```text
+000000000000
+033333000000
+030003006666
+030003006006
+030003006006
+030003006006
+033333006666
+000000000000
+000000000000
+000000000000
+```
+
+**Expected test output**
+```text
+000000000000
+000000000000
+003330000000
+003330000660
+003330000660
+003330000660
+000000000000
+000000000000
+000000000000
+000000000000
+```
+
+**Written solution**
+Ignore the object borders themselves. For each hollow object, output only the enclosed interior hole cells, colored with the same color as the surrounding object.
+
+**Program solution**
+```text
+def solve(grid):
+    out = blank grid
+    for each colored component:
+        find cells inside its bbox that are not part of the component and not connected to the bbox exterior
+        color those hole cells with the component color
+    return out
+```
+
+## M31 — Recolor each object by the nearest marker
+
+**What it tests:** marker-object association by distance
+
+**Train A input**
+```text
+1000000002
+0000000000
+0500000550
+0550000550
+0000000000
+0000000000
+0000555000
+0000050000
+0000000000
+0000030000
+```
+
+**Train A output**
+```text
+1000000002
+0000000000
+0100000220
+0110000220
+0000000000
+0000000000
+0000333000
+0000030000
+0000000000
+0000030000
+```
+
+**Train B input**
+```text
+00000400000
+00000000000
+05500000000
+00550005000
+00000005500
+00000000000
+00005500000
+00005500000
+20000000003
+```
+
+**Train B output**
+```text
+00000400000
+00000000000
+04400000000
+00440004000
+00000004400
+00000000000
+00002200000
+00002200000
+20000000003
+```
+
+**Train C input**
+```text
+3000000000
+0000000010
+0055000000
+0055000000
+0000000000
+0000005500
+0000000550
+0000500000
+0400550000
+0000000000
+```
+
+**Train C output**
+```text
+3000000000
+0000000010
+0033000000
+0033000000
+0000000000
+0000001100
+0000000110
+0000400000
+0400440000
+0000000000
+```
+
+**Train D input**
+```text
+000020000
+000000000
+555000500
+050000550
+000000000
+000550000
+000550000
+300000000
+000000001
+```
+
+**Train D output**
+```text
+000020000
+000000000
+222000200
+020000220
+000000000
+000330000
+000330000
+300000000
+000000001
+```
+
+**Test input**
+```text
+1000000002
+0000000000
+0550000000
+0550000500
+0000000550
+0000000000
+0000550000
+0000055000
+0000000000
+0000400000
+```
+
+**Expected test output**
+```text
+1000000002
+0000000000
+0110000000
+0110000200
+0000000220
+0000000000
+0000440000
+0000044000
+0000000000
+0000400000
+```
+
+**Written solution**
+Each gray(5) object should take on the color of the nearest colored marker. Distance is the smallest Manhattan distance from any object cell to the marker.
+
+**Program solution**
+```text
+def solve(grid):
+    find all colored markers
+    for each gray component:
+        choose the marker minimizing the minimum Manhattan distance to the component
+        recolor the whole component to that marker color
+    return grid
+```
+
+## M32 — Normalize and pack objects in encounter order
+
+**What it tests:** cropping, normalization, and sequence packing
+
+**Train A input**
+```text
+000000000000
+020000000000
+022000000000
+000000000000
+000000003300
+000000003300
+000000000000
+000044400000
+000004000000
+000000000000
+```
+
+**Train A output**
+```text
+200330444
+220330040
+```
+
+**Train B input**
+```text
+00000006600
+00000000660
+00000000000
+02200000000
+02200000000
+00000000000
+00000000700
+00000000770
+00000000000
+```
+
+**Train B output**
+```text
+660022070
+066022077
+```
+
+**Train C input**
+```text
+0000000000
+0000033300
+0000003000
+0000000000
+0000000000
+4400000000
+0440008800
+0000008800
+0000000000
+0000000000
+```
+
+**Train C output**
+```text
+3330440088
+0300044088
+```
+
+**Train D input**
+```text
+000000000000
+011000005000
+011000005500
+000000000000
+000000000000
+000002200000
+000000220000
+000000000000
+```
+
+**Train D output**
+```text
+110500220
+110550022
+```
+
+**Test input**
+```text
+000000000000
+020000000500
+022000005500
+000000005000
+000000000000
+000000000000
+000077000000
+000077000000
+000000000000
+000000000000
+```
+
+**Expected test output**
+```text
+20005077
+22055077
+00050000
+```
+
+**Written solution**
+Take every object in top-to-bottom then left-to-right order. Crop each one to its tight bounding box, keep its colors and shape, and pack the normalized crops side by side with one blank column between them.
+
+**Program solution**
+```text
+def solve(grid):
+    components = objects sorted by bbox top-left
+    render each component in its tight bbox
+    place the rendered crops left-to-right separated by one blank column
+    return the packed output grid
+```
+
+## M33 — Fill the row-column closure of each object
+
+**What it tests:** orthogonal closure inside each object's support
+
+**Train A input**
+```text
+0000000000
+0200000000
+0200000000
+0222000000
+0000000300
+0000000300
+0000003330
+0000000000
+0000000000
+```
+
+**Train A output**
+```text
+0000000000
+0222000000
+0222000000
+0222000000
+0000003330
+0000003330
+0000003330
+0000000000
+0000000000
+```
+
+**Train B input**
+```text
+0000000000
+0000000000
+0004000000
+0004000000
+0044400000
+0000000000
+0000007700
+0000000700
+0000000700
+0000000000
+```
+
+**Train B output**
+```text
+0000000000
+0000000000
+0044400000
+0044400000
+0044400000
+0000000000
+0000007700
+0000007700
+0000007700
+0000000000
+```
+
+**Train C input**
+```text
+00000000000
+00000006000
+00000006000
+00000006660
+01000000000
+01110000000
+00000000000
+00000000000
+```
+
+**Train C output**
+```text
+00000000000
+00000006660
+00000006660
+00000006660
+01110000000
+01110000000
+00000000000
+00000000000
+```
+
+**Train D input**
+```text
+800000000
+800000000
+888000000
+000000000
+000003000
+000003000
+000033300
+000000000
+000000000
+```
+
+**Train D output**
+```text
+888000000
+888000000
+888000000
+000000000
+000033300
+000033300
+000033300
+000000000
+000000000
+```
+
+**Test input**
+```text
+0000000000
+0200000000
+0200000000
+0222000000
+0000000000
+0000000400
+0000000400
+0000004440
+0000000000
+0000000000
+```
+
+**Expected test output**
+```text
+0000000000
+0222000000
+0222000000
+0222000000
+0000000000
+0000004440
+0000004440
+0000004440
+0000000000
+0000000000
+```
+
+**Written solution**
+For each object, look at which rows and which columns within its bounding box contain object cells. Fill every intersection of those occupied rows and occupied columns with the object's color.
+
+**Program solution**
+```text
+def solve(grid):
+    out = blank grid
+    for each component:
+        rows = rows containing component cells
+        cols = columns containing component cells
+        for r in rows:
+            for c in cols:
+                out[r][c] = component color
+    return out
+```
+
+## M34 — Stamp the template at the anchors
+
+**What it tests:** template copying with anchor color substitution
+
+**Train A input**
+```text
+500000000000
+550000000000
+000000000000
+000000000000
+000002000000
+000000000000
+000000003000
+000000000000
+000000000000
+000000000000
+```
+
+**Train A output**
+```text
+000000000000
+000000000000
+000000000000
+000000000000
+000002000000
+000002200000
+000000003000
+000000003300
+000000000000
+000000000000
+```
+
+**Train B input**
+```text
+00000004000
+00500000000
+05500000000
+00500000000
+00000000000
+00000020000
+00000000000
+00000000000
+00000000000
+```
+
+**Train B output**
+```text
+00000000400
+00000004400
+00000000400
+00000000000
+00000000000
+00000002000
+00000022000
+00000002000
+00000000000
+```
+
+**Train C input**
+```text
+5500000000
+0500000000
+0000000000
+0000000000
+0600000000
+0000000000
+0000003000
+0000000000
+0000000000
+0000000000
+```
+
+**Train C output**
+```text
+0000000000
+0000000000
+0000000000
+0000000000
+0660000000
+0060000000
+0000003300
+0000000300
+0000000000
+0000000000
+```
+
+**Train D input**
+```text
+050000000000
+055000000000
+000000000000
+000000007000
+000000000000
+000400000000
+000000000000
+000000000000
+```
+
+**Train D output**
+```text
+000000000000
+000000000000
+000000000000
+000000007000
+000000007700
+000400000000
+000440000000
+000000000000
+```
+
+**Test input**
+```text
+050000000000
+550000000000
+050000000000
+000000000000
+000030000000
+000000006000
+000000000000
+000000000000
+000000000000
+000000000000
+```
+
+**Expected test output**
+```text
+000000000000
+000000000000
+000000000000
+000000000000
+000003000000
+000033000600
+000003006600
+000000000600
+000000000000
+000000000000
+```
+
+**Written solution**
+The gray(5) component is a template. Copy its shape to every anchor singleton, recoloring each copy to the anchor's color. The output contains only the colored copies, not the original template.
+
+**Program solution**
+```text
+def solve(grid):
+    template = largest gray component normalized to its top-left bbox corner
+    out = blank grid
+    for each anchor singleton:
+        stamp the normalized template at the anchor position using the anchor color
+    return out
+```
+
+## M35 — Transpose each object inside its own box
+
+**What it tests:** local main-diagonal reflection
+
+**Train A input**
+```text
+0000000000
+0200000000
+0200000000
+0220000000
+0000000000
+0000033000
+0000003000
+0000003000
+0000000000
+0000000000
+```
+
+**Train A output**
+```text
+0000000000
+0222000000
+0002000000
+0000000000
+0000000000
+0000030000
+0000033300
+0000000000
+0000000000
+0000000000
+```
+
+**Train B input**
+```text
+00000000440
+00000000400
+00000000400
+00000000000
+00600000000
+06600000000
+00600000000
+00000000000
+00000000000
+```
+
+**Train B output**
+```text
+00000000444
+00000000400
+00000000000
+00000000000
+00600000000
+06660000000
+00000000000
+00000000000
+00000000000
+```
+
+**Train C input**
+```text
+0000000000
+0000000000
+0077000000
+0007000000
+0007000000
+0000000000
+0000001000
+0000001000
+0000001100
+0000000000
+```
+
+**Train C output**
+```text
+0000000000
+0000000000
+0070000000
+0077700000
+0000000000
+0000000000
+0000001110
+0000000010
+0000000000
+0000000000
+```
+
+**Train D input**
+```text
+000000000000
+008000000000
+088000000000
+008000002200
+000000002000
+000000002000
+000000000000
+000000000000
+```
+
+**Train D output**
+```text
+000000000000
+008000000000
+088800000000
+000000002220
+000000002000
+000000000000
+000000000000
+000000000000
+```
+
+**Test input**
+```text
+0000000000
+0022000000
+0020000000
+0020000000
+0000000000
+0000007000
+0000077000
+0000007000
+0000000000
+0000000000
+```
+
+**Expected test output**
+```text
+0000000000
+0022200000
+0020000000
+0000000000
+0000000000
+0000007000
+0000077700
+0000000000
+0000000000
+0000000000
+```
+
+**Written solution**
+Treat each object separately inside its own tight bounding box. Reflect its cells across that box's main diagonal, preserving color and keeping the box anchored in place.
+
+**Program solution**
+```text
+def solve(grid):
+    out = blank grid
+    for each component:
+        for each cell (r,c) in its bbox:
+            move it to the transposed position within the same bbox
+    return out
+```
+
+# Hard (7)
+
+## H29 — Slide all objects and let them stack
+
+**What it tests:** simultaneous rigid-body motion using the new slide_component primitive
+
+**Train A input**
+```text
+3000000000
+0600000000
+0660007700
+0000007700
+0000000000
+0009900000
+0000900000
+0000900000
+0000000000
+0000000000
+```
+
+**Train A output**
+```text
+3000000000
+0000000000
+0000000000
+0000000000
+0000000000
+0000000000
+0000000000
+0009900000
+0600907700
+0660907700
+```
+
+**Train B input**
+```text
+00000000002
+06600000000
+00660000000
+00000000000
+00007770000
+00000700000
+90000000000
+99000000000
+00000000000
+```
+
+**Train B output**
+```text
+00000000002
+00000000660
+00000000066
+00000000000
+00000000777
+00000000070
+00000000090
+00000000099
+00000000000
+```
+
+**Train C input**
+```text
+0000000000
+0000000000
+0000000000
+0000000000
+0000007000
+0000077000
+0660007000
+0660000900
+0000000990
+0000000001
+```
+
+**Train C output**
+```text
+0660007900
+0660077990
+0000007000
+0000000000
+0000000000
+0000000000
+0000000000
+0000000000
+0000000000
+0000000001
+```
+
+**Train D input**
+```text
+0000000000
+0000000660
+0099000060
+0099000060
+0000070000
+0000077000
+0000000000
+0000000000
+0000000004
+```
+
+**Train D output**
+```text
+0000000000
+0660000000
+9960000000
+9960000000
+7000000000
+7700000000
+0000000000
+0000000000
+0000000004
+```
+
+**Test input**
+```text
+00000000002
+06000000000
+06600000000
+00000000000
+00007700000
+00007700000
+99000000000
+09000000000
+09000000000
+00000000000
+```
+
+**Expected test output**
+```text
+00000000002
+00000000060
+00000000066
+00000000000
+00000000077
+00000000077
+00000000099
+00000000009
+00000000009
+00000000000
+```
+
+**Written solution**
+A control marker picks a global direction (1=up, 2=right, 3=down, 4=left). Every object slides rigidly as far as possible in that direction. The objects then stack against the wall and against each other, as if they all moved together.
+
+**Program solution**
+```text
+def solve(grid):
+    find the control direction
+    remove every object from the grid
+    sort objects from front-most to back-most along the motion direction
+    for each object in that order:
+        landing = slide_component(object_cells, occupied=already_settled_cells + marker, dir=control_direction)
+        settle the object at landing
+    return grid
+```
+
+## H30 — Trace the perimeter of the marked object
+
+**What it tests:** object selection plus perimeter extraction
+
+**Train A input**
+```text
+0000000000
+0002000000
+0066660000
+0066660000
+0066660000
+0000000000
+0000007700
+0000007700
+0000000000
+0000000000
+```
+
+**Train A output**
+```text
+0000000000
+0000000000
+0022220000
+0020020000
+0022220000
+0000000000
+0000000000
+0000000000
+0000000000
+0000000000
+```
+
+**Train B input**
+```text
+00000000000
+00000007777
+00000007777
+00000007777
+25500000000
+05550000000
+00550000000
+00000000000
+00000000000
+```
+
+**Train B output**
+```text
+00000000000
+00000000000
+00000000000
+00000000000
+02200000000
+02020000000
+00220000000
+00000000000
+00000000000
+```
+
+**Train C input**
+```text
+0000020000
+0000080000
+0000088000
+0000088800
+0000000000
+0000000000
+0666600000
+0666600000
+0666600000
+0000000000
+```
+
+**Train C output**
+```text
+0000000000
+0000020000
+0000022000
+0000022200
+0000000000
+0000000000
+0000000000
+0000000000
+0000000000
+0000000000
+```
+
+**Train D input**
+```text
+000000000
+066000000
+066000000
+000002000
+000077700
+000077700
+000007000
+000000000
+000000000
+```
+
+**Train D output**
+```text
+000000000
+000000000
+000000000
+000000000
+000022200
+000020200
+000002000
+000000000
+000000000
+```
+
+**Test input**
+```text
+00000000000
+00000000770
+00020000770
+00066000000
+00066600000
+00006600000
+00000000000
+05000000000
+05500000000
+00000000000
+```
+
+**Expected test output**
+```text
+00000000000
+00000000000
+00000000000
+00022000000
+00020200000
+00002200000
+00000000000
+00000000000
+00000000000
+00000000000
+```
+
+**Written solution**
+A red(2) marker touches exactly one object. Select that object and output only its outer perimeter cells, recolored red(2). Everything else disappears.
+
+**Program solution**
+```text
+def solve(grid):
+    find the marker
+    select the component touching the marker
+    boundary = cells of that component with at least one 4-neighbor outside the component
+    output boundary in red(2) on a blank grid
+```
+
+## H31 — Recolor the template with the legend and stamp it
+
+**What it tests:** read a color map, then stamp recolored copies
+
+**Train A input**
+```text
+120000000000
+310000000000
+020000000000
+000009000000
+000000000900
+000000000000
+000000000000
+000000000000
+123000000000
+467000000000
+```
+
+**Train A output**
+```text
+000000000000
+000000000000
+000000000000
+000004600000
+000007400460
+000000600740
+000000000060
+000000000000
+000000000000
+000000000000
+```
+
+**Train B input**
+```text
+01000090000
+23100000000
+00200000000
+00000009000
+00000000000
+00000000000
+00000000000
+12300000000
+58400000000
+```
+
+**Train B output**
+```text
+00000005000
+00000084500
+00000000800
+00000000500
+00000008450
+00000000080
+00000000000
+00000000000
+00000000000
+```
+
+**Train C input**
+```text
+1000000000
+2300000000
+0100000000
+0000000000
+0900000000
+0000090000
+0000000000
+0000000000
+1230000000
+7460000000
+```
+
+**Train C output**
+```text
+0000000000
+0000000000
+0000000000
+0000000000
+0700000000
+0460070000
+0070046000
+0000007000
+0000000000
+0000000000
+```
+
+**Train D input**
+```text
+310000000000
+020000090000
+130000000000
+000000000000
+000000009000
+000000000000
+000000000000
+123000000000
+256000000000
+```
+
+**Train D output**
+```text
+000000000000
+000000062000
+000000005000
+000000026000
+000000006200
+000000000500
+000000002600
+000000000000
+000000000000
+```
+
+**Test input**
+```text
+010000000000
+231000000000
+002000000000
+000009000000
+000000000900
+000000000000
+000000000000
+000000000000
+123000000000
+476000000000
+```
+
+**Expected test output**
+```text
+000000000000
+000000000000
+000000000000
+000000400000
+000007640040
+000000070764
+000000000007
+000000000000
+000000000000
+000000000000
+```
+
+**Written solution**
+The bottom two rows form a legend: the upper legend row lists source colors and the lower row lists their replacements. Apply that color mapping to the multicolor template, then stamp recolored copies of the template at each anchor cell.
+
+**Program solution**
+```text
+def solve(grid):
+    read the source->target color mapping from the bottom two rows
+    extract the template above the legend and normalize it
+    recolor each template cell through the mapping
+    for each anchor:
+        stamp the recolored template at the anchor position
+    return the stamped grid
+```
+
+## H32 — Paint the cells seen by exactly two seeds
+
+**What it tests:** line-of-sight counting with blockers
+
+**Train A input**
+```text
+00000000000
+01000000010
+00000800000
+00000800000
+00888800000
+00000800000
+00000000000
+00000100000
+00000000000
+```
+
+**Train A output**
+```text
+00000000000
+20222222202
+00000000000
+00000000000
+00000000000
+00000000000
+00000000000
+02000000020
+00000000000
+```
+
+**Train B input**
+```text
+0000100800
+0000000800
+0000000800
+0000000800
+0000000000
+1088888800
+0000000000
+0000000000
+0000000000
+0000100000
+```
+
+**Train B output**
+```text
+2000000000
+0000000000
+0000000000
+0000000000
+0000000000
+0000000000
+0000000000
+0000000000
+0000000000
+2000000000
+```
+
+**Train C input**
+```text
+000000000000
+000000000000
+001000000010
+000000800000
+000000800000
+000000808880
+000000100000
+000000000000
+000000000000
+```
+
+**Train C output**
+```text
+000000000000
+000000000000
+220222222202
+000000000000
+000000000000
+000000000000
+002000000000
+000000000000
+000000000000
+```
+
+**Train D input**
+```text
+0000800000
+0000800010
+0000800000
+0088888800
+0000000000
+0000000000
+0100000010
+0000000000
+```
+
+**Train D output**
+```text
+0000000020
+0000000000
+0000000020
+0000000020
+0000000020
+0000000020
+2022222202
+0000000020
+```
+
+**Test input**
+```text
+00000000000
+00100000100
+00000800000
+00000800000
+00000800000
+00000888880
+00000800000
+00000100000
+00000000000
+```
+
+**Expected test output**
+```text
+00000000000
+22022222022
+00000000000
+00000000000
+00000000000
+00000000000
+00000000000
+00200000000
+00000000000
+```
+
+**Written solution**
+Each seed sends sight-lines horizontally and vertically until a wall or the border stops it. Count how many seeds see each empty cell, then paint exactly the cells seen by two seeds.
+
+**Program solution**
+```text
+def solve(grid):
+    coverage = zeros
+    for each seed:
+        cast 4 rays until hitting walls or the border
+        increment coverage on visited empty cells
+    output a blank grid with red(2) wherever coverage == 2
+```
+
+## H33 — Fill the chamber by BFS parity
+
+**What it tests:** distance-layer filling in a maze
+
+**Train A input**
+```text
+88888888888
+80000000008
+80000800008
+80000800008
+80200800008
+80000800008
+80000800008
+80000000008
+88888888888
+```
+
+**Train A output**
+```text
+88888888888
+83434343438
+84343834348
+83434843438
+84343834348
+83434843438
+84343834348
+83434343438
+88888888888
+```
+
+**Train B input**
+```text
+8888888888
+8000000008
+8020000008
+8000000008
+8088888808
+8000000008
+8000000008
+8000000008
+8000000008
+8888888888
+```
+
+**Train B output**
+```text
+8888888888
+8343434348
+8434343438
+8343434348
+8488888838
+8343434348
+8434343438
+8343434348
+8434343438
+8888888888
+```
+
+**Train C input**
+```text
+888888888888
+800080000008
+800080000008
+800080000008
+800088888008
+800000000008
+802000000008
+800000000008
+888888888888
+```
+
+**Train C output**
+```text
+888888888888
+834383434348
+843484343438
+834383434348
+843488888438
+834343434348
+843434343438
+834343434348
+888888888888
+```
+
+**Train D input**
+```text
+8888888888
+8020000008
+8000008008
+8000008008
+8000008008
+8000008008
+8000000008
+8888888888
+```
+
+**Train D output**
+```text
+8888888888
+8434343438
+8343438348
+8434348438
+8343438348
+8434348438
+8343434348
+8888888888
+```
+
+**Test input**
+```text
+88888888888
+80008000008
+80008000008
+80008000008
+80008888808
+80008000008
+80208000008
+80000000008
+88888888888
+```
+
+**Expected test output**
+```text
+88888888888
+83438343438
+84348434348
+83438343438
+84348888848
+83438343438
+84348434348
+83434343438
+88888888888
+```
+
+**Written solution**
+Starting from the seed, perform a shortest-path flood through the non-wall cells. Color even-distance cells green(3) and odd-distance cells yellow(4), while keeping the walls.
+
+**Program solution**
+```text
+def solve(grid):
+    run BFS from the seed through every non-wall cell
+    for each reached cell:
+        color it green(3) if its BFS distance is even, else yellow(4)
+    keep the wall cells unchanged
+```
+
+## H34 — Connect matching color pairs through the maze
+
+**What it tests:** simultaneous shortest-path routing for multiple colors
+
+**Train A input**
+```text
+88888888888
+81008000028
+80008000008
+80008000008
+80008888808
+80008000008
+80008000008
+80010000028
+88888888888
+```
+
+**Train A output**
+```text
+88888888888
+81008000028
+81008000028
+81008000028
+81008888828
+81008000028
+81008000028
+81110000028
+88888888888
+```
+
+**Train B input**
+```text
+8888888888
+8100000028
+8000000008
+8888088808
+8000008008
+8000008028
+8000000008
+8000008008
+8000108008
+8888888888
+```
+
+**Train B output**
+```text
+8888888888
+8100000028
+8111100028
+8888188828
+8000108028
+8000108028
+8000100008
+8000108008
+8000108008
+8888888888
+```
+
+**Train C input**
+```text
+888888888888
+803008000028
+800008000008
+800000000008
+800008000008
+800008880888
+800000000008
+800030000028
+888888888888
+```
+
+**Train C output**
+```text
+888888888888
+803008000028
+803008000028
+803000000028
+803008002228
+803008882888
+803000002008
+803330002228
+888888888888
+```
+
+**Train D input**
+```text
+88888888888
+84000000008
+80088888808
+80080000008
+80080000028
+80080000008
+80080000008
+84080002008
+88888888888
+```
+
+**Train D output**
+```text
+88888888888
+84000000008
+84088888808
+84080000008
+84080000028
+84080000028
+84080000028
+84080002228
+88888888888
+```
+
+**Test input**
+```text
+888888888888
+810008000028
+800000000008
+800008000008
+800008000008
+800008808808
+800000000008
+800100000028
+888888888888
+```
+
+**Expected test output**
+```text
+888888888888
+810008000028
+810000000028
+810008000028
+810008000028
+810008808828
+810000000028
+811100000028
+888888888888
+```
+
+**Written solution**
+For every color that appears exactly twice, find the shortest path through the empty maze between the two endpoints and paint that path in the same color, leaving the walls in place.
+
+**Program solution**
+```text
+def solve(grid):
+    out = copy(grid)
+    for each non-wall color with exactly two endpoints:
+        path = shortest path between the endpoints through zero cells
+        paint the whole path with that color
+    return out
+```
+
+## H35 — Alternate interior layers inside each frame
+
+**What it tests:** distance transform inside enclosed regions
+
+**Train A input**
+```text
+0000000000
+0888888800
+0800000800
+0800000800
+0800000800
+0800000800
+0800000800
+0888888800
+0000000000
+0000000000
+```
+
+**Train A output**
+```text
+0000000000
+0888888800
+0822222800
+0823332800
+0823232800
+0823332800
+0822222800
+0888888800
+0000000000
+0000000000
+```
+
+**Train B input**
+```text
+000000000000
+088888800000
+080000808880
+080000808080
+080000808080
+088888808080
+000000008080
+000000008880
+000000000000
+```
+
+**Train B output**
+```text
+000000000000
+088888800000
+082222808880
+082332808280
+082222808280
+088888808280
+000000008280
+000000008880
+000000000000
+```
+
+**Train C input**
+```text
+00000000000
+00000000000
+00888888800
+00800000800
+00800000800
+00800000800
+00800000800
+00800000800
+00888888800
+00000000000
+00000000000
+```
+
+**Train C output**
+```text
+00000000000
+00000000000
+00888888800
+00822222800
+00823332800
+00823232800
+00823332800
+00822222800
+00888888800
+00000000000
+00000000000
+```
+
+**Train D input**
+```text
+000000000000
+000000088880
+000000080080
+000000080080
+088888080080
+080008080080
+080008080080
+080008088880
+088888000000
+000000000000
+```
+
+**Train D output**
+```text
+000000000000
+000000088880
+000000082280
+000000082280
+088888082280
+082228082280
+082328082280
+082228088880
+088888000000
+000000000000
+```
+
+**Test input**
+```text
+00000000000
+08888888880
+08000000080
+08000000080
+08000000080
+08000000080
+08000000080
+08000000080
+08000000080
+08888888880
+00000000000
+```
+
+**Expected test output**
+```text
+00000000000
+08888888880
+08222222280
+08233333280
+08232223280
+08232323280
+08232223280
+08233333280
+08222222280
+08888888880
+00000000000
+```
+
+**Written solution**
+For each hollow frame, fill its interior by layer depth: cells one step from the wall become red(2), the next layer becomes green(3), then red again, and so on. The frame itself stays unchanged.
+
+**Program solution**
+```text
+def solve(grid):
+    for each frame component:
+        extract the interior hole cells
+        compute each hole cell's distance to the frame wall by repeated layer peeling
+        color odd layers red(2) and even layers green(3)
+    keep the frame cells as they are
+```

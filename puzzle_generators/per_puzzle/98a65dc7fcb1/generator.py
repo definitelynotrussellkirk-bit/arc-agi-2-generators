@@ -1,0 +1,110 @@
+"""Generator for arc_puzzle_bank_twelfth21:E82.
+
+Hollow same-color 3x3 rings fill their center cell.
+
+Combinatorial axes (8): grid_h, grid_w, palette_kind, n_rings,
+palette_size, position_bias, n_distinct_colors, density, texture.
+Degenerates: no_rings, filled_centers, missing_corner.
+"""
+from __future__ import annotations
+
+from puzzle_generators.base import gen_ctx
+from puzzle_generators.helpers.grid import full_grid
+
+GENERATOR_ID = "98a65dc7fcb1"
+VERSION = "1.1.0"
+TASK_ID = "98a65dc7fcb1"
+
+SUMMARY = "Hollow same-color 3x3 rings fill their center cell."
+
+INVARIANTS = [
+    "background is 0",
+    "each target ring has eight same-color neighbors",
+    "ring centers are zero in the input",
+    "rings are separated by background",
+]
+
+PALETTE_KINDS = ("default", "warm", "cool", "varied")
+DEGENERATE_TEXTURES = ("no_rings", "filled_centers", "missing_corner")
+HELPFUL_TEXTURES = PALETTE_KINDS
+
+AXES = {
+    "grid_h":         {"type": "int", "default": "rng 7..10", "valid": "5..18"},
+    "grid_w":         {"type": "int", "default": "rng 7..10", "valid": "5..18"},
+    "palette_kind":   {"type": "str", "default": "rng helpful",
+                       "valid": "|".join(PALETTE_KINDS)},
+    "n_rings":        {"type": "int", "default": "rng 1..2", "valid": "1..6"},
+    "palette_size":   {"type": "int", "default": "rng 1..2", "valid": "1..6"},
+    "position_bias":  {"type": "str", "default": "separated_3x3_rings",
+                       "valid": "separated_3x3_rings"},
+    "n_distinct_colors": {"type": "int", "default": "rng 1..2", "valid": "1..6"},
+    "density":        {"type": "str", "default": "sparse", "valid": "sparse"},
+    "texture":        {"type": "str", "default": "alias for palette_kind",
+                       "valid": "|".join(HELPFUL_TEXTURES + DEGENERATE_TEXTURES)},
+}
+
+
+def _free_box(g, r, c):
+    h, w = len(g), len(g[0])
+    for rr in range(max(0, r - 1), min(h, r + 4)):
+        for cc in range(max(0, c - 1), min(w, c + 4)):
+            if g[rr][cc] != 0:
+                return False
+    return True
+
+
+def generate(seed, sample_index, *, difficulty=None, **overrides):
+    ctx = gen_ctx(seed=seed, sample_index=sample_index, version=VERSION,
+                  task_id=TASK_ID, difficulty=difficulty, overrides=overrides)
+    if overrides.get("texture") in DEGENERATE_TEXTURES:
+        return _draw_from_degenerate(overrides["texture"], None)
+    if difficulty == "easy":
+        h = ctx.draw_int("grid_h", 7, 8)
+        w = ctx.draw_int("grid_w", 7, 8)
+        target = ctx.draw_int("n_rings", 1, 1)
+    elif difficulty == "hard":
+        h = ctx.draw_int("grid_h", 9, 10)
+        w = ctx.draw_int("grid_w", 9, 10)
+        target = ctx.draw_int("n_rings", 2, 2)
+    else:
+        h = ctx.draw_int("grid_h", 7, 10)
+        w = ctx.draw_int("grid_w", 7, 10)
+        target = ctx.draw_int("n_rings", 1, 2)
+    rng = ctx.draw_rng("layout")
+    g = full_grid(h, w, 0)
+    placed = 0
+    for _ in range(100):
+        if placed >= target:
+            break
+        r, c = rng.randint(0, h - 3), rng.randint(0, w - 3)
+        if not _free_box(g, r, c):
+            continue
+        color = rng.choice([1, 2, 3, 4, 5, 6, 7, 8, 9])
+        for dr in range(3):
+            for dc in range(3):
+                if (dr, dc) != (1, 1):
+                    g[r + dr][c + dc] = color
+        placed += 1
+    return g
+
+
+def _draw_from_degenerate(name, rng):
+    h, w = 8, 8
+    g = full_grid(h, w, 0)
+    if name == "no_rings":
+        # blank → no ring centers to fill
+        return g
+    if name == "filled_centers":
+        # rings already have non-zero center → "center is zero" precondition fails
+        for dr in range(3):
+            for dc in range(3):
+                g[1 + dr][1 + dc] = 4
+        return g
+    if name == "missing_corner":
+        # ring missing one corner → not 8 same-color neighbors, rule won't fire
+        for dr in range(3):
+            for dc in range(3):
+                if (dr, dc) not in [(1, 1), (0, 0)]:
+                    g[1 + dr][1 + dc] = 4
+        return g
+    return g

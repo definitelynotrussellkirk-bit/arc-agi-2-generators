@@ -1,0 +1,37 @@
+{
+  "bank": "11e5fb05c519",
+  "title": "Additional 21-puzzle bank (E1-style IDs)",
+  "description": "Second hand-authored set of 21 puzzles with E1/M1/H1-style IDs. Biased toward marker-controlled transforms, bbox logic, and 2-pass patch-friendly tasks. Used together with the main bank for eval coverage.",
+  "schema_shape": "list[Entry]  (id/name/difficulty/tests/written_solution/program_solution/train/test)",
+  "source": "user-provided download 2026-04-16",
+  "solution_language": "python",
+  "files": {
+    "puzzles_json": "puzzles.json",
+    "solutions_py": "solutions.py",
+    "reference_md": "REFERENCE.md"
+  },
+  "stats": {
+    "n_puzzles": 21,
+    "n_train_pairs": 42,
+    "n_test_pairs": 21,
+    "difficulties": {
+      "easy": 7,
+      "medium": 7,
+      "hard": 7
+    },
+    "top_tags": [],
+    "common_fields": [
+      "difficulty",
+      "id",
+      "name",
+      "program_language",
+      "program_solution",
+      "test",
+      "tests",
+      "train",
+      "written_solution"
+    ]
+  },
+  "generated_at": "2026-05-10 11:31:43 -0400",
+  "legacy_bank": "765a70430bc9"
+}

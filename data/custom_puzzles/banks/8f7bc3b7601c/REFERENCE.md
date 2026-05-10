@@ -1,0 +1,14966 @@
+# ARC-style Puzzle Bank: 21 More Tasks (Third Batch)
+
+This third batch is split into 7 easy, 7 medium, and 7 hard tasks. I leaned this set toward masking, directional propagation, object filtering, conditional transforms, and small-scale composition so it broadens the earlier banks instead of just repeating them.
+
+## Index
+- `easy_c01` — **Seed expands to a 3x3 square** (easy; same_size_local, expansion)
+- `easy_c02` — **Keep only the bottommost cell in each column** (easy; column_logic, extraction)
+- `easy_c03` — **Right-pack every row** (easy; row_logic, compression)
+- `easy_c04` — **Complete 2x2 blocks from L-shapes** (easy; same_size_local, pattern_completion)
+- `easy_c05` — **Seed paints its whole row and column** (easy; same_size_transform, cross_logic)
+- `easy_c06` — **Fill vertical segments between matching endpoints** (easy; line_drawing, column_logic)
+- `easy_c07` — **Rotate the square grid by 180 degrees** (easy; global_layout, rotation)
+- `medium_c01` — **Recolor each object by aspect ratio** (medium; object_reasoning, classification)
+- `medium_c02` — **Keep only frame objects** (medium; object_reasoning, frame_detection)
+- `medium_c03` — **Output the object and its horizontal mirror** (medium; extraction, symmetry, relayout)
+- `medium_c04` — **Keep only even-area objects** (medium; object_reasoning, selection)
+- `medium_c05` — **Keep the largest object of each color** (medium; object_reasoning, selection)
+- `medium_c06` — **Column-majority color row** (medium; global_counting, column_logic, extraction)
+- `medium_c07` — **Rotate each object inside its own square box** (medium; object_reasoning, rotation)
+- `hard_c01` — **Stamp rotated copies of a template at marker cells** (hard; template_transfer, rotation, marker_control)
+- `hard_c02` — **Concatenate frame interiors from left to right** (hard; containment, extraction, relayout)
+- `hard_c03` — **Recolor objects by marker order after sorting by area** (hard; object_reasoning, sorting, marker_control)
+- `hard_c04` — **Make a quadrant mosaic of normalized objects** (hard; normalization, relayout, quadrant_logic)
+- `hard_c05` — **Flip each frame's contents according to the frame color** (hard; containment, conditional_transform)
+- `hard_c06` — **Sort objects by bounding-box perimeter and stack them** (hard; sorting, rotation, relayout)
+- `hard_c07` — **Select the nth-largest object using marker count** (hard; counting, selection, extraction)
+
+## easy_c01 — Seed expands to a 3x3 square
+
+**Difficulty:** easy
+
+**Tags:** same_size_local, expansion
+
+**Written solution:**
+
+Each nonzero seed becomes a solid 3x3 block of the same color, clipped by the grid border.
+
+**Program solution:**
+
+```python
+def solve_c_e1_seed_to_3x3(g):
+    h,w=dims(g)
+    out=copy_grid(g)
+    for r in range(h):
+        for c in range(w):
+            color=g[r][c]
+            if color!=0:
+                for dr in (-1,0,1):
+                    for dc in (-1,0,1):
+                        nr,nc=r+dr,c+dc
+                        if 0<=nr<h and 0<=nc<w:
+                            out[nr][nc]=color
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    2,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    7
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    7
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    7
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    4,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    4,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    4,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    5,
+    5,
+    5,
+    0,
+    0,
+    0
+  ],
+  [
+    5,
+    5,
+    5,
+    0,
+    0,
+    0
+  ],
+  [
+    5,
+    5,
+    5,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Input**
+
+```json
+[
+  [
+    9,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Output**
+
+```json
+[
+  [
+    9,
+    9,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    9,
+    9,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    3,
+    3,
+    3,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    3,
+    3,
+    3,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    3,
+    3,
+    3,
+    0
+  ],
+  [
+    0,
+    6,
+    6,
+    6,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    6,
+    6,
+    6,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    6,
+    6,
+    6,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Expected Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    8,
+    8,
+    8,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    8,
+    8,
+    8,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    8,
+    8,
+    8,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1
+  ]
+]
+```
+
+## easy_c02 — Keep only the bottommost cell in each column
+
+**Difficulty:** easy
+
+**Tags:** column_logic, extraction
+
+**Written solution:**
+
+In every column, erase all nonzero cells except the lowest one. Keep that cell's color and position.
+
+**Program solution:**
+
+```python
+def solve_c_e2_keep_bottommost_per_column(g):
+    h,w=dims(g)
+    out=blank(h,w)
+    for c in range(w):
+        chosen=None
+        for r in range(h-1,-1,-1):
+            if g[r][c]!=0:
+                chosen=(r,g[r][c])
+                break
+        if chosen:
+            r,color=chosen
+            out[r][c]=color
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    5,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0
+  ],
+  [
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    5,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    7,
+    0,
+    0,
+    0,
+    0,
+    3
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    5,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    7,
+    0,
+    0,
+    0,
+    0,
+    3
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    1,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    4,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    6,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    2,
+    0
+  ],
+  [
+    9,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    6,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    2,
+    0
+  ],
+  [
+    9,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Input**
+
+```json
+[
+  [
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    5,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    1,
+    0,
+    0,
+    5,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    1,
+    0,
+    0,
+    5,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    9,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1
+  ]
+]
+```
+
+**Test — Expected Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    9,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1
+  ]
+]
+```
+
+## easy_c03 — Right-pack every row
+
+**Difficulty:** easy
+
+**Tags:** row_logic, compression
+
+**Written solution:**
+
+Within each row, keep the nonzero cells in their left-to-right order but slide them all the way to the right.
+
+**Program solution:**
+
+```python
+def solve_c_e3_right_pack_rows(g):
+    h,w=dims(g)
+    out=blank(h,w)
+    for r,row in enumerate(g):
+        vals=[v for v in row if v!=0]
+        out[r][w-len(vals):]=vals
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    2,
+    0,
+    3,
+    0,
+    0,
+    4
+  ],
+  [
+    5,
+    0,
+    0,
+    0,
+    6,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    7,
+    0,
+    8,
+    0,
+    0,
+    9,
+    0
+  ],
+  [
+    0,
+    1,
+    0,
+    0,
+    2,
+    0,
+    3
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    2,
+    3,
+    4
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    6
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    8,
+    9
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    1,
+    2,
+    3
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    4,
+    0,
+    4,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    5,
+    0,
+    6,
+    0
+  ],
+  [
+    7,
+    8,
+    0,
+    0,
+    0,
+    9
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    4,
+    4
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    5,
+    6
+  ],
+  [
+    0,
+    0,
+    0,
+    7,
+    8,
+    9
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Input**
+
+```json
+[
+  [
+    0,
+    3,
+    0,
+    0,
+    2,
+    0,
+    1
+  ],
+  [
+    9,
+    0,
+    0,
+    8,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    7,
+    0,
+    6,
+    0,
+    0
+  ],
+  [
+    5,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    3,
+    2,
+    1
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    8
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    6
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    4
+  ]
+]
+```
+
+**Test — Input**
+
+```json
+[
+  [
+    0,
+    8,
+    0,
+    1,
+    0,
+    0,
+    3
+  ],
+  [
+    4,
+    0,
+    0,
+    0,
+    5,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    7,
+    0,
+    0,
+    9,
+    0,
+    0,
+    8
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Expected Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    8,
+    1,
+    3
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    4,
+    5,
+    6
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    9,
+    8
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+## easy_c04 — Complete 2x2 blocks from L-shapes
+
+**Difficulty:** easy
+
+**Tags:** same_size_local, pattern_completion
+
+**Written solution:**
+
+Whenever a 2x2 window has exactly three cells of the same nonzero color and one 0, fill the missing corner with that color.
+
+**Program solution:**
+
+```python
+def solve_c_e4_complete_2x2_L(g):
+    h,w=dims(g)
+    out=copy_grid(g)
+    for r in range(h-1):
+        for c in range(w-1):
+            vals=[g[r][c],g[r][c+1],g[r+1][c],g[r+1][c+1]]
+            nz=[v for v in vals if v!=0]
+            if len(nz)==3 and len(set(nz))==1:
+                color=nz[0]
+                if vals[0]==0: out[r][c]=color
+                if vals[1]==0: out[r][c+1]=color
+                if vals[2]==0: out[r+1][c]=color
+                if vals[3]==0: out[r+1][c+1]=color
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    2,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    6,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    6,
+    6,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    2,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    6,
+    6,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    6,
+    6,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    5,
+    5,
+    0
+  ],
+  [
+    0,
+    0,
+    3,
+    0,
+    0,
+    5,
+    0
+  ],
+  [
+    0,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    5,
+    5,
+    0
+  ],
+  [
+    0,
+    3,
+    3,
+    0,
+    5,
+    5,
+    0
+  ],
+  [
+    0,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Input**
+
+```json
+[
+  [
+    8,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    8,
+    0,
+    0,
+    0,
+    0,
+    9,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    9,
+    9
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Output**
+
+```json
+[
+  [
+    8,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    8,
+    8,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    9,
+    9
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Input**
+
+```json
+[
+  [
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    0,
+    0,
+    7,
+    7,
+    0
+  ],
+  [
+    5,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Expected Output**
+
+```json
+[
+  [
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    0
+  ],
+  [
+    5,
+    5,
+    0,
+    0,
+    7,
+    7,
+    0
+  ],
+  [
+    5,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+## easy_c05 — Seed paints its whole row and column
+
+**Difficulty:** easy
+
+**Tags:** same_size_transform, cross_logic
+
+**Written solution:**
+
+Each nonzero seed fills its entire row and its entire column with the same color.
+
+**Program solution:**
+
+```python
+def solve_c_e5_full_cross_from_seed(g):
+    h,w=dims(g)
+    out=blank(h,w)
+    seeds=[(r,c,v) for r,row in enumerate(g) for c,v in enumerate(row) if v!=0]
+    assert len(seeds)>=1
+    # examples use one seed or same-colored non-conflicting; later seeds overwrite but generators avoid conflict
+    for r,c,color in seeds:
+        for rr in range(h):
+            out[rr][c]=color
+        for cc in range(w):
+            out[r][cc]=color
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    4,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    4,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    4,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4
+  ],
+  [
+    0,
+    0,
+    0,
+    4,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    4,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    4,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0
+  ],
+  [
+    8,
+    8,
+    8,
+    8,
+    8,
+    8,
+    8
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0
+  ]
+]
+```
+
+**Train 3 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Output**
+
+```json
+[
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Expected Output**
+
+```json
+[
+  [
+    0,
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+  ],
+  [
+    0,
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+## easy_c06 — Fill vertical segments between matching endpoints
+
+**Difficulty:** easy
+
+**Tags:** line_drawing, column_logic
+
+**Written solution:**
+
+If a column has two endpoints of the same nonzero color with only 0s between them, fill the vertical segment between the endpoints.
+
+**Program solution:**
+
+```python
+def solve_c_e6_fill_vertical_segments(g):
+    h,w=dims(g)
+    out=copy_grid(g)
+    for c in range(w):
+        positions=[(r,g[r][c]) for r in range(h) if g[r][c]!=0]
+        # support multiple pairs by color if exactly two of a color in a column and nothing else between them
+        bycolor={}
+        for r,color in positions:
+            bycolor.setdefault(color, []).append(r)
+        for color,rows in bycolor.items():
+            if len(rows)==2:
+                r0,r1=sorted(rows)
+                # all cells between are zero or same color endpoints only?
+                if all(g[r][c]==0 for r in range(r0+1,r1)):
+                    for r in range(r0,r1+1):
+                        out[r][c]=color
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    0,
+    7,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    0,
+    7,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    0,
+    7,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    5,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    5,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    5,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    5,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    5,
+    0,
+    0,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    5,
+    0,
+    0,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    5,
+    0,
+    0,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0
+  ]
+]
+```
+
+**Train 3 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    9
+  ],
+  [
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    9
+  ]
+]
+```
+
+**Train 3 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    2,
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    2,
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    0,
+    0,
+    0,
+    9
+  ],
+  [
+    2,
+    0,
+    0,
+    0,
+    9
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    9
+  ]
+]
+```
+
+**Test — Input**
+
+```json
+[
+  [
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    0
+  ]
+]
+```
+
+**Test — Expected Output**
+
+```json
+[
+  [
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    6,
+    0,
+    0,
+    0,
+    3,
+    0
+  ],
+  [
+    0,
+    6,
+    0,
+    0,
+    0,
+    3,
+    0
+  ],
+  [
+    0,
+    6,
+    0,
+    0,
+    0,
+    3,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    0
+  ]
+]
+```
+
+## easy_c07 — Rotate the square grid by 180 degrees
+
+**Difficulty:** easy
+
+**Tags:** global_layout, rotation
+
+**Written solution:**
+
+Turn the whole square grid upside down: the output is the 180-degree rotation of the input.
+
+**Program solution:**
+
+```python
+def solve_c_e7_rotate_180(g):
+    return rotate_180(g)
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    2,
+    0,
+    0,
+    3
+  ],
+  [
+    4,
+    0,
+    5,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    6,
+    0
+  ],
+  [
+    7,
+    0,
+    0,
+    0,
+    8
+  ],
+  [
+    0,
+    9,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    9,
+    0
+  ],
+  [
+    8,
+    0,
+    0,
+    0,
+    7
+  ],
+  [
+    0,
+    6,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    5,
+    0,
+    4
+  ],
+  [
+    3,
+    0,
+    0,
+    2,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    1,
+    0,
+    0,
+    2,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    5,
+    0,
+    6,
+    0,
+    0,
+    7
+  ],
+  [
+    0,
+    0,
+    0,
+    8,
+    0,
+    0
+  ],
+  [
+    9,
+    0,
+    0,
+    0,
+    1,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    3
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    3,
+    0,
+    0,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    1,
+    0,
+    0,
+    0,
+    9
+  ],
+  [
+    0,
+    0,
+    8,
+    0,
+    0,
+    0
+  ],
+  [
+    7,
+    0,
+    0,
+    6,
+    0,
+    5
+  ],
+  [
+    0,
+    4,
+    0,
+    0,
+    3,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    0,
+    0,
+    1
+  ]
+]
+```
+
+**Train 3 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    5,
+    0,
+    0,
+    6
+  ],
+  [
+    0,
+    7,
+    0,
+    0
+  ],
+  [
+    8,
+    0,
+    9,
+    0
+  ]
+]
+```
+
+**Train 3 — Output**
+
+```json
+[
+  [
+    0,
+    9,
+    0,
+    8
+  ],
+  [
+    0,
+    0,
+    7,
+    0
+  ],
+  [
+    6,
+    0,
+    0,
+    5
+  ],
+  [
+    0,
+    4,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Input**
+
+```json
+[
+  [
+    0,
+    1,
+    0,
+    2,
+    0
+  ],
+  [
+    3,
+    0,
+    4,
+    0,
+    5
+  ],
+  [
+    0,
+    6,
+    0,
+    7,
+    0
+  ],
+  [
+    8,
+    0,
+    9,
+    0,
+    1
+  ],
+  [
+    0,
+    2,
+    0,
+    3,
+    0
+  ]
+]
+```
+
+**Test — Expected Output**
+
+```json
+[
+  [
+    0,
+    3,
+    0,
+    2,
+    0
+  ],
+  [
+    1,
+    0,
+    9,
+    0,
+    8
+  ],
+  [
+    0,
+    7,
+    0,
+    6,
+    0
+  ],
+  [
+    5,
+    0,
+    4,
+    0,
+    3
+  ],
+  [
+    0,
+    2,
+    0,
+    1,
+    0
+  ]
+]
+```
+
+## medium_c01 — Recolor each object by aspect ratio
+
+**Difficulty:** medium
+
+**Tags:** object_reasoning, classification
+
+**Written solution:**
+
+Treat each connected component as an object. Recolor tall objects to red(2), wide objects to green(3), and square-bbox objects to yellow(4), preserving each shape and position.
+
+**Program solution:**
+
+```python
+def solve_c_m1_recolor_by_aspect(g):
+    out=blank(*dims(g))
+    for comp in components(g):
+        r0,r1,c0,c1=bbox_cells(comp["cells"])
+        h=r1-r0+1; w=c1-c0+1
+        if h>w:
+            color=2
+        elif w>h:
+            color=3
+        else:
+            color=4
+        for r,c in comp["cells"]:
+            out[r][c]=color
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    6,
+    0,
+    0,
+    0,
+    5,
+    5,
+    0
+  ],
+  [
+    0,
+    6,
+    0,
+    0,
+    0,
+    5,
+    5,
+    0
+  ],
+  [
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    7,
+    7,
+    7,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    3,
+    3,
+    3,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    4,
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    8,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    8,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    8,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    9,
+    9,
+    9,
+    9,
+    9,
+    0,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    0,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    3,
+    3,
+    3,
+    3,
+    0,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    0,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    3,
+    3
+  ],
+  [
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    3,
+    3
+  ],
+  [
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    3,
+    3
+  ],
+  [
+    5,
+    0,
+    0,
+    0,
+    7,
+    7,
+    7,
+    7,
+    0
+  ],
+  [
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Expected Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    4
+  ],
+  [
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    4
+  ],
+  [
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    4
+  ],
+  [
+    2,
+    0,
+    0,
+    0,
+    3,
+    3,
+    3,
+    3,
+    0
+  ],
+  [
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+## medium_c02 — Keep only frame objects
+
+**Difficulty:** medium
+
+**Tags:** object_reasoning, frame_detection
+
+**Written solution:**
+
+Preserve only objects that are hollow rectangular frames. Erase all filled or irregular objects.
+
+**Program solution:**
+
+```python
+def solve_c_m2_keep_frames_only(g):
+    out=blank(*dims(g))
+    for comp in components(g):
+        if is_frame(comp):
+            for r,c in comp["cells"]:
+                out[r][c]=comp["color"]
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    2,
+    2,
+    2,
+    0,
+    6,
+    6,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    2,
+    0,
+    6,
+    6,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    2,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    2,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    2,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    4,
+    4,
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    0,
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    0,
+    0,
+    4,
+    0,
+    0,
+    3,
+    3,
+    0
+  ],
+  [
+    4,
+    0,
+    0,
+    4,
+    0,
+    0,
+    3,
+    3,
+    0
+  ],
+  [
+    4,
+    4,
+    4,
+    4,
+    8,
+    8,
+    8,
+    8,
+    8
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    8,
+    0,
+    0,
+    0,
+    8
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    8,
+    8,
+    8,
+    8,
+    8
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    4,
+    4,
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    0,
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    0,
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    0,
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    4,
+    4,
+    4,
+    8,
+    8,
+    8,
+    8,
+    8
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    8,
+    0,
+    0,
+    0,
+    8
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    8,
+    8,
+    8,
+    8,
+    8
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    5,
+    5,
+    5,
+    0,
+    7,
+    7,
+    7,
+    7
+  ],
+  [
+    0,
+    5,
+    0,
+    0,
+    5,
+    0,
+    7,
+    0,
+    0,
+    7
+  ],
+  [
+    0,
+    5,
+    0,
+    0,
+    5,
+    0,
+    7,
+    7,
+    7,
+    7
+  ],
+  [
+    0,
+    5,
+    5,
+    5,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    6,
+    0
+  ],
+  [
+    0,
+    9,
+    9,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    0
+  ],
+  [
+    0,
+    9,
+    9,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    0
+  ],
+  [
+    0,
+    9,
+    9,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    5,
+    5,
+    5,
+    0,
+    7,
+    7,
+    7,
+    7
+  ],
+  [
+    0,
+    5,
+    0,
+    0,
+    5,
+    0,
+    7,
+    0,
+    0,
+    7
+  ],
+  [
+    0,
+    5,
+    0,
+    0,
+    5,
+    0,
+    7,
+    7,
+    7,
+    7
+  ],
+  [
+    0,
+    5,
+    5,
+    5,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Input**
+
+```json
+[
+  [
+    3,
+    3,
+    3,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    0,
+    0,
+    0,
+    3,
+    0,
+    8,
+    0,
+    8
+  ],
+  [
+    3,
+    0,
+    0,
+    0,
+    3,
+    0,
+    8,
+    8,
+    8
+  ],
+  [
+    3,
+    3,
+    3,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    6,
+    0
+  ]
+]
+```
+
+**Test — Expected Output**
+
+```json
+[
+  [
+    3,
+    3,
+    3,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    3,
+    3,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    6,
+    0
+  ]
+]
+```
+
+## medium_c03 — Output the object and its horizontal mirror
+
+**Difficulty:** medium
+
+**Tags:** extraction, symmetry, relayout
+
+**Written solution:**
+
+Crop the only object tightly. Output the crop, then a blank separator column, then its left-right mirror.
+
+**Program solution:**
+
+```python
+def solve_c_m3_object_and_hmirror_strip(g):
+    obj=crop_nonzero(g)
+    mir=flip_h(obj)
+    h1,w1=dims(obj); h2,w2=dims(mir)
+    h=max(h1,h2)
+    out=blank(h,w1+1+w2)
+    paste(out,obj,0,0)
+    paste(out,mir,0,w1+1)
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    2,
+    0,
+    0,
+    0,
+    2
+  ],
+  [
+    2,
+    0,
+    0,
+    0,
+    2
+  ],
+  [
+    2,
+    2,
+    0,
+    2,
+    2
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    5,
+    5,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    5,
+    5,
+    5,
+    0,
+    5,
+    5,
+    5
+  ],
+  [
+    0,
+    5,
+    0,
+    0,
+    0,
+    5,
+    0
+  ],
+  [
+    0,
+    5,
+    0,
+    0,
+    0,
+    5,
+    0
+  ]
+]
+```
+
+**Train 3 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Output**
+
+```json
+[
+  [
+    7,
+    7,
+    0,
+    0,
+    0,
+    7,
+    7
+  ],
+  [
+    0,
+    7,
+    7,
+    0,
+    7,
+    7,
+    0
+  ]
+]
+```
+
+**Test — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    4,
+    0,
+    4,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    4,
+    4,
+    4,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Expected Output**
+
+```json
+[
+  [
+    4,
+    0,
+    4,
+    0,
+    4,
+    0,
+    4
+  ],
+  [
+    4,
+    4,
+    4,
+    0,
+    4,
+    4,
+    4
+  ]
+]
+```
+
+## medium_c04 — Keep only even-area objects
+
+**Difficulty:** medium
+
+**Tags:** object_reasoning, selection
+
+**Written solution:**
+
+Treat each connected component as an object and keep only those with an even number of cells.
+
+**Program solution:**
+
+```python
+def solve_c_m4_keep_even_area_objects(g):
+    out=blank(*dims(g))
+    for comp in components(g):
+        if len(comp["cells"])%2==0:
+            for r,c in comp["cells"]:
+                out[r][c]=comp["color"]
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    3,
+    3,
+    0,
+    5,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    5,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    5,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    7,
+    7,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    7,
+    7,
+    7,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    8,
+    8,
+    8,
+    8,
+    8
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    7,
+    7,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    7,
+    7,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Input**
+
+```json
+[
+  [
+    0,
+    2,
+    2,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    3,
+    0,
+    0,
+    0,
+    8,
+    0,
+    8,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    8,
+    8,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Output**
+
+```json
+[
+  [
+    0,
+    2,
+    2,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Input**
+
+```json
+[
+  [
+    4,
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    7
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    5,
+    5,
+    5,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9
+  ]
+]
+```
+
+**Test — Expected Output**
+
+```json
+[
+  [
+    4,
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    7
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+## medium_c05 — Keep the largest object of each color
+
+**Difficulty:** medium
+
+**Tags:** object_reasoning, selection
+
+**Written solution:**
+
+For each color independently, keep only the largest connected component of that color and erase the smaller ones.
+
+**Program solution:**
+
+```python
+def solve_c_m5_keep_largest_per_color(g):
+    out=blank(*dims(g))
+    groups={}
+    for comp in components(g):
+        groups.setdefault(comp["color"], []).append(comp)
+    for color, comps in groups.items():
+        comps_sorted=sorted(comps, key=lambda comp: (len(comp["cells"]), -bbox_cells(comp["cells"])[0], -bbox_cells(comp["cells"])[2]), reverse=True)
+        best=comps_sorted[0]
+        for r,c in best["cells"]:
+            out[r][c]=color
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0,
+    4,
+    4
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    2,
+    2,
+    0,
+    0,
+    0,
+    7,
+    7,
+    7,
+    7
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    2,
+    2,
+    0,
+    0,
+    0,
+    7,
+    7,
+    7,
+    7
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    3,
+    3,
+    3,
+    0,
+    0,
+    0,
+    8,
+    8,
+    8
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    8,
+    8,
+    8
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    8,
+    8
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    8,
+    8,
+    8
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Input**
+
+```json
+[
+  [
+    0,
+    5,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    5,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    5,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Input**
+
+```json
+[
+  [
+    2,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    6,
+    0
+  ],
+  [
+    2,
+    2,
+    0,
+    0,
+    0,
+    6,
+    6,
+    6,
+    0
+  ],
+  [
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Expected Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    6,
+    0
+  ],
+  [
+    2,
+    2,
+    0,
+    0,
+    0,
+    6,
+    6,
+    6,
+    0
+  ],
+  [
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+## medium_c06 — Column-majority color row
+
+**Difficulty:** medium
+
+**Tags:** global_counting, column_logic, extraction
+
+**Written solution:**
+
+Build a 1-row output. In each column, write the nonzero color that appears most often in that input column; write 0 if the column is empty.
+
+**Program solution:**
+
+```python
+def solve_c_m6_column_majority_row(g):
+    h,w=dims(g)
+    out=[[0]*w]
+    for c in range(w):
+        counts={}
+        for r in range(h):
+            v=g[r][c]
+            if v!=0:
+                counts[v]=counts.get(v,0)+1
+        if counts:
+            color=max(counts.items(), key=lambda kv: (kv[1], -kv[0]))[0]
+            out[0][c]=color
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    2,
+    0,
+    4,
+    0,
+    1,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    4,
+    8,
+    5,
+    0,
+    9
+  ],
+  [
+    2,
+    0,
+    0,
+    8,
+    1,
+    6,
+    9
+  ],
+  [
+    0,
+    0,
+    7,
+    0,
+    0,
+    0,
+    4
+  ],
+  [
+    3,
+    0,
+    0,
+    0,
+    1,
+    6,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    2,
+    0,
+    4,
+    8,
+    1,
+    6,
+    9
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    3,
+    7,
+    0,
+    4,
+    0,
+    6
+  ],
+  [
+    3,
+    0,
+    0,
+    0,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    4,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    0,
+    0,
+    0
+  ],
+  [
+    5,
+    0,
+    2,
+    0,
+    8,
+    0
+  ],
+  [
+    0,
+    7,
+    0,
+    1,
+    8,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    3,
+    7,
+    2,
+    4,
+    8,
+    6
+  ]
+]
+```
+
+**Train 3 — Input**
+
+```json
+[
+  [
+    1,
+    0,
+    4,
+    0,
+    6,
+    0,
+    9,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    5,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    6,
+    0,
+    9,
+    0
+  ],
+  [
+    1,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    9,
+    0
+  ],
+  [
+    0,
+    0,
+    4,
+    0,
+    0,
+    8,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    4,
+    0,
+    0,
+    0,
+    0,
+    3
+  ]
+]
+```
+
+**Train 3 — Output**
+
+```json
+[
+  [
+    1,
+    2,
+    4,
+    5,
+    6,
+    7,
+    9,
+    3
+  ]
+]
+```
+
+**Test — Input**
+
+```json
+[
+  [
+    2,
+    0,
+    7,
+    1,
+    0,
+    3,
+    0,
+    0
+  ],
+  [
+    0,
+    4,
+    0,
+    1,
+    0,
+    0,
+    9,
+    0
+  ],
+  [
+    5,
+    0,
+    0,
+    1,
+    6,
+    0,
+    8,
+    0
+  ],
+  [
+    0,
+    4,
+    0,
+    0,
+    0,
+    3,
+    9,
+    0
+  ],
+  [
+    2,
+    0,
+    0,
+    8,
+    6,
+    3,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Expected Output**
+
+```json
+[
+  [
+    2,
+    4,
+    7,
+    1,
+    6,
+    3,
+    9,
+    0
+  ]
+]
+```
+
+## medium_c07 — Rotate each object inside its own square box
+
+**Difficulty:** medium
+
+**Tags:** object_reasoning, rotation
+
+**Written solution:**
+
+Each object occupies a square bounding box. Rotate each object 90 degrees clockwise within its own box, keeping the boxes in place.
+
+**Program solution:**
+
+```python
+def solve_c_m7_rotate_objects_in_square_boxes(g):
+    h,w=dims(g)
+    out=blank(h,w)
+    for comp in components(g):
+        r0,r1,c0,c1=bbox_cells(comp["cells"])
+        sub=component_grid(comp)
+        sh,sw=dims(sub)
+        assert sh==sw, "generator should only use square bboxes"
+        rot=rotate_cw(sub)
+        paste(out,rot,r0,c0)
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    5,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    2,
+    0,
+    5,
+    5,
+    5,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    2,
+    0,
+    5,
+    5,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    5,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    5,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    7,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    7,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    3,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    3,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    7,
+    7,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    3,
+    3,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    4,
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    8,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    8,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    6,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    6,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Expected Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    6,
+    6,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9,
+    9,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+## hard_c01 — Stamp rotated copies of a template at marker cells
+
+**Difficulty:** hard
+
+**Tags:** template_transfer, rotation, marker_control
+
+**Written solution:**
+
+The non-marker pattern is a template. For each singleton marker: color 1 stamps the template as-is, 2 stamps a 90-degree clockwise rotation, 3 stamps 180 degrees, and 4 stamps 270 degrees. Place each copy with its top-left corner at the marker cell.
+
+**Program solution:**
+
+```python
+def solve_c_h1_stamp_rotated_template(g):
+    h,w=dims(g)
+    markers=[]
+    g2=copy_grid(g)
+    for r in range(h):
+        for c in range(w):
+            v=g[r][c]
+            if v in (1,2,3,4):
+                # singleton marker
+                same_neighbors=0
+                for dr,dc in ((1,0),(-1,0),(0,1),(0,-1)):
+                    nr,nc=r+dr,c+dc
+                    if 0<=nr<h and 0<=nc<w and g[nr][nc]==v:
+                        same_neighbors+=1
+                if same_neighbors==0:
+                    markers.append((r,c,v))
+                    g2[r][c]=0
+    template=crop_nonzero(g2)
+    out=blank(h,w)
+    for r,c,v in markers:
+        stamp=rotate_times(template, v-1)
+        paste(out,stamp,r,c)
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    8,
+    8,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    8,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    8,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    8,
+    8,
+    0
+  ],
+  [
+    0,
+    8,
+    8,
+    0,
+    0,
+    0,
+    8,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    8,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    6,
+    6,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    6,
+    6,
+    0,
+    0,
+    6,
+    6,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    0,
+    6,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Input**
+
+```json
+[
+  [
+    9,
+    9,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    9,
+    9,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    9,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9,
+    9,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    7,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    7,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Expected Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+## hard_c02 — Concatenate frame interiors from left to right
+
+**Difficulty:** hard
+
+**Tags:** containment, extraction, relayout
+
+**Written solution:**
+
+Find all rectangular frames. Take the full interior rectangle of each frame (without the border) and concatenate those interior grids from left to right, separated by one blank column.
+
+**Program solution:**
+
+```python
+def solve_c_h2_concat_frame_interiors(g):
+    frames=sorted([comp for comp in components(g) if is_frame(comp)], key=lambda comp: bbox_cells(comp["cells"])[2])
+    interiors=[]
+    for comp in frames:
+        r0,r1,c0,c1=bbox_cells(comp["cells"])
+        interior=[row[c0+1:c1] for row in g[r0+1:r1]]
+        interiors.append(interior)
+    if not interiors:
+        return [[0]]
+    H=max(len(x) for x in interiors)
+    W=sum(len(x[0]) for x in interiors)+max(0,len(interiors)-1)
+    out=blank(H,W)
+    cur=0
+    for i,sub in enumerate(interiors):
+        paste(out,sub,0,cur)
+        cur+=len(sub[0])
+        if i+1<len(interiors):
+            cur+=1
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    2,
+    2,
+    2,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    0,
+    7,
+    0,
+    2,
+    0,
+    0,
+    6,
+    6,
+    6,
+    6,
+    0
+  ],
+  [
+    2,
+    7,
+    7,
+    0,
+    2,
+    0,
+    0,
+    6,
+    5,
+    0,
+    6,
+    0
+  ],
+  [
+    2,
+    2,
+    2,
+    2,
+    2,
+    0,
+    0,
+    6,
+    5,
+    5,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    5,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    6,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    0,
+    7,
+    0,
+    0,
+    5,
+    0
+  ],
+  [
+    7,
+    7,
+    0,
+    0,
+    5,
+    5
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    5
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    3,
+    3,
+    3,
+    3,
+    3,
+    0,
+    0,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    0
+  ],
+  [
+    3,
+    8,
+    0,
+    8,
+    3,
+    0,
+    0,
+    4,
+    2,
+    2,
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    3,
+    0,
+    8,
+    0,
+    3,
+    0,
+    0,
+    4,
+    0,
+    2,
+    2,
+    0,
+    4,
+    0
+  ],
+  [
+    3,
+    8,
+    0,
+    0,
+    3,
+    0,
+    0,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    0
+  ],
+  [
+    3,
+    3,
+    3,
+    3,
+    3,
+    9,
+    9,
+    9,
+    9,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    1,
+    0,
+    9,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    1,
+    1,
+    9,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    0,
+    1,
+    9,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    0,
+    1,
+    9,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9,
+    9,
+    9,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    8,
+    0,
+    8,
+    0,
+    1,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0
+  ],
+  [
+    0,
+    8,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    2,
+    2,
+    0
+  ],
+  [
+    8,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    8,
+    8,
+    8,
+    8,
+    0,
+    0,
+    0
+  ],
+  [
+    5,
+    5,
+    5,
+    5,
+    0,
+    8,
+    0,
+    4,
+    0,
+    8,
+    0,
+    0,
+    0
+  ],
+  [
+    5,
+    7,
+    0,
+    5,
+    0,
+    8,
+    4,
+    4,
+    4,
+    8,
+    0,
+    0,
+    0
+  ],
+  [
+    5,
+    7,
+    7,
+    5,
+    0,
+    8,
+    0,
+    4,
+    0,
+    8,
+    0,
+    0,
+    0
+  ],
+  [
+    5,
+    5,
+    5,
+    5,
+    0,
+    8,
+    8,
+    8,
+    2,
+    2,
+    2,
+    2,
+    2
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    6,
+    6,
+    0,
+    2
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    6,
+    0,
+    2
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    2,
+    2,
+    2,
+    2
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Output**
+
+```json
+[
+  [
+    7,
+    0,
+    0,
+    6,
+    6,
+    0
+  ],
+  [
+    7,
+    7,
+    0,
+    0,
+    6,
+    0
+  ]
+]
+```
+
+**Test — Input**
+
+```json
+[
+  [
+    4,
+    4,
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    7,
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    7,
+    7,
+    4,
+    0,
+    0,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    0
+  ],
+  [
+    4,
+    0,
+    7,
+    4,
+    0,
+    0,
+    6,
+    5,
+    5,
+    0,
+    0,
+    6,
+    0
+  ],
+  [
+    3,
+    3,
+    3,
+    3,
+    0,
+    0,
+    6,
+    0,
+    5,
+    5,
+    0,
+    6,
+    0
+  ],
+  [
+    3,
+    8,
+    0,
+    3,
+    0,
+    0,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    0
+  ],
+  [
+    3,
+    8,
+    8,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    8,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    0,
+    8,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    3,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Expected Output**
+
+```json
+[
+  [
+    8,
+    0,
+    0,
+    5,
+    5,
+    0,
+    0
+  ],
+  [
+    8,
+    8,
+    0,
+    0,
+    5,
+    5,
+    0
+  ],
+  [
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+## hard_c03 — Recolor objects by marker order after sorting by area
+
+**Difficulty:** hard
+
+**Tags:** object_reasoning, sorting, marker_control
+
+**Written solution:**
+
+Read the top-row marker colors from left to right. Sort the non-marker objects by area from smallest to largest. Recolor the smallest object to the first marker color, the next object to the second marker color, and so on.
+
+**Program solution:**
+
+```python
+def solve_c_h3_recolor_objects_by_marker_rank(g):
+    h,w=dims(g)
+    markers=[(c,g[0][c]) for c in range(w) if g[0][c]!=0]
+    g2=copy_grid(g)
+    for c,_ in markers:
+        g2[0][c]=0
+    objs=components(g2)
+    objs_sorted=sorted(objs, key=lambda comp: (len(comp["cells"]), bbox_cells(comp["cells"])[0], bbox_cells(comp["cells"])[2]))
+    assert len(objs_sorted)==len(markers)
+    out=blank(h,w)
+    for comp,(c,color) in zip(objs_sorted, sorted(markers)):
+        for r,cc in comp["cells"]:
+            out[r][cc]=color
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    4,
+    0,
+    0,
+    7,
+    0,
+    0,
+    2,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    8,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    5,
+    5,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    6
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    6
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    2,
+    2
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    2,
+    2
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    3,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0,
+    0,
+    0,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0,
+    0,
+    5,
+    5,
+    5
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    0,
+    0,
+    5,
+    5,
+    5
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    8,
+    0,
+    0,
+    0,
+    6,
+    6,
+    6
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    8,
+    8,
+    0,
+    0,
+    6,
+    6,
+    6
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    9,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    0,
+    0,
+    5,
+    0,
+    5,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    5,
+    5,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    9,
+    9,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    4,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Input**
+
+```json
+[
+  [
+    0,
+    5,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    8,
+    8,
+    0,
+    0,
+    6,
+    6,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Expected Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    7,
+    7,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+## hard_c04 — Make a quadrant mosaic of normalized objects
+
+**Difficulty:** hard
+
+**Tags:** normalization, relayout, quadrant_logic
+
+**Written solution:**
+
+Assign each object to TL/TR/BL/BR based on the quadrant of its center in the original grid. Crop each object tightly, then build a 2x2 mosaic with one blank row and one blank column separating the quadrants.
+
+**Program solution:**
+
+```python
+def solve_c_h4_quadrant_mosaic(g):
+    h,w=dims(g)
+    mid_r=(h-1)/2.0
+    mid_c=(w-1)/2.0
+    slots={"TL":None,"TR":None,"BL":None,"BR":None}
+    for comp in components(g):
+        rs=[r for r,c in comp["cells"]]; cs=[c for r,c in comp["cells"]]
+        cr=sum(rs)/len(rs); cc=sum(cs)/len(cs)
+        key=("T" if cr<mid_r else "B")+("L" if cc<mid_c else "R")
+        slots[key]=component_grid(comp)
+    top_h=max((dims(x)[0] for x in [slots["TL"],slots["TR"]] if x is not None), default=1)
+    bot_h=max((dims(x)[0] for x in [slots["BL"],slots["BR"]] if x is not None), default=1)
+    left_w=max((dims(x)[1] for x in [slots["TL"],slots["BL"]] if x is not None), default=1)
+    right_w=max((dims(x)[1] for x in [slots["TR"],slots["BR"]] if x is not None), default=1)
+    out=blank(top_h+1+bot_h, left_w+1+right_w)
+    if slots["TL"] is not None: paste(out, slots["TL"], 0, 0)
+    if slots["TR"] is not None: paste(out, slots["TR"], 0, left_w+1)
+    if slots["BL"] is not None: paste(out, slots["BL"], top_h+1, 0)
+    if slots["BR"] is not None: paste(out, slots["BR"], top_h+1, left_w+1)
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    2,
+    2,
+    0,
+    0,
+    0,
+    5,
+    5,
+    5
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    7,
+    7,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9
+  ],
+  [
+    0,
+    7,
+    7,
+    0,
+    0,
+    0,
+    9,
+    9
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    2,
+    2,
+    0,
+    0,
+    5,
+    5,
+    5
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    7,
+    7,
+    0,
+    0,
+    9,
+    9,
+    0
+  ],
+  [
+    0,
+    7,
+    7,
+    0,
+    9,
+    9,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    4,
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    4,
+    4,
+    0,
+    0,
+    0,
+    6,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    4,
+    0,
+    4,
+    0,
+    6,
+    6
+  ],
+  [
+    4,
+    4,
+    4,
+    0,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    8,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    8,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    8,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    5,
+    5,
+    0
+  ],
+  [
+    0,
+    3,
+    3,
+    0,
+    0,
+    0,
+    5,
+    5,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9,
+    0
+  ],
+  [
+    7,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9,
+    0
+  ],
+  [
+    7,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9,
+    0
+  ],
+  [
+    7,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Output**
+
+```json
+[
+  [
+    3,
+    3,
+    0,
+    0,
+    5,
+    0
+  ],
+  [
+    3,
+    3,
+    0,
+    0,
+    5,
+    5
+  ],
+  [
+    0,
+    0,
+    0,
+    5,
+    5,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    7,
+    0,
+    0,
+    9,
+    9,
+    0
+  ],
+  [
+    7,
+    0,
+    0,
+    9,
+    9,
+    0
+  ],
+  [
+    7,
+    7,
+    0,
+    9,
+    9,
+    0
+  ]
+]
+```
+
+**Test — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    4
+  ],
+  [
+    2,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    4
+  ],
+  [
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    6,
+    6,
+    6,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Expected Output**
+
+```json
+[
+  [
+    0,
+    0,
+    2,
+    0,
+    0,
+    4,
+    4,
+    4
+  ],
+  [
+    2,
+    2,
+    2,
+    0,
+    0,
+    4,
+    4,
+    4
+  ],
+  [
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    6,
+    6,
+    6,
+    6,
+    0,
+    8,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0,
+    0
+  ]
+]
+```
+
+## hard_c05 — Flip each frame's contents according to the frame color
+
+**Difficulty:** hard
+
+**Tags:** containment, conditional_transform
+
+**Written solution:**
+
+Inside every rectangular frame, transform the entire interior rectangle. If the frame color is odd, flip the interior left-right; if the frame color is even, flip it top-bottom. Keep the frames themselves unchanged.
+
+**Program solution:**
+
+```python
+def solve_c_h5_flip_contents_by_frame_parity(g):
+    out=copy_grid(g)
+    for comp in components(g):
+        if is_frame(comp):
+            r0,r1,c0,c1=bbox_cells(comp["cells"])
+            interior=[row[c0+1:c1] for row in g[r0+1:r1]]
+            trans=flip_h(interior) if comp["color"]%2==1 else flip_v(interior)
+            # blank interior then paste transformed
+            for r in range(r0+1,r1):
+                for c in range(c0+1,c1):
+                    out[r][c]=0
+            paste(out, trans, r0+1, c0+1)
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    2,
+    2,
+    2,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    7,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    7,
+    7,
+    0,
+    2,
+    0,
+    0,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    0
+  ],
+  [
+    2,
+    0,
+    7,
+    7,
+    2,
+    0,
+    0,
+    3,
+    5,
+    0,
+    0,
+    5,
+    3,
+    0
+  ],
+  [
+    2,
+    2,
+    2,
+    2,
+    2,
+    0,
+    0,
+    3,
+    5,
+    5,
+    0,
+    0,
+    3,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    2,
+    2,
+    2,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    0,
+    7,
+    7,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    7,
+    7,
+    0,
+    2,
+    0,
+    0,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    0
+  ],
+  [
+    2,
+    7,
+    0,
+    0,
+    2,
+    0,
+    0,
+    3,
+    5,
+    0,
+    0,
+    5,
+    3,
+    0
+  ],
+  [
+    2,
+    2,
+    2,
+    2,
+    2,
+    0,
+    0,
+    3,
+    0,
+    0,
+    5,
+    5,
+    3,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    0,
+    5,
+    5,
+    5,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    8,
+    0,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    8,
+    8,
+    5,
+    0,
+    0,
+    4,
+    4,
+    4,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    5,
+    0,
+    8,
+    5,
+    0,
+    0,
+    4,
+    6,
+    6,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    5,
+    5,
+    5,
+    5,
+    0,
+    0,
+    4,
+    0,
+    6,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    0,
+    6,
+    6,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    0,
+    0,
+    6,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    4,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    5,
+    5,
+    5,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    0,
+    8,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    8,
+    8,
+    5,
+    0,
+    0,
+    4,
+    4,
+    4,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    5,
+    8,
+    0,
+    5,
+    0,
+    0,
+    4,
+    0,
+    0,
+    6,
+    4,
+    0
+  ],
+  [
+    0,
+    5,
+    5,
+    5,
+    5,
+    0,
+    0,
+    4,
+    0,
+    6,
+    6,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    0,
+    6,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    6,
+    6,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    4,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Input**
+
+```json
+[
+  [
+    8,
+    8,
+    8,
+    8,
+    8,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    8,
+    2,
+    0,
+    2,
+    0,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    8,
+    2,
+    2,
+    0,
+    0,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    8,
+    8,
+    8,
+    8,
+    8,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    7,
+    7,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    3,
+    0,
+    0,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    3,
+    3,
+    0,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    3,
+    3,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    7,
+    7,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Output**
+
+```json
+[
+  [
+    8,
+    8,
+    8,
+    8,
+    8,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    8,
+    2,
+    2,
+    0,
+    0,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    8,
+    2,
+    0,
+    2,
+    0,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    8,
+    8,
+    8,
+    8,
+    8,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    7,
+    7,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0,
+    3,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    3,
+    3,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    3,
+    3,
+    0,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    7,
+    7,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Input**
+
+```json
+[
+  [
+    6,
+    6,
+    6,
+    6,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    6,
+    4,
+    0,
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    6,
+    4,
+    4,
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    6,
+    0,
+    4,
+    4,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    6,
+    6,
+    6,
+    6,
+    6,
+    0,
+    9,
+    9,
+    9,
+    9,
+    9,
+    9,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    7,
+    7,
+    0,
+    0,
+    9,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    0,
+    7,
+    7,
+    0,
+    9,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9,
+    9,
+    9,
+    9,
+    9,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Expected Output**
+
+```json
+[
+  [
+    6,
+    6,
+    6,
+    6,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    6,
+    0,
+    4,
+    4,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    6,
+    4,
+    4,
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    6,
+    4,
+    0,
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    6,
+    6,
+    6,
+    6,
+    6,
+    0,
+    9,
+    9,
+    9,
+    9,
+    9,
+    9,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    0,
+    0,
+    7,
+    7,
+    9,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    0,
+    7,
+    7,
+    0,
+    9,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9,
+    9,
+    9,
+    9,
+    9,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+## hard_c06 — Sort objects by bounding-box perimeter and stack them
+
+**Difficulty:** hard
+
+**Tags:** sorting, rotation, relayout
+
+**Written solution:**
+
+Crop each object tightly. If an object's box is taller than it is wide, rotate it 90 degrees clockwise so its longer side becomes horizontal. Then sort the objects by bounding-box perimeter from largest to smallest; if perimeters tie, keep reading order. Stack them top-to-bottom with one blank row between them.
+
+**Program solution:**
+
+```python
+def solve_c_h6_perimeter_sort_rotated_strip(g):
+    objs=[]
+    for comp in components(g):
+        sub=component_grid(comp)
+        sh,sw=dims(sub)
+        if sh>sw:
+            sub=rotate_cw(sub)
+            sh,sw=dims(sub)
+        per=2*(sh+sw)
+        r0,r1,c0,c1=bbox_cells(comp["cells"])
+        objs.append((per, r0, c0, sub))
+    objs.sort(key=lambda x: (-x[0], x[1], x[2]))  # descending perimeter, then reading order
+    H=sum(dims(sub)[0] for _,_,_,sub in objs)+max(0,len(objs)-1)
+    W=max(dims(sub)[1] for _,_,_,sub in objs)
+    out=blank(H,W)
+    cur=0
+    for i,(_,_,_,sub) in enumerate(objs):
+        paste(out,sub,cur,0)
+        cur+=dims(sub)[0]
+        if i+1<len(objs):
+            cur+=1
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    2,
+    2,
+    2,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    2,
+    2,
+    2,
+    2,
+    2
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    7,
+    7,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    7,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    7,
+    7,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    4,
+    4,
+    0,
+    0
+  ],
+  [
+    4,
+    4,
+    4,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    0,
+    0,
+    0,
+    5,
+    5,
+    5,
+    5,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    0,
+    0,
+    0,
+    5,
+    5,
+    5,
+    5,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    8,
+    0,
+    8,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9,
+    9,
+    0
+  ],
+  [
+    8,
+    8,
+    8,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9,
+    9,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9,
+    9,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    5,
+    5,
+    5,
+    5
+  ],
+  [
+    5,
+    5,
+    5,
+    5
+  ],
+  [
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    9,
+    9,
+    9,
+    0
+  ],
+  [
+    9,
+    9,
+    9,
+    0
+  ],
+  [
+    9,
+    9,
+    9,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    3,
+    3,
+    3
+  ],
+  [
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    8,
+    0,
+    8,
+    0
+  ],
+  [
+    8,
+    8,
+    8,
+    0
+  ]
+]
+```
+
+**Train 3 — Input**
+
+```json
+[
+  [
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Output**
+
+```json
+[
+  [
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    2,
+    2,
+    2,
+    0,
+    0
+  ],
+  [
+    2,
+    2,
+    2,
+    2,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    4,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Input**
+
+```json
+[
+  [
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    5,
+    0,
+    0,
+    0,
+    7,
+    7,
+    7,
+    7,
+    7,
+    0,
+    0,
+    0
+  ],
+  [
+    5,
+    0,
+    0,
+    0,
+    7,
+    7,
+    7,
+    7,
+    7,
+    0,
+    0,
+    0
+  ],
+  [
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    9,
+    0,
+    0
+  ],
+  [
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Expected Output**
+
+```json
+[
+  [
+    7,
+    7,
+    7,
+    7,
+    7
+  ],
+  [
+    7,
+    7,
+    7,
+    7,
+    7
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    5,
+    5,
+    5,
+    5,
+    5
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    3,
+    0,
+    0
+  ],
+  [
+    3,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    9,
+    9,
+    9,
+    0,
+    0
+  ],
+  [
+    9,
+    9,
+    9,
+    0,
+    0
+  ]
+]
+```
+
+## hard_c07 — Select the nth-largest object using marker count
+
+**Difficulty:** hard
+
+**Tags:** counting, selection, extraction
+
+**Written solution:**
+
+Count the 9-markers in the top row. Sort the non-marker objects by area from largest to smallest and output a tight crop of the nth-largest object, where n is the number of markers.
+
+**Program solution:**
+
+```python
+def solve_c_h7_select_nth_largest_by_marker_count(g):
+    h,w=dims(g)
+    n=sum(1 for c in range(w) if g[0][c]==9)
+    g2=copy_grid(g)
+    for c in range(w):
+        if g2[0][c]==9:
+            g2[0][c]=0
+    objs=components(g2)
+    objs_sorted=sorted(objs, key=lambda comp: (len(comp["cells"]), bbox_cells(comp["cells"])[0], bbox_cells(comp["cells"])[2]), reverse=True)
+    chosen=objs_sorted[n-1]
+    return component_grid(chosen)
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    9,
+    0,
+    9,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    2,
+    2,
+    0,
+    0,
+    5,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    2,
+    2,
+    0,
+    0,
+    5,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    5,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    7
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    5,
+    0
+  ],
+  [
+    5,
+    0
+  ],
+  [
+    5,
+    5
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    9,
+    0,
+    9,
+    0,
+    9,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    3,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    3,
+    3,
+    3,
+    0,
+    5,
+    5,
+    5,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    5,
+    5,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    7,
+    0,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    8,
+    8
+  ],
+  [
+    7,
+    7,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    7,
+    0,
+    7
+  ],
+  [
+    7,
+    7,
+    7
+  ]
+]
+```
+
+**Train 3 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    4,
+    4,
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    0,
+    0,
+    8,
+    8,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 3 — Output**
+
+```json
+[
+  [
+    4,
+    4,
+    4,
+    4,
+    4
+  ]
+]
+```
+
+**Test — Input**
+
+```json
+[
+  [
+    0,
+    9,
+    0,
+    9,
+    0,
+    9,
+    0,
+    9,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    2,
+    2,
+    2,
+    0,
+    3,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    2,
+    2,
+    2,
+    0,
+    3,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    0,
+    4,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    4,
+    4,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test — Expected Output**
+
+```json
+[
+  [
+    7,
+    0
+  ],
+  [
+    7,
+    0
+  ],
+  [
+    7,
+    7
+  ]
+]
+```

@@ -1,0 +1,256 @@
+[
+  {
+    "id": "easy_01",
+    "difficulty": "easy",
+    "name": "Fill hollow-square centers",
+    "tags": [
+      "same_size_local",
+      "pattern_completion"
+    ],
+    "written_rule": "Whenever a 3x3 ring of a single non-background color appears with a 0 in the middle, fill the center with that same color.",
+    "program_function": "solve_e1_hollow_square_fill",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range 1 (- (rows g) 1))) (c (in-range 1 (- (cols g) 1)))) (let ((color (at g (- r 1) (- c 1)))) (if (and (not (= color 0)) (= (at g r c) 0) (all? (lambda (p) (= (at g (first p) (second p)) color)) (list (list (- r 1) (- c 1)) (list (- r 1) c) (list (- r 1) (+ c 1)) (list r (- c 1)) (list r (+ c 1)) (list (+ r 1) (- c 1)) (list (+ r 1) c) (list (+ r 1) (+ c 1))))) (set-cell out r c color) out)))))"
+  },
+  {
+    "id": "easy_02",
+    "difficulty": "easy",
+    "name": "Seed paints its whole column",
+    "tags": [
+      "same_size_transform",
+      "column_logic"
+    ],
+    "written_rule": "Each nonzero seed cell paints its entire column with its own color. Columns without seeds stay 0.",
+    "program_function": "solve_e2_seed_column",
+    "program_solution": "(rule! (let ((dummy 0)) (grid-from-fn (rows g) (cols g) (lambda (r c) (let ((hits (filter (lambda (rr) (not (= (at g rr c) 0))) (range (rows g))))) (if (empty? hits) 0 (at g (first hits) c)))))))"
+  },
+  {
+    "id": "easy_03",
+    "difficulty": "easy",
+    "name": "Crop to the tight bounding box",
+    "tags": [
+      "extraction",
+      "bbox"
+    ],
+    "written_rule": "Crop the grid to the tight bbox of all non-background cells.",
+    "program_function": "solve_e3_crop_bbox",
+    "program_solution": "(rule! (let ((dummy 0)) (define (nonzero-cells grid) (filter (lambda (p) (not (= (at grid (first p) (second p)) 0))) (grid-positions grid))) (define (crop-nonzero grid) (let ((cells (nonzero-cells grid))) (if (empty? cells) (list (list 0)) (let* ((bb (bbox-of-cells cells))) (subgrid grid (first bb) (second bb) (third bb) (fourth bb)))))) (crop-nonzero g)))"
+  },
+  {
+    "id": "easy_04",
+    "difficulty": "easy",
+    "name": "Mirror the left half",
+    "tags": [
+      "same_size_transform",
+      "symmetry"
+    ],
+    "written_rule": "Copy the pattern in the left half of the grid to the right half by horizontal mirroring.",
+    "program_function": "solve_e4_mirror_left_half",
+    "program_solution": "(rule! (let ((dummy 0)) (let ((half (quotient (cols g) 2))) (grid-from-fn (rows g) (cols g) (lambda (r c) (if (< c half) (at g r c) (at g r (- (cols g) 1 c))))))))"
+  },
+  {
+    "id": "easy_05",
+    "difficulty": "easy",
+    "name": "Draw down-right diagonals from seeds",
+    "tags": [
+      "same_size_transform",
+      "line_drawing"
+    ],
+    "written_rule": "From every nonzero seed, draw a diagonal line of the same color toward the bottom-right edge.",
+    "program_function": "solve_e5_diagonal_dr",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range (cols g)))) (let ((v (at g r c))) (if (= v 0) out (let loop ((rr r) (cc c) (acc out)) (if (in-bounds? rr cc (rows g) (cols g)) (loop (+ rr 1) (+ cc 1) (set-cell acc rr cc v)) acc)))))))"
+  },
+  {
+    "id": "easy_06",
+    "difficulty": "easy",
+    "name": "Recolor isolated cells",
+    "tags": [
+      "same_size_local",
+      "connectivity"
+    ],
+    "written_rule": "Any nonzero cell with no nonzero 4-neighbor is isolated and becomes cyan(8). Connected clusters stay unchanged.",
+    "program_function": "solve_e6_isolated_to_8",
+    "program_solution": "(rule! (let ((dummy 0)) (define dirs4 (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range (cols g)))) (let ((v (at g r c))) (if (and (not (= v 0)) (all? (lambda (d) (let ((rr (+ r (first d))) (col2 (+ c (second d)))) (not (and (in-bounds? rr col2 (rows g) (cols g)) (not (= (at g rr col2) 0)))))) dirs4)) (set-cell out r c 8) out)))))"
+  },
+  {
+    "id": "easy_07",
+    "difficulty": "easy",
+    "name": "Horizontal domino becomes a 2x2 block",
+    "tags": [
+      "same_size_local",
+      "shape_growth"
+    ],
+    "written_rule": "Whenever two equal nonzero cells sit side by side horizontally, fill the two cells directly below them with that color.",
+    "program_function": "solve_e7_domino_to_2x2",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (- (rows g) 1))) (c (in-range (- (cols g) 1)))) (let ((v (at g r c))) (if (and (not (= v 0)) (= (at g r (+ c 1)) v)) (set-cell (set-cell out (+ r 1) c v) (+ r 1) (+ c 1) v) out)))))"
+  },
+  {
+    "id": "medium_01",
+    "difficulty": "medium",
+    "name": "Keep only the largest object",
+    "tags": [
+      "object_reasoning",
+      "selection"
+    ],
+    "written_rule": "Find the largest connected nonzero object, erase all other objects, and recolor the kept object to cyan(8).",
+    "program_function": "solve_m1_keep_largest_recolor",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-list< a b) (cond ((empty? a) #f) ((< (first a) (first b)) #t) ((> (first a) (first b)) #f) (else (e8b-list< (rest a) (rest b))))) (let ((objs (objects g 0))) (if (empty? objs) (empty-grid (rows g) (cols g) 0) (let ((best (first (sort objs (lambda (a b) (or (> (obj-size a) (obj-size b)) (and (= (obj-size a) (obj-size b)) (e8b-list< (obj-bbox a) (obj-bbox b))))))))) (paint-cells (empty-grid (rows g) (cols g) 0) (obj-cells best) 8))))))"
+  },
+  {
+    "id": "medium_02",
+    "difficulty": "medium",
+    "name": "Draw rectangles from same-color marker pairs",
+    "tags": [
+      "global_layout",
+      "geometry"
+    ],
+    "written_rule": "For each color, the two cells of that color mark opposite corners of a rectangle; draw the rectangle border in that color.",
+    "program_function": "solve_m2_marker_rectangle_border",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-colors-reading grid) (remove-duplicates (filter (lambda (v) (not (= v 0))) (map (lambda (p) (at grid (first p) (second p))) (grid-positions grid))))) (define (f14-border-cells r0 c0 r1 c1) (for*/list ((r (in-range r0 (+ r1 1))) (c (in-range c0 (+ c1 1))) #:when (or (= r r0) (= r r1) (= c c0) (= c c1))) (list r c))) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((color (in-list (e8b-colors-reading g)))) (let ((cells (find-color g color))) (if (= (length cells) 2) (let ((bb (bbox-of-cells cells))) (paint-cells out (f14-border-cells (first bb) (second bb) (third bb) (fourth bb)) color)) (paint-cells out cells color))))))"
+  },
+  {
+    "id": "medium_03",
+    "difficulty": "medium",
+    "name": "Scale the whole grid by 2",
+    "tags": [
+      "scaling",
+      "resampling"
+    ],
+    "written_rule": "Each input cell becomes a 2x2 block of the same color in the output.",
+    "program_function": "solve_m3_scale2",
+    "program_solution": "(rule! (let ((dummy 0)) (upscale g 2)))"
+  },
+  {
+    "id": "medium_04",
+    "difficulty": "medium",
+    "name": "Center the object",
+    "tags": [
+      "object_reasoning",
+      "translation"
+    ],
+    "written_rule": "Take the unique nonzero object, keep its shape, and translate it so its bbox is centered in the grid.",
+    "program_function": "solve_m4_center_object",
+    "program_solution": "(rule! (let ((dummy 0)) (define (nonzero-cells grid) (filter (lambda (p) (not (= (at grid (first p) (second p)) 0))) (grid-positions grid))) (define (crop-nonzero grid) (let ((cells (nonzero-cells grid))) (if (empty? cells) (list (list 0)) (let* ((bb (bbox-of-cells cells))) (subgrid grid (first bb) (second bb) (third bb) (fourth bb)))))) (define (e8b-paste grid pat top left) (for*/fold ((out grid)) ((r (in-range (rows pat))) (c (in-range (cols pat)))) (let ((v (at pat r c)) (rr (+ top r)) (cc (+ left c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows out) (cols out))) (set-cell out rr cc v) out)))) (let* ((obj (crop-nonzero g)) (top (quotient (- (rows g) (rows obj)) 2)) (left (quotient (- (cols g) (cols obj)) 2))) (e8b-paste (empty-grid (rows g) (cols g) 0) obj top left))))"
+  },
+  {
+    "id": "medium_05",
+    "difficulty": "medium",
+    "name": "Recolor by global color-frequency rank",
+    "tags": [
+      "global_counting",
+      "color_remap"
+    ],
+    "written_rule": "Rank nonzero colors by how many cells they occupy. The most frequent becomes blue(1), the second becomes red(2), the third becomes green(3), and so on.",
+    "program_function": "solve_m5_color_rank_recolor",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-colors-reading grid) (remove-duplicates (filter (lambda (v) (not (= v 0))) (map (lambda (p) (at grid (first p) (second p))) (grid-positions grid))))) (define (t10-alist-ref pairs key default) (let ((hits (filter (lambda (p) (= (first p) key)) pairs))) (if (empty? hits) default (second (first hits))))) (let* ((colors (sort (e8b-colors-reading g) (lambda (a b) (let ((ca (length (find-color g a))) (cb (length (find-color g b)))) (or (> ca cb) (and (= ca cb) (< a b))))))) (pairs (map (lambda (color idx) (list color (+ idx 1))) colors (range (length colors))))) (grid-from-fn (rows g) (cols g) (lambda (r c) (let ((v (at g r c))) (if (= v 0) 0 (t10-alist-ref pairs v v))))))))"
+  },
+  {
+    "id": "medium_06",
+    "difficulty": "medium",
+    "name": "Fill each object's bounding box",
+    "tags": [
+      "object_reasoning",
+      "bbox"
+    ],
+    "written_rule": "For every nonzero component, fill its tight bbox with the component's color.",
+    "program_function": "solve_m6_fill_bbox_each_object",
+    "program_solution": "(rule! (let ((dummy 0)) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((obj (in-list (objects g 0)))) (let ((bb (obj-bbox obj))) (paint-cells out (positions-in-rect (first bb) (second bb) (third bb) (fourth bb)) (obj-color obj))))))"
+  },
+  {
+    "id": "medium_07",
+    "difficulty": "medium",
+    "name": "Fill enclosed holes",
+    "tags": [
+      "object_reasoning",
+      "hole_fill"
+    ],
+    "written_rule": "Any zero region completely enclosed by a single-color object gets filled with that object's color.",
+    "program_function": "solve_m7_fill_holes",
+    "program_solution": "(rule! (let ((dummy 0)) (define dirs4 (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (define (v0-touches-border? grid cells) (any? (lambda (p) (or (= (first p) 0) (= (second p) 0) (= (first p) (- (rows grid) 1)) (= (second p) (- (cols grid) 1)))) cells)) (define (v0-neighbor-colors grid cells) (remove-duplicates (filter (lambda (v) (not (= v 0))) (apply append (map (lambda (p) (for/list ((d (in-list dirs4)) #:when (in-bounds? (+ (first p) (first d)) (+ (second p) (second d)) (rows grid) (cols grid))) (at grid (+ (first p) (first d)) (+ (second p) (second d))))) cells))))) (for/fold ((out g)) ((region (in-list (find-0-regions g 0)))) (let ((colors (v0-neighbor-colors g region))) (if (and (not (v0-touches-border? g region)) (= (length colors) 1)) (paint-cells out region (first colors)) out)))))"
+  },
+  {
+    "id": "hard_01",
+    "difficulty": "hard",
+    "name": "Pack objects left-to-right by size",
+    "tags": [
+      "object_extraction",
+      "sorting",
+      "relayout"
+    ],
+    "written_rule": "Crop each connected object to its own bbox, sort the cropped objects by size descending, and pack them left-to-right with one background column between them.",
+    "program_function": "solve_h1_pack_objects_sorted",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-paste grid pat top left) (for*/fold ((out grid)) ((r (in-range (rows pat))) (c (in-range (cols pat)))) (let ((v (at pat r c)) (rr (+ top r)) (cc (+ left c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows out) (cols out))) (set-cell out rr cc v) out)))) (define (v0-object-crop grid obj) (let* ((bb (obj-bbox obj)) (r0 (first bb)) (c0 (second bb)) (h (+ 1 (- (third bb) r0))) (w (+ 1 (- (fourth bb) c0)))) (for/fold ((out (empty-grid h w 0))) ((p (in-list (obj-cells obj)))) (set-cell out (- (first p) r0) (- (second p) c0) (at grid (first p) (second p)))))) (define (v0-bbox-height bb) (+ 1 (- (third bb) (first bb)))) (define (v0-bbox-width bb) (+ 1 (- (fourth bb) (second bb)))) (define (v0-hstack-top grids (gap 1)) (if (empty? grids) (list (list 0)) (let* ((h (apply max (map rows grids))) (w (+ (apply + (map cols grids)) (* gap (- (length grids) 1))))) (let loop ((pieces grids) (left 0) (out (empty-grid h w 0))) (if (empty? pieces) out (let ((piece (first pieces))) (loop (rest pieces) (+ left (cols piece) gap) (e8b-paste out piece 0 left)))))))) (let* ((items (sort (objects g 0) (lambda (a b) (let ((ba (obj-bbox a)) (bb (obj-bbox b))) (or (> (obj-size a) (obj-size b)) (and (= (obj-size a) (obj-size b)) (or (> (v0-bbox-height ba) (v0-bbox-height bb)) (and (= (v0-bbox-height ba) (v0-bbox-height bb)) (or (> (v0-bbox-width ba) (v0-bbox-width bb)) (and (= (v0-bbox-width ba) (v0-bbox-width bb)) (< (obj-color a) (obj-color b)))))))))))) (pieces (map (lambda (obj) (v0-object-crop g obj)) items))) (v0-hstack-top pieces 1))))"
+  },
+  {
+    "id": "hard_02",
+    "difficulty": "hard",
+    "name": "Frame interior adopts the seed color",
+    "tags": [
+      "containment",
+      "frame_reasoning"
+    ],
+    "written_rule": "Each hollow rectangular frame keeps its border color, but its interior is filled with the color of the nonzero seed placed inside the frame.",
+    "program_function": "solve_h2_frame_fill_from_seed",
+    "program_solution": "(rule! (let ((dummy 0)) (define (f14-border-cells r0 c0 r1 c1) (for*/list ((r (in-range r0 (+ r1 1))) (c (in-range c0 (+ c1 1))) #:when (or (= r r0) (= r r1) (= c c0) (= c c1))) (list r c))) (define (v0-rect-frame? obj) (let* ((bb (obj-bbox obj)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb)) (border (f14-border-cells r0 c0 r1 c1))) (and (>= (- r1 r0) 2) (>= (- c1 c0) 2) (all? (lambda (p) (member? p (obj-cells obj))) border)))) (define (v0-rect-frames grid) (filter v0-rect-frame? (objects grid 0))) (for/fold ((out g)) ((fr (in-list (v0-rect-frames g)))) (let* ((bb (obj-bbox fr)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb)) (frame-color (obj-color fr)) (seeds (remove-duplicates (filter (lambda (v) (and (not (= v 0)) (not (= v frame-color)))) (for*/list ((r (in-range (+ r0 1) r1)) (c (in-range (+ c0 1) c1))) (at g r c)))))) (if (= (length seeds) 1) (paint-cells out (positions-in-rect (+ r0 1) (+ c0 1) (- r1 1) (- c1 1)) (first seeds)) out)))))"
+  },
+  {
+    "id": "hard_03",
+    "difficulty": "hard",
+    "name": "Stamp a template at anchor cells",
+    "tags": [
+      "template_transfer",
+      "relayout"
+    ],
+    "written_rule": "Find the one multi-cell template object. For every single-cell anchor, stamp a copy of the template's cropped shape using the anchor color, with the anchor as the template's top-left corner. The original input objects disappear.",
+    "program_function": "solve_h3_stamp_template_at_anchors",
+    "program_solution": "(rule! (let ((dummy 0)) (define (t10b-recolor grid color) (grid-from-fn (rows grid) (cols grid) (lambda (r c) (if (= (at grid r c) 0) 0 color)))) (define (t13-paste-all out obj top left) (for*/fold ((acc out)) ((r (in-range (rows obj))) (c (in-range (cols obj)))) (let ((v (at obj r c)) (rr (+ top r)) (cc (+ left c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows acc) (cols acc))) (set-cell acc rr cc v) acc)))) (define (v0-object-crop grid obj) (let* ((bb (obj-bbox obj)) (r0 (first bb)) (c0 (second bb)) (h (+ 1 (- (third bb) r0))) (w (+ 1 (- (fourth bb) c0)))) (for/fold ((out (empty-grid h w 0))) ((p (in-list (obj-cells obj)))) (set-cell out (- (first p) r0) (- (second p) c0) (at grid (first p) (second p)))))) (let* ((objs (objects g 0)) (templates (filter (lambda (obj) (> (obj-size obj) 1)) objs)) (singles (filter (lambda (obj) (= (obj-size obj) 1)) objs)) (template (first templates)) (pat (v0-object-crop g template)) (anchor-color (if (empty? singles) (obj-color template) (obj-color (first singles))))) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((anchor (in-list singles))) (let ((p (first (obj-cells anchor)))) (t13-paste-all out (t10b-recolor pat anchor-color) (first p) (second p)))))))"
+  },
+  {
+    "id": "hard_04",
+    "difficulty": "hard",
+    "name": "Slide the object toward the marker",
+    "tags": [
+      "translation",
+      "spatial_relation"
+    ],
+    "written_rule": "There is one single-cell marker and one multi-cell object. Move the object in a straight line (along the row or column toward the marker) until its bbox is cardinally adjacent to the marker — one cell away in row or column. Output only the moved object and the marker, on a background grid.",
+    "program_function": "solve_h4_move_object_toward_marker",
+    "program_solution": "(rule! (let ((dummy 0)) (let* ((objs (objects g 0)) (single (first (filter (lambda (obj) (= (obj-size obj) 1)) objs))) (obj (first (filter (lambda (obj) (> (obj-size obj) 1)) objs))) (marker (first (obj-cells single))) (bb (obj-bbox obj)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb)) (mr (first marker)) (mc (second marker)) (dc (cond ((> mc c1) (- (- mc 1) c1)) ((< mc c0) (- (+ mc 1) c0)) (else 0))) (dr (cond ((not (= dc 0)) 0) ((> mr r1) (- (- mr 1) r1)) ((< mr r0) (- (+ mr 1) r0)) (else 0))) (out0 (set-cell (empty-grid (rows g) (cols g) 0) mr mc (obj-color single)))) (for/fold ((out out0)) ((p (in-list (obj-cells obj)))) (set-cell out (+ (first p) dr) (+ (second p) dc) (obj-color obj))))))"
+  },
+  {
+    "id": "hard_05",
+    "difficulty": "hard",
+    "name": "Keep frames, recolor enclosed objects",
+    "tags": [
+      "containment",
+      "conditional_selection"
+    ],
+    "written_rule": "Keep every rectangular frame. Any object fully enclosed inside a frame is recolored to the frame's color. Any object outside all frames is erased.",
+    "program_function": "solve_h5_enclosed_recolor_keep_frames",
+    "program_solution": "(rule! (let ((dummy 0)) (define (f14-border-cells r0 c0 r1 c1) (for*/list ((r (in-range r0 (+ r1 1))) (c (in-range c0 (+ c1 1))) #:when (or (= r r0) (= r r1) (= c c0) (= c c1))) (list r c))) (define (v0-rect-frame? obj) (let* ((bb (obj-bbox obj)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb)) (border (f14-border-cells r0 c0 r1 c1))) (and (>= (- r1 r0) 2) (>= (- c1 c0) 2) (all? (lambda (p) (member? p (obj-cells obj))) border)))) (define (v0-rect-frames grid) (filter v0-rect-frame? (objects grid 0))) (define (v0-frame-area frame) (let ((bb (obj-bbox frame))) (* (- (third bb) (first bb)) (- (fourth bb) (second bb))))) (define (v0-strictly-contains? frame obj) (let ((fb (obj-bbox frame)) (ob (obj-bbox obj))) (and (< (first fb) (first ob)) (< (second fb) (second ob)) (< (third ob) (third fb)) (< (fourth ob) (fourth fb))))) (let* ((frames (v0-rect-frames g)) (frame-cellsets (map obj-cells frames)) (out0 (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((fr (in-list frames))) (paint-cells out (obj-cells fr) (obj-color fr))))) (for/fold ((out out0)) ((obj (in-list (objects g 0)))) (if (member? (obj-cells obj) frame-cellsets) out (let ((containers (filter (lambda (fr) (v0-strictly-contains? fr obj)) frames))) (if (empty? containers) out (let ((fr (first (sort containers (lambda (a b) (< (v0-frame-area a) (v0-frame-area b))))))) (paint-cells out (obj-cells obj) (obj-color fr))))))))))"
+  },
+  {
+    "id": "hard_06",
+    "difficulty": "hard",
+    "name": "Overlay two normalized objects",
+    "tags": [
+      "normalization",
+      "overlay"
+    ],
+    "written_rule": "Crop the two objects to their own bounding boxes, translate both crops to the top-left origin, and overlay them. Cells occupied by both become cyan(8); cells occupied by only one keep that object's color.",
+    "program_function": "solve_h6_overlay_normalized",
+    "program_solution": "(rule! (let ((dummy 0)) (define (v0-object-crop grid obj) (let* ((bb (obj-bbox obj)) (r0 (first bb)) (c0 (second bb)) (h (+ 1 (- (third bb) r0))) (w (+ 1 (- (fourth bb) c0)))) (for/fold ((out (empty-grid h w 0))) ((p (in-list (obj-cells obj)))) (set-cell out (- (first p) r0) (- (second p) c0) (at grid (first p) (second p)))))) (let* ((objs (objects g 0)) (a (first objs)) (b (second objs)) (sa (v0-object-crop g a)) (sb (v0-object-crop g b)) (ha (rows sa)) (wa (cols sa)) (hb (rows sb)) (wb (cols sb))) (grid-from-fn (max ha hb) (max wa wb) (lambda (r c) (let ((va (if (and (< r ha) (< c wa)) (at sa r c) 0)) (vb (if (and (< r hb) (< c wb)) (at sb r c) 0))) (cond ((and (not (= va 0)) (not (= vb 0))) 8) ((not (= va 0)) (obj-color a)) ((not (= vb 0)) (obj-color b)) (else 0))))))))"
+  },
+  {
+    "id": "hard_07",
+    "difficulty": "hard",
+    "name": "Scale the template by the number of markers",
+    "tags": [
+      "counting",
+      "scaling",
+      "template"
+    ],
+    "written_rule": "Count the number of single-cell markers. Crop the one multi-cell template object and scale it uniformly by that count.",
+    "program_function": "solve_h7_scale_template_by_marker_count",
+    "program_solution": "(rule! (let ((dummy 0)) (define (v0-object-crop grid obj) (let* ((bb (obj-bbox obj)) (r0 (first bb)) (c0 (second bb)) (h (+ 1 (- (third bb) r0))) (w (+ 1 (- (fourth bb) c0)))) (for/fold ((out (empty-grid h w 0))) ((p (in-list (obj-cells obj)))) (set-cell out (- (first p) r0) (- (second p) c0) (at grid (first p) (second p)))))) (let* ((objs (objects g 0)) (templates (filter (lambda (obj) (> (obj-size obj) 1)) objs)) (markers (filter (lambda (obj) (= (obj-size obj) 1)) objs)) (pat (v0-object-crop g (first templates)))) (upscale pat (length markers)))))"
+  }
+]

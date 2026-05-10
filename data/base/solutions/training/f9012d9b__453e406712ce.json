@@ -1,0 +1,332 @@
+{
+  "bank": null,
+  "base_id": "f9012d9b::453e406712ce",
+  "content_hash": "453e406712ce",
+  "description_target": {
+    "ambiguity_notes": "",
+    "generator_parameters": [],
+    "input_modalities": [
+      "task_image",
+      "samples"
+    ],
+    "negative_constraints": [],
+    "puzzle_concepts": [],
+    "semantic_primitives": [],
+    "solution_steps": [],
+    "source": "solvers/grounded_rules.py comment",
+    "target_status": "grounded_rule_comment",
+    "target_text": "Repeating pattern with hole: find period, fill zeros from mod position"
+  },
+  "difficulty": "",
+  "files": {
+    "solution_relpath": "data/base/solutions/training/f9012d9b__453e406712ce.json",
+    "task_image_relpath": "data/base/images/training/f9012d9b__453e406712ce.png",
+    "task_image_status": "generated"
+  },
+  "lineage": {
+    "parent_hash": null,
+    "parent_reason": null,
+    "variant_status": "base_or_original"
+  },
+  "original_id": null,
+  "primitive_metadata": {
+    "family_chain": [
+      "cell_access",
+      "iteration",
+      "selection",
+      "grid_construction"
+    ],
+    "primitive_chain": [
+      "rows",
+      "cols",
+      "flatmap",
+      "cell-at",
+      "range",
+      "min-list",
+      "map",
+      "max-list",
+      "first",
+      "filter",
+      "all?",
+      "grid-from-fn"
+    ],
+    "source": "mined_from_racket"
+  },
+  "racket_target": {
+    "canonicalization_status": "preserved_executable_source",
+    "code_form": "legacy_lambda_g",
+    "input_modalities": [
+      "task_image",
+      "samples",
+      "description"
+    ],
+    "needs_conversion": false,
+    "raw_code": "(rule! (lambda (g)\n  (let* ((h (rows g)) (w (cols g))\n         (zeros (flatmap (lambda (r)\n           (flatmap (lambda (c)\n             (if (= (cell-at g r c) 0) (list (cons r c)) (list)))\n             (range 0 w)))\n           (range 0 h)))\n         (r1 (min-list (map fst zeros)))\n         (c1 (min-list (map snd zeros)))\n         (r2 (max-list (map fst zeros)))\n         (c2 (max-list (map snd zeros)))\n         (zh (+ 1 (- r2 r1)))\n         (zw (+ 1 (- c2 c1)))\n         (p (first (filter (lambda (pp)\n           (all? (lambda (r)\n                 (all? (lambda (c)\n                   (let ((v (cell-at g r c)))\n                     (or (= v 0) (= v (cell-at g (mod r pp) (mod c pp))))))\n                   (range 0 w)))\n                 (range 0 h)))\n           (range 2 (+ h 1))))))\n    (grid-from-fn zh zw (lambda (r c)\n      (cell-at g (mod (+ r1 r) p) (mod (+ c1 c) p)))))))",
+    "solution_language": "racket",
+    "target_code": "(rule! (lambda (g)\n  (let* ((h (rows g)) (w (cols g))\n         (zeros (flatmap (lambda (r)\n           (flatmap (lambda (c)\n             (if (= (cell-at g r c) 0) (list (cons r c)) (list)))\n             (range 0 w)))\n           (range 0 h)))\n         ;; Top edge of the zeros bbox\n         (r1 (min-list (map fst zeros)))\n         ;; Left edge of the zeros bbox\n         (c1 (min-list (map snd zeros)))\n         ;; Bottom edge of the zeros bbox\n         (r2 (max-list (map fst zeros)))\n         ;; Right edge of the zeros bbox\n         (c2 (max-list (map snd zeros)))\n         ;; Bbox height (rows)\n         (zh (+ 1 (- r2 r1)))\n         ;; Bbox width (cols)\n         (zw (+ 1 (- c2 c1)))\n         (p (first (filter (lambda (pp)\n           (all? (lambda (r)\n                 (all? (lambda (c)\n                   (let ((v (cell-at g r c)))\n                     (or (= v 0) (= v (cell-at g (mod r pp) (mod c pp))))))\n                   (range 0 w)))\n                 (range 0 h)))\n           (range 2 (+ h 1))))))\n    (grid-from-fn zh zw (lambda (r c)\n      (cell-at g (mod (+ r1 r) p) (mod (+ c1 c) p)))))))",
+    "target_status": "verified_racket_available"
+  },
+  "schema_version": 1,
+  "skills": [],
+  "slug": "f9012d9b",
+  "source": "training",
+  "task_id": "453e406712ce",
+  "title": "",
+  "verification": {
+    "backend": "racket",
+    "expected_test_outputs": [
+      [
+        [
+          1,
+          8,
+          8
+        ],
+        [
+          8,
+          8,
+          1
+        ],
+        [
+          8,
+          1,
+          8
+        ]
+      ]
+    ],
+    "status": "available_from_canonical"
+  },
+  "visible_context": {
+    "leakage_policy": "description/code inputs may use train input-output pairs and test inputs only; test outputs are verification-only",
+    "samples_text": "{\"test\":[{\"input\":[[8,1,8,8,0,0,0],[1,8,8,1,0,0,0],[8,8,1,8,0,0,0],[8,1,8,8,1,8,8],[1,8,8,1,8,8,1],[8,8,1,8,8,1,8],[8,1,8,8,1,8,8]]}],\"train\":[{\"input\":[[8,6,0,6],[6,8,6,8],[8,6,8,6],[6,8,6,8]],\"output\":[[8]]},{\"input\":[[2,1,2,1,2],[1,1,1,1,1],[2,1,2,1,2],[0,0,1,1,1],[0,0,2,1,2]],\"output\":[[1,1],[2,1]]},{\"input\":[[2,2,5,2,2,5,2],[2,2,5,2,2,5,2],[5,5,5,5,5,5,5],[2,2,5,2,2,5,2],[2,2,5,2,2,5,2],[5,5,5,5,5,0,0],[2,2,5,2,2,0,0]],\"output\":[[5,5],[5,2]]}]}",
+    "test_inputs": [
+      {
+        "input": [
+          [
+            8,
+            1,
+            8,
+            8,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            8,
+            8,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            8,
+            8,
+            1,
+            8,
+            0,
+            0,
+            0
+          ],
+          [
+            8,
+            1,
+            8,
+            8,
+            1,
+            8,
+            8
+          ],
+          [
+            1,
+            8,
+            8,
+            1,
+            8,
+            8,
+            1
+          ],
+          [
+            8,
+            8,
+            1,
+            8,
+            8,
+            1,
+            8
+          ],
+          [
+            8,
+            1,
+            8,
+            8,
+            1,
+            8,
+            8
+          ]
+        ]
+      }
+    ],
+    "train": [
+      {
+        "input": [
+          [
+            8,
+            6,
+            0,
+            6
+          ],
+          [
+            6,
+            8,
+            6,
+            8
+          ],
+          [
+            8,
+            6,
+            8,
+            6
+          ],
+          [
+            6,
+            8,
+            6,
+            8
+          ]
+        ],
+        "output": [
+          [
+            8
+          ]
+        ]
+      },
+      {
+        "input": [
+          [
+            2,
+            1,
+            2,
+            1,
+            2
+          ],
+          [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          [
+            2,
+            1,
+            2,
+            1,
+            2
+          ],
+          [
+            0,
+            0,
+            1,
+            1,
+            1
+          ],
+          [
+            0,
+            0,
+            2,
+            1,
+            2
+          ]
+        ],
+        "output": [
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            1
+          ]
+        ]
+      },
+      {
+        "input": [
+          [
+            2,
+            2,
+            5,
+            2,
+            2,
+            5,
+            2
+          ],
+          [
+            2,
+            2,
+            5,
+            2,
+            2,
+            5,
+            2
+          ],
+          [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          [
+            2,
+            2,
+            5,
+            2,
+            2,
+            5,
+            2
+          ],
+          [
+            2,
+            2,
+            5,
+            2,
+            2,
+            5,
+            2
+          ],
+          [
+            5,
+            5,
+            5,
+            5,
+            5,
+            0,
+            0
+          ],
+          [
+            2,
+            2,
+            5,
+            2,
+            2,
+            0,
+            0
+          ]
+        ],
+        "output": [
+          [
+            5,
+            5
+          ],
+          [
+            5,
+            2
+          ]
+        ]
+      }
+    ]
+  }
+}

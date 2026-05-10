@@ -1,0 +1,50 @@
+{
+  "bank": "a3ff5e6ae5c2",
+  "title": "arc_puzzle_bank_21_set15",
+  "description": "(no description — add to BANK_DESCRIPTIONS in scripts/regen_bank_manifests.py)",
+  "schema_shape": "unknown",
+  "source": "unknown",
+  "solution_language": "unknown",
+  "files": {
+    "puzzles_json": "puzzles.json",
+    "solutions_py": "solutions.py",
+    "reference_md": "REFERENCE.md"
+  },
+  "stats": {
+    "n_puzzles": 21,
+    "n_train_pairs": 42,
+    "n_test_pairs": 42,
+    "difficulties": {
+      "easy": 7,
+      "medium": 7,
+      "hard": 7
+    },
+    "top_tags": [
+      "cropping",
+      "local coordinates",
+      "translation invariance",
+      "template reuse",
+      "single-anchor stamping",
+      "normalization by top-left",
+      "multi-seed stamping",
+      "reflection",
+      "bounding-box reasoning",
+      "anchor-relative copy"
+    ],
+    "common_fields": [
+      "difficulty",
+      "id",
+      "primitive_note",
+      "program_solution",
+      "reference_program",
+      "scaffold",
+      "skills",
+      "test",
+      "title",
+      "train",
+      "written_solution"
+    ]
+  },
+  "generated_at": "2026-05-10 11:31:43 -0400",
+  "legacy_bank": "40f7bd2c7916"
+}

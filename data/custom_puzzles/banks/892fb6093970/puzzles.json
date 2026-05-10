@@ -1,0 +1,1590 @@
+{
+  "meta": {
+    "title": "ARC-style Puzzle Bank — 21 more puzzles (set 5)",
+    "set": 5,
+    "description": "A fifth bank of 21 ARC-style puzzles, organized into 7 easy, 7 medium, and 7 hard tasks. This set intentionally widens the mix with crop/extract tasks, count/build tasks, legend-driven remaps, submatrix extraction, canonical rotation matching, and several ray-based tasks.",
+    "new_primitive": {
+      "name": "raycast_until",
+      "signature": "raycast_until(grid, start, step, blockers=None, include_blocker=False)",
+      "description": "Walk from start+step in a fixed direction until the first blocker or the edge, returning the traversed cells.",
+      "used_in": [
+        "S5_E4",
+        "S5_M2",
+        "S5_H1",
+        "S5_H5"
+      ]
+    }
+  },
+  "puzzles": [
+    {
+      "id": "S5_E1",
+      "difficulty": "easy",
+      "title": "Legend Color Crop",
+      "skills": [
+        "legend reading",
+        "component extraction",
+        "output-size crop"
+      ],
+      "scaffold": [
+        "Read the nonzero legend color in the top-left corner.",
+        "Find the connected object elsewhere with that same color.",
+        "Crop to that object's bounding box."
+      ],
+      "written_solution": "Read the legend color from the top-left cell. Find the unique object of that color elsewhere in the grid, and output only its bbox crop.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "30000000",
+            "00000011",
+            "00000011",
+            "00003000",
+            "00003000",
+            "00003300",
+            "02220000",
+            "00000000"
+          ],
+          "output": [
+            "30",
+            "30",
+            "33"
+          ]
+        },
+        {
+          "input": [
+            "100000000",
+            "000000000",
+            "000000070",
+            "000000770",
+            "000111000",
+            "000010000",
+            "003000000",
+            "033300000",
+            "000000000"
+          ],
+          "output": [
+            "111",
+            "010"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "7000000000",
+          "0000000040",
+          "0000070044",
+          "0000077000",
+          "0000007000",
+          "0000000000",
+          "0110000000",
+          "0010000000"
+        ],
+        "output": [
+          "70",
+          "77",
+          "07"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    target = grid[0][0]\n    comps = components(grid, {target}, 4, ignore_cells={(0,0)})\n    # choose largest or only\n    comp = max(comps, key=lambda c: len(c['cells']))\n    return crop_bbox(grid, comp['cells'])\n",
+      "program_solution": "(rule! (let ((dummy 0)) (define (crop-bbox grid cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb))) (subgrid grid r0 c0 r1 c1))) (let* ((target (at g 0 0)) (masked (set-cell g 0 0 0)) (comps (filter (lambda (obj) (= (obj-color obj) target)) (objects masked 0))) (comp (first (sort comps (lambda (a b) (> (obj-size a) (obj-size b))))))) (crop-bbox g (obj-cells comp)))))"
+    },
+    {
+      "id": "S5_E2",
+      "difficulty": "easy",
+      "title": "Blue Dot Count Strip",
+      "skills": [
+        "counting",
+        "output construction",
+        "single-color summary"
+      ],
+      "scaffold": [
+        "Count all blue(1) singleton cells in the grid.",
+        "Ignore their positions.",
+        "Output a 1-row strip of red(2) cells of that length."
+      ],
+      "written_solution": "Count the blue(1) dots. Build a single-row output whose length equals that count, and fill the row with red(2).",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "010000",
+            "000000",
+            "000010",
+            "000000",
+            "100000"
+          ],
+          "output": [
+            "222"
+          ]
+        },
+        {
+          "input": [
+            "1000000",
+            "0000010",
+            "0010000",
+            "0000000",
+            "0000001",
+            "0001000"
+          ],
+          "output": [
+            "22222"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "00000001",
+          "01000000",
+          "00000000",
+          "00010000",
+          "00000100"
+        ],
+        "output": [
+          "2222"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    n = sum(cell==1 for row in grid for cell in row)\n    return [[2]*n] if n>0 else [[0]]\n",
+      "program_solution": "(rule! (let ((dummy 0)) (let ((n (length (find-color g 1)))) (if (> n 0) (list (make-list n 2)) (list (list 0))))))"
+    },
+    {
+      "id": "S5_E3",
+      "difficulty": "easy",
+      "title": "Marked Row Extraction",
+      "skills": [
+        "indexing",
+        "row selection",
+        "output-size crop"
+      ],
+      "scaffold": [
+        "Find the magenta(6) marker in the leftmost column.",
+        "Take that entire row, excluding the marker column.",
+        "Return it as a 1-row output."
+      ],
+      "written_solution": "Use the magenta(6) marker in the first column to choose one row. Remove the marker column and output the contents of that marked row by itself.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "0011002",
+            "0300300",
+            "0440040",
+            "6123400",
+            "0005550",
+            "0700077"
+          ],
+          "output": [
+            "123400"
+          ]
+        },
+        {
+          "input": [
+            "01010101",
+            "62220000",
+            "00303030",
+            "04044004",
+            "05500505"
+          ],
+          "output": [
+            "2220000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "00770070",
+          "08080808",
+          "00099900",
+          "02202022",
+          "61001100",
+          "03330033"
+        ],
+        "output": [
+          "1001100"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    r = next(i for i,row in enumerate(grid) if row[0]==6)\n    return [grid[r][1:]]\n",
+      "program_solution": "(rule! (let ((dummy 0)) (let ((r (first (filter (lambda (rr) (= (at g rr 0) 6)) (range 0 (rows g)))))) (list (for/list ((c (in-range 1 (cols g)))) (at g r c))))))"
+    },
+    {
+      "id": "S5_E4",
+      "difficulty": "easy",
+      "title": "Rightward Ray Paint",
+      "skills": [
+        "directional propagation",
+        "blocking",
+        "same-size transform"
+      ],
+      "scaffold": [
+        "Find each yellow(4) emitter.",
+        "Cast a ray to the right until a maroon(9) blocker or the grid edge.",
+        "Paint the traversed empty cells cyan(8), keeping emitters and blockers unchanged."
+      ],
+      "written_solution": "From every yellow(4) emitter, paint a cyan(8) beam to the right. The beam continues through background cells and stops just before the first maroon(9) blocker, or at the boundary if there is no blocker.",
+      "primitive_note": "Uses the new primitive `raycast_until(start, step, blockers)`.",
+      "train": [
+        {
+          "input": [
+            "0000000000",
+            "0400000090",
+            "0000000000",
+            "4000090000",
+            "0000004000",
+            "0000000000"
+          ],
+          "output": [
+            "0000000000",
+            "0488888890",
+            "0000000000",
+            "4888890000",
+            "0000004888",
+            "0000000000"
+          ]
+        },
+        {
+          "input": [
+            "00400090000",
+            "00000000000",
+            "00004000009",
+            "00000000000",
+            "00000000000",
+            "04090000000",
+            "00000000000"
+          ],
+          "output": [
+            "00488890000",
+            "00000000000",
+            "00004888889",
+            "00000000000",
+            "00000000000",
+            "04890000000",
+            "00000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "000000000000",
+          "400090000000",
+          "000004000009",
+          "000000000000",
+          "000400000000",
+          "000000000000"
+        ],
+        "output": [
+          "000000000000",
+          "488890000000",
+          "000004888889",
+          "000000000000",
+          "000488888888",
+          "000000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out = copyg(grid)\n    for r,row in enumerate(grid):\n        for c,val in enumerate(row):\n            if val==4:\n                for rr,cc in raycast_until(grid,(r,c),(0,1),blockers={9}):\n                    if out[rr][cc]==0:\n                        out[rr][cc]=8\n    return out\n",
+      "program_solution": "(rule! (let ((dummy 0)) (define (raycast grid start dr dc blockers) (let loop ((r (+ (first start) dr)) (c (+ (second start) dc)) (acc (list))) (cond ((not (in-bounds? r c (rows grid) (cols grid))) acc) ((member? (at grid r c) blockers) acc) (else (loop (+ r dr) (+ c dc) (append acc (list (list r c)))))))) (for/fold ((out g)) ((p (in-list (find-color g 4)))) (for/fold ((acc out)) ((q (in-list (raycast g p 0 1 (list 9))))) (if (= (at acc (first q) (second q)) 0) (set-cell acc (first q) (second q) 8) acc)))))"
+    },
+    {
+      "id": "S5_E5",
+      "difficulty": "easy",
+      "title": "Border-Touching Shape Crop",
+      "skills": [
+        "border detection",
+        "component selection",
+        "output-size crop"
+      ],
+      "scaffold": [
+        "Extract the red(2) connected components.",
+        "Identify the one that touches any grid border.",
+        "Crop exactly that component's bounding box."
+      ],
+      "written_solution": "Among the red(2) objects, choose the one that touches the outer border of the input. Output only the bounding-box crop of that border-touching object.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "00000000",
+            "00000220",
+            "20000220",
+            "20000000",
+            "22000000",
+            "00000000",
+            "00001100",
+            "00000000"
+          ],
+          "output": [
+            "20",
+            "20",
+            "22"
+          ]
+        },
+        {
+          "input": [
+            "000002200",
+            "000000200",
+            "000000200",
+            "000000004",
+            "000000000",
+            "022200000",
+            "002000000",
+            "000000000"
+          ],
+          "output": [
+            "22",
+            "02",
+            "02"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "100000000",
+          "000000000",
+          "000000200",
+          "000000200",
+          "000002200",
+          "000000000",
+          "000200000",
+          "002200000",
+          "002000000"
+        ],
+        "output": [
+          "02",
+          "22",
+          "20"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    comps = components(grid, {2}, 4)\n    h,w=dims(grid)\n    def touches_border(comp):\n        return any(r in (0,h-1) or c in (0,w-1) for r,c in comp['cells'])\n    comp = next(comp for comp in comps if touches_border(comp))\n    return crop_bbox(grid, comp['cells'])\n",
+      "program_solution": "(rule! (let ((dummy 0)) (define (crop-bbox grid cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb))) (subgrid grid r0 c0 r1 c1))) (let* ((comps (filter (lambda (obj) (= (obj-color obj) 2)) (objects g 0))) (comp (first (filter (lambda (obj) (any? (lambda (p) (or (= (first p) 0) (= (first p) (- (rows g) 1)) (= (second p) 0) (= (second p) (- (cols g) 1)))) (obj-cells obj))) comps)))) (crop-bbox g (obj-cells comp)))))"
+    },
+    {
+      "id": "S5_E6",
+      "difficulty": "easy",
+      "title": "Horizontal Segment Completion",
+      "skills": [
+        "scanline reasoning",
+        "between-markers fill",
+        "same-size transform"
+      ],
+      "scaffold": [
+        "Look row by row.",
+        "Whenever a row contains exactly two blue(1) markers, fill the cells between them.",
+        "Leave all other rows unchanged."
+      ],
+      "written_solution": "In each row that has exactly two blue(1) endpoints, fill the whole horizontal segment between them with blue(1).",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "000000000",
+            "010001000",
+            "000000000",
+            "100000001",
+            "000010000",
+            "000000000"
+          ],
+          "output": [
+            "000000000",
+            "011111000",
+            "000000000",
+            "111111111",
+            "000010000",
+            "000000000"
+          ]
+        },
+        {
+          "input": [
+            "0010000100",
+            "0000000000",
+            "0000101000",
+            "0000000000",
+            "0000000000",
+            "0101000000",
+            "0000000000"
+          ],
+          "output": [
+            "0011111100",
+            "0000000000",
+            "0000111000",
+            "0000000000",
+            "0000000000",
+            "0111000000",
+            "0000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "00000000000",
+          "10001000000",
+          "00000100001",
+          "00000000000",
+          "00010001000",
+          "00000000000"
+        ],
+        "output": [
+          "00000000000",
+          "11111000000",
+          "00000111111",
+          "00000000000",
+          "00011111000",
+          "00000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out = copyg(grid)\n    h,w=dims(grid)\n    for r in range(h):\n        cols=[c for c in range(w) if grid[r][c]==1]\n        if len(cols)==2:\n            a,b=cols\n            for c in range(a,b+1):\n                out[r][c]=1\n    return out\n",
+      "program_solution": "(rule! (let ((dummy 0)) (for/fold ((out g)) ((r (in-range (rows g)))) (let ((cols (filter (lambda (c) (= (at g r c) 1)) (range 0 (cols g))))) (if (= (length cols) 2) (for/fold ((acc out)) ((c (in-range (first cols) (+ (second cols) 1)))) (set-cell acc r c 1)) out)))))"
+    },
+    {
+      "id": "S5_E7",
+      "difficulty": "easy",
+      "title": "Green Dot Count Square",
+      "skills": [
+        "counting",
+        "output construction",
+        "size inference"
+      ],
+      "scaffold": [
+        "Count the green(3) dots in the input.",
+        "Use that count as both the height and width.",
+        "Output an orange(7) square of that size."
+      ],
+      "written_solution": "Count the green(3) dots. If there are n of them, output an n×n square filled with orange(7).",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "000000",
+            "030000",
+            "000000",
+            "000030",
+            "000000"
+          ],
+          "output": [
+            "77",
+            "77"
+          ]
+        },
+        {
+          "input": [
+            "3000000",
+            "0000030",
+            "0000000",
+            "0000000",
+            "0030000",
+            "0000003"
+          ],
+          "output": [
+            "7777",
+            "7777",
+            "7777",
+            "7777"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000003",
+          "0000000",
+          "0030000",
+          "0000000",
+          "0300000"
+        ],
+        "output": [
+          "777",
+          "777",
+          "777"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    n = sum(cell==3 for row in grid for cell in row)\n    return [[7]*n for _ in range(n)] if n>0 else [[0]]\n",
+      "program_solution": "(rule! (let ((dummy 0)) (let ((n (length (find-color g 3)))) (if (> n 0) (empty-grid n n 7) (list (list 0))))))"
+    },
+    {
+      "id": "S5_M1",
+      "difficulty": "medium",
+      "title": "Quadrant Palette Summary",
+      "skills": [
+        "spatial partitioning",
+        "color summarization",
+        "output compression"
+      ],
+      "scaffold": [
+        "Split the input into four equal quadrants.",
+        "Read the nonzero color present in each quadrant, or 0 if it is empty.",
+        "Write those four values into a 2×2 summary grid."
+      ],
+      "written_solution": "Partition the grid into top-left, top-right, bottom-left, and bottom-right quadrants. For each quadrant, output its single non-background color, or 0 if it has none.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "00000000",
+            "01100000",
+            "01000000",
+            "00000000",
+            "00000300",
+            "02000330",
+            "02200000",
+            "00000000"
+          ],
+          "output": [
+            "10",
+            "23"
+          ]
+        },
+        {
+          "input": [
+            "00000400",
+            "00000440",
+            "00000000",
+            "00000000",
+            "00000000",
+            "77000080",
+            "07000880",
+            "00000000"
+          ],
+          "output": [
+            "04",
+            "78"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000000000",
+          "0900000500",
+          "0090000000",
+          "0000000050",
+          "0000000000",
+          "0000000000",
+          "0000000000",
+          "0060000000",
+          "0660000000",
+          "0000000000"
+        ],
+        "output": [
+          "95",
+          "60"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    h,w=dims(grid)\n    mh,mw=h//2,w//2\n    out=[[0,0],[0,0]]\n    quads=[(0,mh,0,mw),(0,mh,mw,w),(mh,h,0,mw),(mh,h,mw,w)]\n    for idx,(r1,r2,c1,c2) in enumerate(quads):\n        colors={grid[r][c] for r in range(r1,r2) for c in range(c1,c2) if grid[r][c]!=0}\n        val=next(iter(colors)) if colors else 0\n        out[idx//2][idx%2]=val\n    return out\n",
+      "program_solution": "(rule! (let ((dummy 0)) (define (first-nonzero-in-rect grid r0 r1 c0 c1) (let ((vals (filter (lambda (v) (not (= v 0))) (for*/list ((r (in-range r0 r1)) (c (in-range c0 c1))) (at grid r c))))) (if (empty? vals) 0 (first vals)))) (let* ((mh (quotient (rows g) 2)) (mw (quotient (cols g) 2)) (quads (list (list 0 mh 0 mw) (list 0 mh mw (cols g)) (list mh (rows g) 0 mw) (list mh (rows g) mw (cols g))))) (grid-from-fn 2 2 (lambda (r c) (let ((q (list-ref quads (+ (* r 2) c)))) (first-nonzero-in-rect g (first q) (second q) (third q) (fourth q))))))))"
+    },
+    {
+      "id": "S5_M2",
+      "difficulty": "medium",
+      "title": "Beam Crossing Cells",
+      "skills": [
+        "orthogonal ray casting",
+        "set intersection",
+        "same-size output"
+      ],
+      "scaffold": [
+        "Cast red(2) beams downward from the top-row emitters until gray(5) blockers.",
+        "Cast blue(1) beams rightward from the left-column emitters until gray(5) blockers.",
+        "Output only the cells visited by both kinds of beams, colored magenta(6)."
+      ],
+      "written_solution": "Top red(2) emitters send vertical beams down and left blue(1) emitters send horizontal beams right. Both stop before gray(5) blockers. The output keeps only the crossing cells, colored magenta(6).",
+      "primitive_note": "Uses the new primitive `raycast_until(start, step, blockers)`.",
+      "train": [
+        {
+          "input": [
+            "00200200",
+            "00000000",
+            "00000000",
+            "10000000",
+            "00000000",
+            "00000000",
+            "10000000",
+            "00000000"
+          ],
+          "output": [
+            "00000000",
+            "00000000",
+            "00000000",
+            "00600600",
+            "00000000",
+            "00000000",
+            "00600600",
+            "00000000"
+          ]
+        },
+        {
+          "input": [
+            "000200200",
+            "000000000",
+            "100005000",
+            "000000000",
+            "000500000",
+            "100000000",
+            "000000500",
+            "000000000",
+            "000000000"
+          ],
+          "output": [
+            "000000000",
+            "000000000",
+            "000600000",
+            "000000000",
+            "000000000",
+            "000000600",
+            "000000000",
+            "000000000",
+            "000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0200000200",
+          "1000000000",
+          "0000000000",
+          "0500000000",
+          "0000000000",
+          "1000500000",
+          "0000000000",
+          "0000000000"
+        ],
+        "output": [
+          "0000000000",
+          "0600000600",
+          "0000000000",
+          "0000000000",
+          "0000000000",
+          "0000000000",
+          "0000000000",
+          "0000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    h,w=dims(grid)\n    vert=set()\n    horiz=set()\n    for c,val in enumerate(grid[0]):\n        if val==2:\n            vert.update(raycast_until(grid,(0,c),(1,0),blockers={5}))\n    for r in range(h):\n        if grid[r][0]==1:\n            horiz.update(raycast_until(grid,(r,0),(0,1),blockers={5}))\n    inter=vert & horiz\n    out=blank(h,w)\n    for r,c in inter:\n        out[r][c]=6\n    return out\n",
+      "program_solution": "(rule! (let ((dummy 0)) (define (raycast grid start dr dc blockers) (let loop ((r (+ (first start) dr)) (c (+ (second start) dc)) (acc (list))) (cond ((not (in-bounds? r c (rows grid) (cols grid))) acc) ((member? (at grid r c) blockers) acc) (else (loop (+ r dr) (+ c dc) (append acc (list (list r c)))))))) (let* ((vert (apply append (map (lambda (c) (raycast g (list 0 c) 1 0 (list 5))) (filter (lambda (c) (= (at g 0 c) 2)) (range 0 (cols g)))))) (horiz (apply append (map (lambda (r) (raycast g (list r 0) 0 1 (list 5))) (filter (lambda (r) (= (at g r 0) 1)) (range 0 (rows g)))))) (inter (filter (lambda (p) (member? p horiz)) vert))) (paint-cells (empty-grid (rows g) (cols g) 0) inter 6))))"
+    },
+    {
+      "id": "S5_M3",
+      "difficulty": "medium",
+      "title": "Marked Column Compression",
+      "skills": [
+        "column selection",
+        "legend markers",
+        "output-size change"
+      ],
+      "scaffold": [
+        "Read the top-row marker positions.",
+        "Select those columns from the body of the grid.",
+        "Compress them side by side in the same order."
+      ],
+      "written_solution": "The top row marks which columns matter. Remove the top row, keep only the marked columns from the remaining rows, and pack those columns together in order.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "04004040",
+            "01234567",
+            "76543210",
+            "10101010",
+            "22222222",
+            "98765432"
+          ],
+          "output": [
+            "146",
+            "631",
+            "011",
+            "222",
+            "853"
+          ]
+        },
+        {
+          "input": [
+            "004004004",
+            "123456789",
+            "987654321",
+            "010101010",
+            "246802468"
+          ],
+          "output": [
+            "369",
+            "741",
+            "010",
+            "628"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0404000404",
+          "5432101234",
+          "0987654321",
+          "1122334455",
+          "5544332211",
+          "0101010101",
+          "9090909090"
+        ],
+        "output": [
+          "4224",
+          "9731",
+          "1245",
+          "5421",
+          "1111",
+          "0000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    cols=[c for c,v in enumerate(grid[0]) if v==4]\n    body=grid[1:]\n    return [[row[c] for c in cols] for row in body]\n",
+      "program_solution": "(rule! (let ((dummy 0)) (let ((cols (filter (lambda (c) (= (at g 0 c) 4)) (range 0 (cols g))))) (for/list ((r (in-range 1 (rows g)))) (for/list ((c (in-list cols))) (at g r c))))))"
+    },
+    {
+      "id": "S5_M4",
+      "difficulty": "medium",
+      "title": "Object-Area Color Ranking",
+      "skills": [
+        "component measurement",
+        "sorting",
+        "symbolic output"
+      ],
+      "scaffold": [
+        "Extract all nonzero connected components.",
+        "Measure each component's area.",
+        "Output a 1-row strip of component colors ordered from smallest area to largest."
+      ],
+      "written_solution": "Measure the size of every colored object. Then output a single row listing the objects' colors in ascending order of area.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "00000000",
+            "01000220",
+            "00000000",
+            "00000000",
+            "03000440",
+            "03300440",
+            "00000000",
+            "00000000"
+          ],
+          "output": [
+            "1234"
+          ]
+        },
+        {
+          "input": [
+            "000000000",
+            "000000050",
+            "000000050",
+            "000000000",
+            "000060000",
+            "000000000",
+            "077000880",
+            "070000888",
+            "000000000"
+          ],
+          "output": [
+            "6578"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000000000",
+          "0990000030",
+          "0990000000",
+          "0000000000",
+          "0000000000",
+          "0020000000",
+          "0020000400",
+          "0000000440",
+          "0000000000",
+          "0000000000"
+        ],
+        "output": [
+          "3249"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    comps=components(grid, None, 4)\n    comps_sorted=sorted(comps, key=lambda comp:(len(comp['cells']), comp['color']))\n    return [[comp['color'] for comp in comps_sorted]]\n",
+      "program_solution": "(rule! (let ((dummy 0)) (let ((sorted (sort (objects g 0) (lambda (a b) (if (= (obj-size a) (obj-size b)) (< (obj-color a) (obj-color b)) (< (obj-size a) (obj-size b))))))) (list (map obj-color sorted)))))"
+    },
+    {
+      "id": "S5_M5",
+      "difficulty": "medium",
+      "title": "Hole Count Object Selector",
+      "skills": [
+        "hole counting",
+        "marker decoding",
+        "output-size crop"
+      ],
+      "scaffold": [
+        "Count the blue(1) markers in the top row.",
+        "Compute the number of enclosed holes in each orange(7) object.",
+        "Crop the object whose hole count matches the marker count."
+      ],
+      "written_solution": "The number of blue(1) markers in the first row tells you how many holes to look for. Among the orange(7) objects, choose the one with exactly that many holes and output its bounding-box crop.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "10000000000000",
+            "00000077700000",
+            "07770070700000",
+            "07770077700000",
+            "00000000000000",
+            "00000000000000",
+            "00000777777700",
+            "00000700700700",
+            "00000777777700",
+            "00000000000000"
+          ],
+          "output": [
+            "777",
+            "707",
+            "777"
+          ]
+        },
+        {
+          "input": [
+            "11000000000000",
+            "00000077700000",
+            "07770070700000",
+            "07770077700000",
+            "00000000000000",
+            "00000000000000",
+            "00000777777700",
+            "00000700700700",
+            "00000777777700",
+            "00000000000000"
+          ],
+          "output": [
+            "7777777",
+            "7007007",
+            "7777777"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "00000000000000",
+          "00000077700000",
+          "07770070700000",
+          "07770077700000",
+          "00000000000000",
+          "00000000000000",
+          "00000777777700",
+          "00000700700700",
+          "00000777777700",
+          "00000000000000"
+        ],
+        "output": [
+          "777",
+          "777"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    k=sum(v==1 for v in grid[0])\n    body=grid[1:]\n    # components in body with absolute coords offset by 1 row\n    comps=components(grid, {7}, 4)\n    # ignore top row markers if any 7? none\n    selected=None\n    for comp in comps:\n        if count_holes(grid, comp)==k:\n            selected=comp\n            break\n    return crop_bbox(grid, selected['cells'])\n",
+      "program_solution": "(rule! (let ((dummy 0)) (define (crop-bbox grid cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb))) (subgrid grid r0 c0 r1 c1))) (let* ((k (length (filter (lambda (v) (= v 1)) (first g)))) (selected (first (filter (lambda (obj) (= (topo-count-holes g obj 0) k)) (filter (lambda (obj) (= (obj-color obj) 7)) (objects g 0)))))) (crop-bbox g (obj-cells selected)))))"
+    },
+    {
+      "id": "S5_M6",
+      "difficulty": "medium",
+      "title": "Template Stamp at Anchors",
+      "skills": [
+        "template extraction",
+        "shape copying",
+        "same-size construction"
+      ],
+      "scaffold": [
+        "Find the green(3) source object and normalize its shape.",
+        "Use every red(4) singleton as a top-left anchor.",
+        "Stamp cyan(8) copies of the template at all anchor positions on a blank grid."
+      ],
+      "written_solution": "Treat the green(3) object as a reusable template. For each yellow(4) anchor cell, place a cyan(8) copy of that template with its top-left corner at the anchor. The output is otherwise background.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "3000000000",
+            "3300000000",
+            "0000000000",
+            "0000400000",
+            "0000000000",
+            "0000000400",
+            "0000000000",
+            "0000000000"
+          ],
+          "output": [
+            "0000000000",
+            "0000000000",
+            "0000000000",
+            "0000800000",
+            "0000880000",
+            "0000000800",
+            "0000000880",
+            "0000000000"
+          ]
+        },
+        {
+          "input": [
+            "00000000000",
+            "03300000000",
+            "00330000000",
+            "00000000000",
+            "00000400000",
+            "00000000400",
+            "04000000000",
+            "00000000000",
+            "00000000000"
+          ],
+          "output": [
+            "00000000000",
+            "00000000000",
+            "00000000000",
+            "00000000000",
+            "00000880000",
+            "00000088880",
+            "08800000088",
+            "00880000000",
+            "00000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "030000000000",
+          "033000000000",
+          "003000000000",
+          "000000400000",
+          "000000000000",
+          "000000000000",
+          "000400000000",
+          "000000004000",
+          "000000000000",
+          "000000000000"
+        ],
+        "output": [
+          "000000000000",
+          "000000000000",
+          "000000000000",
+          "000000800000",
+          "000000880000",
+          "000000080000",
+          "000800000000",
+          "000880008000",
+          "000080008800",
+          "000000000800"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    comps=components(grid, {3}, 4)\n    template = max(comps, key=lambda c: len(c['cells']))\n    norm = normalize_cells(template['cells'])\n    out=blank(*dims(grid))\n    h,w=dims(grid)\n    # anchors color4\n    for r in range(h):\n        for c in range(w):\n            if grid[r][c]==4:\n                for dr,dc in norm:\n                    rr,cc=r+dr,c+dc\n                    if 0<=rr<h and 0<=cc<w:\n                        out[rr][cc]=8\n    return out\n",
+      "program_solution": "(rule! (let ((dummy 0)) (define (norm-cells cells) (sort (normalize-cells cells) cell<)) (let* ((template (first (sort (filter (lambda (obj) (= (obj-color obj) 3)) (objects g 0)) (lambda (a b) (> (obj-size a) (obj-size b)))))) (norm (norm-cells (obj-cells template)))) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((anchor (in-list (find-color g 4)))) (for/fold ((acc out)) ((p (in-list norm))) (let ((rr (+ (first anchor) (first p))) (cc (+ (second anchor) (second p)))) (if (in-bounds? rr cc (rows g) (cols g)) (set-cell acc rr cc 8) acc)))))))"
+    },
+    {
+      "id": "S5_M7",
+      "difficulty": "medium",
+      "title": "Nonempty Row Compression",
+      "skills": [
+        "row filtering",
+        "order preservation",
+        "output-size compression"
+      ],
+      "scaffold": [
+        "Scan rows from top to bottom.",
+        "Keep only rows that contain at least one nonzero cell.",
+        "Stack the surviving rows without changing their order."
+      ],
+      "written_solution": "Delete every all-zero row. Keep the nonempty rows in the same order and stack them together.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "000000",
+            "120000",
+            "000000",
+            "003300",
+            "000000",
+            "400004"
+          ],
+          "output": [
+            "120000",
+            "003300",
+            "400004"
+          ]
+        },
+        {
+          "input": [
+            "0000000",
+            "0000000",
+            "1110000",
+            "0000000",
+            "0022200",
+            "0000000",
+            "0000003"
+          ],
+          "output": [
+            "1110000",
+            "0022200",
+            "0000003"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "00000000",
+          "50000005",
+          "00000000",
+          "01111000",
+          "00000000",
+          "00070000",
+          "00000000",
+          "33000033"
+        ],
+        "output": [
+          "50000005",
+          "01111000",
+          "00070000",
+          "33000033"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    rows=[row[:] for row in grid if any(v!=0 for v in row)]\n    return rows if rows else [[0]*len(grid[0])]\n",
+      "program_solution": "(rule! (let ((dummy 0)) (let ((rows-kept (filter (lambda (row) (any? (lambda (v) (not (= v 0))) row)) g))) (if (empty? rows-kept) (list (make-list (cols g) 0)) rows-kept))))"
+    },
+    {
+      "id": "S5_H1",
+      "difficulty": "hard",
+      "title": "Cells Seen by Two Emitters",
+      "skills": [
+        "multi-source visibility",
+        "ray counting",
+        "thresholding"
+      ],
+      "scaffold": [
+        "From each yellow(4) emitter, cast rays in all four cardinal directions until gray(5) blockers or the edge.",
+        "Count how many emitters can see each cell.",
+        "Output only the cells seen by at least two emitters, colored red(2)."
+      ],
+      "written_solution": "Every yellow(4) emitter sees outward in the four cardinal directions until a gray(5) blocker or the boundary. Count the visibility coverage, and keep only cells reached by two or more emitters.",
+      "primitive_note": "Uses the new primitive `raycast_until(start, step, blockers)` in four directions.",
+      "train": [
+        {
+          "input": [
+            "0000000",
+            "0400040",
+            "0000000",
+            "0005000",
+            "0000000",
+            "0004000",
+            "0000000"
+          ],
+          "output": [
+            "0000000",
+            "2022202",
+            "0000000",
+            "0000000",
+            "0000000",
+            "0200020",
+            "0000000"
+          ]
+        },
+        {
+          "input": [
+            "00000000",
+            "00400000",
+            "00000500",
+            "00000000",
+            "00400040",
+            "00500000",
+            "00000000",
+            "00000000"
+          ],
+          "output": [
+            "00200000",
+            "00000020",
+            "00200000",
+            "00200000",
+            "22222202",
+            "00000000",
+            "00000000",
+            "00000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "000000000",
+          "040000040",
+          "000000000",
+          "000000000",
+          "050040050",
+          "000000000",
+          "000000000",
+          "000040000",
+          "000000000"
+        ],
+        "output": [
+          "000020000",
+          "202222202",
+          "000020000",
+          "000020000",
+          "000000000",
+          "000020000",
+          "000020000",
+          "000000000",
+          "000020000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    h,w=dims(grid)\n    counts=[[0]*w for _ in range(h)]\n    for r in range(h):\n        for c in range(w):\n            if grid[r][c]==4:\n                for step in dirs4:\n                    for rr,cc in raycast_until(grid,(r,c),step,blockers={5}):\n                        counts[rr][cc]+=1\n    out=blank(h,w)\n    for r in range(h):\n        for c in range(w):\n            if counts[r][c]>=2:\n                out[r][c]=2\n    return out\n",
+      "program_solution": "(rule! (let ((dummy 0)) (define (raycast grid start dr dc blockers) (let loop ((r (+ (first start) dr)) (c (+ (second start) dc)) (acc (list))) (cond ((not (in-bounds? r c (rows grid) (cols grid))) acc) ((member? (at grid r c) blockers) acc) (else (loop (+ r dr) (+ c dc) (append acc (list (list r c)))))))) (let* ((counts (for/fold ((acc (empty-grid (rows g) (cols g) 0))) ((p (in-list (find-color g 4)))) (for/fold ((a acc)) ((d (in-list cardinal-deltas))) (for/fold ((aa a)) ((q (in-list (raycast g p (first d) (second d) (list 5))))) (set-cell aa (first q) (second q) (+ (at aa (first q) (second q)) 1))))))) (grid-from-fn (rows g) (cols g) (lambda (r c) (if (>= (at counts r c) 2) 2 0))))))"
+    },
+    {
+      "id": "S5_H2",
+      "difficulty": "hard",
+      "title": "Two-Row Palette Permutation",
+      "skills": [
+        "legend mapping",
+        "color permutation",
+        "header removal"
+      ],
+      "scaffold": [
+        "Read the source colors from the first row and the corresponding target colors from the second row.",
+        "Build a color map from those aligned pairs.",
+        "Recolor the remaining body rows with that map and drop the legend rows."
+      ],
+      "written_solution": "The first two rows form a source→target color legend by column. Apply that recoloring to the body of the grid and output only the recolored body.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "123000",
+            "789000",
+            "100220",
+            "110220",
+            "003300",
+            "003330"
+          ],
+          "output": [
+            "700880",
+            "770880",
+            "009900",
+            "009990"
+          ]
+        },
+        {
+          "input": [
+            "2460000",
+            "1380000",
+            "2004400",
+            "2204400",
+            "0000060",
+            "0000660"
+          ],
+          "output": [
+            "1003300",
+            "1103300",
+            "0000080",
+            "0000880"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "13500000",
+          "92700000",
+          "10050000",
+          "03350000",
+          "00335000",
+          "00000111"
+        ],
+        "output": [
+          "90070000",
+          "02270000",
+          "00227000",
+          "00000999"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    src=grid[0]\n    tgt=grid[1]\n    mp={}\n    for a,b in zip(src,tgt):\n        if a!=0:\n            mp[a]=b\n    body=grid[2:]\n    return [[mp.get(v,v) if v!=0 else 0 for v in row] for row in body]\n",
+      "program_solution": "(rule! (let ((dummy 0)) (let* ((src (first g)) (tgt (second g)) (pairs (filter (lambda (p) (not (= (first p) 0))) (map list src tgt)))) (for/list ((r (in-range 2 (rows g)))) (for/list ((c (in-range (cols g)))) (let* ((v (at g r c)) (hit (filter (lambda (p) (= (first p) v)) pairs))) (if (= v 0) 0 (if (empty? hit) v (second (first hit))))))))))"
+    },
+    {
+      "id": "S5_H3",
+      "difficulty": "hard",
+      "title": "Rotation-Coded Stamps",
+      "skills": [
+        "template extraction",
+        "rotation reasoning",
+        "coded markers"
+      ],
+      "scaffold": [
+        "Normalize the green(3) template shape.",
+        "Interpret marker colors 1,2,4,5 as 0°, 90°, 180°, and 270° rotations.",
+        "Stamp cyan(8) rotated copies on a blank grid, anchored at each marker cell."
+      ],
+      "written_solution": "Use the green(3) object as a template. Marker colors encode how much to rotate that template before stamping a cyan(8) copy starting at the marker location.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "3000000000",
+            "3300000000",
+            "0000000000",
+            "0000100000",
+            "0000000000",
+            "0200000000",
+            "0000000000",
+            "0000000000"
+          ],
+          "output": [
+            "0000000000",
+            "0000000000",
+            "0000000000",
+            "0000800000",
+            "0000880000",
+            "0880000000",
+            "0800000000",
+            "0000000000"
+          ]
+        },
+        {
+          "input": [
+            "03000000000",
+            "33000005000",
+            "03000000000",
+            "00000000000",
+            "00000400000",
+            "00000000000",
+            "00000000000",
+            "00000000000",
+            "00000000000"
+          ],
+          "output": [
+            "00000000000",
+            "00000008880",
+            "00000000800",
+            "00000000000",
+            "00000800000",
+            "00000880000",
+            "00000800000",
+            "00000000000",
+            "00000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "330000000000",
+          "030000000000",
+          "030000000000",
+          "000000100000",
+          "000000000000",
+          "002000000000",
+          "000000004000",
+          "000000000000",
+          "000000000000",
+          "000000000000"
+        ],
+        "output": [
+          "000000000000",
+          "000000000000",
+          "000000000000",
+          "000000880000",
+          "000000080000",
+          "000080080000",
+          "008880008000",
+          "000000008000",
+          "000000008800",
+          "000000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    # colors 1,2,4,5 => rotations 0,1,2,3 quarter turns\n    rot_map={1:0,2:1,4:2,5:3}\n    template=max(components(grid,{3},4), key=lambda c: len(c['cells']))\n    base=normalize_cells(template['cells'])\n    out=blank(*dims(grid))\n    h,w=dims(grid)\n    for r in range(h):\n        for c in range(w):\n            if grid[r][c] in rot_map:\n                shape=rotate_norm_cells(base, rot_map[grid[r][c]])\n                for dr,dc in shape:\n                    rr,cc=r+dr,c+dc\n                    if 0<=rr<h and 0<=cc<w:\n                        out[rr][cc]=8\n    return out\n",
+      "program_solution": "(rule! (let ((dummy 0)) (define (norm-cells cells) (sort (normalize-cells cells) cell<)) (define (rotate-norm cells times) (if (= (modulo times 4) 0) cells (let* ((maxr (apply max (map first cells))) (h (+ maxr 1)) (rotated (map (lambda (p) (list (second p) (- h 1 (first p)))) cells))) (rotate-norm (norm-cells rotated) (- times 1))))) (let* ((rot-map (list (list 1 0) (list 2 1) (list 4 2) (list 5 3))) (template (first (sort (filter (lambda (obj) (= (obj-color obj) 3)) (objects g 0)) (lambda (a b) (> (obj-size a) (obj-size b)))))) (base (norm-cells (obj-cells template)))) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((p (in-list (grid-positions g)))) (let* ((v (at g (first p) (second p))) (hit (filter (lambda (row) (= (first row) v)) rot-map))) (if (empty? hit) out (for/fold ((acc out)) ((q (in-list (rotate-norm base (second (first hit)))))) (let ((rr (+ (first p) (first q))) (cc (+ (second p) (second q)))) (if (in-bounds? rr cc (rows g) (cols g)) (set-cell acc rr cc 8) acc)))))))))"
+    },
+    {
+      "id": "S5_H4",
+      "difficulty": "hard",
+      "title": "Repeated Shape Under Rotation",
+      "skills": [
+        "rotation-invariant matching",
+        "component normalization",
+        "canonical output"
+      ],
+      "scaffold": [
+        "Normalize every blue(1) component up to rotation.",
+        "Find the shape that appears twice under rotation.",
+        "Output its canonical normalized form in cyan(8)."
+      ],
+      "written_solution": "Among the blue(1) objects, one shape is repeated in a different rotation. Detect that repeated shape up to rotation, choose a canonical orientation, and output it alone in cyan(8).",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "0000000000",
+            "0100001100",
+            "0110000100",
+            "0000000000",
+            "0000001100",
+            "0111001100",
+            "0000000000",
+            "0000000000"
+          ],
+          "output": [
+            "88",
+            "80"
+          ]
+        },
+        {
+          "input": [
+            "00000000000",
+            "00110000000",
+            "01100001000",
+            "00000001000",
+            "00000000000",
+            "00000001000",
+            "01000001100",
+            "01100000100",
+            "00000000000"
+          ],
+          "output": [
+            "80",
+            "88",
+            "08"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "000000000000",
+          "001000000000",
+          "001000000110",
+          "001100000010",
+          "000000000000",
+          "000000000010",
+          "000000001110",
+          "011100000000",
+          "001000000000",
+          "000000000000"
+        ],
+        "output": [
+          "888",
+          "800"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    comps=components(grid,{1},4)\n    canons=[canonical_rot(normalize_cells(comp['cells'])) for comp in comps]\n    from collections import Counter\n    cnt=Counter(canons)\n    target=next(c for c,n in cnt.items() if n>=2)\n    # output canonical shape in color 8\n    maxr=max(r for r,c in target); maxc=max(c for r,c in target)\n    out=blank(maxr+1,maxc+1)\n    for r,c in target:\n        out[r][c]=8\n    return out\n",
+      "program_solution": "(rule! (let ((dummy 0)) (define (norm-cells cells) (sort (normalize-cells cells) cell<)) (define (rotate-norm cells times) (if (= (modulo times 4) 0) cells (let* ((maxr (apply max (map first cells))) (h (+ maxr 1)) (rotated (map (lambda (p) (list (second p) (- h 1 (first p)))) cells))) (rotate-norm (norm-cells rotated) (- times 1))))) (define (canonical-rot cells) (first (sort (map (lambda (k) (rotate-norm cells k)) (range 0 4)) (lambda (a b) (lex-list< (apply append a) (apply append b)))))) (define (lex-list< a b) (cond ((empty? a) (not (empty? b))) ((empty? b) #f) ((not (= (first a) (first b))) (< (first a) (first b))) (else (lex-list< (rest a) (rest b))))) (define (count-equal xs x) (length (filter (lambda (v) (equal? v x)) xs))) (define (shape->grid cells color) (let* ((maxr (apply max (map first cells))) (maxc (apply max (map second cells)))) (for/fold ((out (empty-grid (+ maxr 1) (+ maxc 1) 0))) ((p (in-list cells))) (set-cell out (first p) (second p) color)))) (let* ((comps (filter (lambda (obj) (= (obj-color obj) 1)) (objects g 0))) (canons (map (lambda (obj) (canonical-rot (norm-cells (obj-cells obj)))) comps)) (target (first (filter (lambda (canon) (>= (count-equal canons canon) 2)) canons)))) (shape->grid target 8))))"
+    },
+    {
+      "id": "S5_H5",
+      "difficulty": "hard",
+      "title": "Matched Beacon Corridors",
+      "skills": [
+        "pairing by color",
+        "axis alignment",
+        "same-size construction"
+      ],
+      "scaffold": [
+        "Group the singleton beacons by color.",
+        "Each color appears exactly twice and the two beacons are aligned horizontally or vertically.",
+        "Fill the corridor between each pair using that same color."
+      ],
+      "written_solution": "For every color, connect its two matching beacons with a solid straight segment of that color. Horizontal pairs make horizontal corridors and vertical pairs make vertical corridors.",
+      "primitive_note": "Can be implemented as repeated axis-aligned ray walks between matched endpoints.",
+      "train": [
+        {
+          "input": [
+            "000000000",
+            "020000200",
+            "000030000",
+            "000000000",
+            "000000000",
+            "400400000",
+            "000030000",
+            "000000000"
+          ],
+          "output": [
+            "000000000",
+            "022222200",
+            "000030000",
+            "000030000",
+            "000030000",
+            "444430000",
+            "000030000",
+            "000000000"
+          ]
+        },
+        {
+          "input": [
+            "0050000000",
+            "0000000000",
+            "0000000000",
+            "0000060006",
+            "0050000000",
+            "0000000000",
+            "0700000700",
+            "0000000000",
+            "0000000000"
+          ],
+          "output": [
+            "0050000000",
+            "0050000000",
+            "0050000000",
+            "0050066666",
+            "0050000000",
+            "0000000000",
+            "0777777700",
+            "0000000000",
+            "0000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000000000",
+          "2000020000",
+          "0000000030",
+          "0500000000",
+          "0000000000",
+          "0040004000",
+          "0000000000",
+          "0000000030",
+          "0500000000",
+          "0000000000"
+        ],
+        "output": [
+          "0000000000",
+          "2222220000",
+          "0000000030",
+          "0500000030",
+          "0500000030",
+          "0544444030",
+          "0500000030",
+          "0500000030",
+          "0500000000",
+          "0000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    h,w=dims(grid)\n    positions={}\n    for r in range(h):\n        for c in range(w):\n            v=grid[r][c]\n            if v!=0:\n                positions.setdefault(v, []).append((r,c))\n    out=blank(h,w)\n    for color,cells in positions.items():\n        if len(cells)!=2:\n            continue\n        (r1,c1),(r2,c2)=cells\n        if r1==r2:\n            a,b=sorted([c1,c2])\n            clear=all(grid[r1][c]==0 or c in (a,b) for c in range(a,b+1))\n            if clear:\n                for c in range(a,b+1):\n                    out[r1][c]=color\n        elif c1==c2:\n            a,b=sorted([r1,r2])\n            clear=all(grid[r][c1]==0 or r in (a,b) for r in range(a,b+1))\n            if clear:\n                for r in range(a,b+1):\n                    out[r][c1]=color\n    return out\n",
+      "program_solution": "(rule! (let ((dummy 0)) (define (line-clear-horizontal? grid r a b) (all? (lambda (c) (or (= (at grid r c) 0) (= c a) (= c b))) (range a (+ b 1)))) (define (line-clear-vertical? grid c a b) (all? (lambda (r) (or (= (at grid r c) 0) (= r a) (= r b))) (range a (+ b 1)))) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((color (in-list (grid-colors g 0)))) (let ((cells (find-color g color))) (if (= (length cells) 2) (let* ((a (first cells)) (b (second cells)) (r1 (first a)) (c1 (second a)) (r2 (first b)) (c2 (second b))) (cond ((= r1 r2) (let ((lo (min c1 c2)) (hi (max c1 c2))) (if (line-clear-horizontal? g r1 lo hi) (for/fold ((acc out)) ((c (in-range lo (+ hi 1)))) (set-cell acc r1 c color)) out))) ((= c1 c2) (let ((lo (min r1 r2)) (hi (max r1 r2))) (if (line-clear-vertical? g c1 lo hi) (for/fold ((acc out)) ((r (in-range lo (+ hi 1)))) (set-cell acc r c1 color)) out))) (else out))) out)))))"
+    },
+    {
+      "id": "S5_H6",
+      "difficulty": "hard",
+      "title": "Color Count Histogram",
+      "skills": [
+        "counting by color",
+        "histogram construction",
+        "output resizing"
+      ],
+      "scaffold": [
+        "Count total cells of color 1, then 2, then 3.",
+        "Let the output width be the maximum of those counts.",
+        "Build one row per color, filled from the left with that color repeated its count times."
+      ],
+      "written_solution": "Count how many cells of colors 1, 2, and 3 appear. Make a three-row histogram: row 1 contains that many 1s, row 2 that many 2s, row 3 that many 3s, padded with zeros to a common width.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "100000",
+            "022000",
+            "020030",
+            "020000",
+            "000001"
+          ],
+          "output": [
+            "1100",
+            "2222",
+            "3000"
+          ]
+        },
+        {
+          "input": [
+            "1000003",
+            "0000023",
+            "0010003",
+            "0000003",
+            "0000003",
+            "0000001"
+          ],
+          "output": [
+            "11100",
+            "20000",
+            "33333"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "01000000",
+          "01000000",
+          "01000333",
+          "01000000",
+          "00000000",
+          "22000000"
+        ],
+        "output": [
+          "1111",
+          "2200",
+          "3330"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    colors=[1,2,3]\n    counts=[sum(v==color for row in grid for v in row) for color in colors]\n    w=max(counts) if counts else 1\n    out=blank(len(colors), w)\n    for i,color in enumerate(colors):\n        for c in range(counts[i]):\n            out[i][c]=color\n    return out\n",
+      "program_solution": "(rule! (let ((dummy 0)) (let* ((colors (list 1 2 3)) (counts (map (lambda (color) (length (find-color g color))) colors)) (w (if (empty? counts) 1 (apply max counts)))) (grid-from-fn (length colors) w (lambda (r c) (let ((color (list-ref colors r))) (if (< c (list-ref counts r)) color 0)))))))"
+    },
+    {
+      "id": "S5_H7",
+      "difficulty": "hard",
+      "title": "Row/Column Submatrix Extraction",
+      "skills": [
+        "dual-axis indexing",
+        "submatrix extraction",
+        "compositional selection"
+      ],
+      "scaffold": [
+        "Use top-row red(4) markers to choose columns.",
+        "Use left-column blue(5) markers to choose rows.",
+        "Output the body submatrix at the selected rows and selected columns, preserving order."
+      ],
+      "written_solution": "The top row selects columns and the left column selects rows. Take the interior grid and extract the submatrix formed by those chosen rows and columns.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "0040404",
+            "0123456",
+            "5891234",
+            "4321012",
+            "5468024",
+            "9876543"
+          ],
+          "output": [
+            "924",
+            "604"
+          ]
+        },
+        {
+          "input": [
+            "04040004",
+            "52345678",
+            "87654321",
+            "01010101",
+            "99887766",
+            "54680246",
+            "50505050"
+          ],
+          "output": [
+            "248",
+            "486",
+            "000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "004004004",
+          "101010101",
+          "534567890",
+          "987654321",
+          "512233445",
+          "544332211",
+          "090807060",
+          "577000888"
+        ],
+        "output": [
+          "470",
+          "235",
+          "421",
+          "708"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    sel_cols=[c for c,v in enumerate(grid[0]) if v==4 and c>0]\n    sel_rows=[r for r in range(1,len(grid)) if grid[r][0]==5]\n    return [[grid[r][c] for c in sel_cols] for r in sel_rows]\n",
+      "program_solution": "(rule! (let ((dummy 0)) (let ((sel-cols (filter (lambda (c) (and (> c 0) (= (at g 0 c) 4))) (range 0 (cols g)))) (sel-rows (filter (lambda (r) (= (at g r 0) 5)) (range 1 (rows g))))) (for/list ((r (in-list sel-rows))) (for/list ((c (in-list sel-cols))) (at g r c))))))"
+    }
+  ]
+}

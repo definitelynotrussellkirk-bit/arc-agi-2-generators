@@ -1,0 +1,149 @@
+[
+  {
+    "id": "E36",
+    "name": "Recolor left-right symmetric red components",
+    "difficulty": "easy",
+    "written_solution": "Look at every red(2) component by itself. If its shape is symmetric under a left-right mirror inside its own bbox, recolor the whole component to green(3). Leave asymmetric red(2) components and all other colors unchanged.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (cell<? a b)\n      (or (< (first a) (first b))\n          (and (= (first a) (first b)) (< (second a) (second b)))))\n    (define (norm cells) (sort (normalize-cells cells) cell<?))\n    (define (hmirror cells)\n      (let* ((n (norm cells))\n             (w (+ 1 (apply max (map second n)))))\n        (sort (map (lambda (p) (list (first p) (- w 1 (second p)))) n) cell<?)))\n    (for/fold ([out g]) ([obj (in-list (filter (lambda (o) (= (obj-color o) 2)) (objects g 0)))])\n      (if (equal? (norm (obj-cells obj)) (hmirror (obj-cells obj)))\n          (paint-cells out (obj-cells obj) 3)\n          out))))"
+  },
+  {
+    "id": "E37",
+    "name": "Fill diagonal gaps between yellow pairs",
+    "difficulty": "easy",
+    "written_solution": "Whenever two yellow(4) cells sit one step away from the same empty cell on a diagonal, fill that empty midpoint with cyan(8). Do this for both diagonal directions and keep everything else unchanged.",
+    "program_solution": "(rule!\n  (grid-from-fn (rows g) (cols g)\n    (lambda (r c)\n      (if (and (= (at g r c) 0)\n               (or (and (= (safe-at g (- r 1) (- c 1) 0) 4)\n                        (= (safe-at g (+ r 1) (+ c 1) 0) 4))\n                   (and (= (safe-at g (- r 1) (+ c 1) 0) 4)\n                        (= (safe-at g (+ r 1) (- c 1) 0) 4))))\n          8\n          (at g r c)))))"
+  },
+  {
+    "id": "E38",
+    "name": "Turn solid blue rectangles into hollow rectangles",
+    "difficulty": "easy",
+    "written_solution": "Every blue(1) object is a solid axis-aligned rectangle. Remove its interior cells and keep only the border, so each solid rectangle becomes a hollow rectangle.",
+    "program_solution": "(rule!\n  (for/fold ([out g]) ([obj (in-list (filter (lambda (o) (= (obj-color o) 1)) (objects g 0)))])\n    (foldl (lambda (p acc)\n             (if (and (> (first p) (obj-r1 obj)) (< (first p) (obj-r2 obj))\n                      (> (second p) (obj-c1 obj)) (< (second p) (obj-c2 obj)))\n                 (set-cell acc (first p) (second p) 0)\n                 acc))\n           out\n           (obj-cells obj))))"
+  },
+  {
+    "id": "E39",
+    "name": "Recolor the corner cell of each green L-triomino",
+    "difficulty": "easy",
+    "written_solution": "Among the green(3) size-3 objects, only the L-shaped triominoes change. In each L, the bend cell where the two arms meet becomes red(2). Straight size-3 lines stay unchanged.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (degree p cells)\n      (count-where (lambda (d) (member? (list (+ (first p) (first d)) (+ (second p) (second d))) cells))\n                   cardinal-deltas))\n    (for/fold ([out g]) ([obj (in-list (filter (lambda (o)\n                                                 (and (= (obj-color o) 3)\n                                                      (= (obj-size o) 3)\n                                                      (= (obj-h o) 2)\n                                                      (= (obj-w o) 2)))\n                                               (objects g 0)))])\n      (let ((corners (filter (lambda (p) (= (degree p (obj-cells obj)) 2)) (obj-cells obj))))\n        (if (= (length corners) 1)\n            (set-cell out (first (first corners)) (second (first corners)) 2)\n            out)))))"
+  },
+  {
+    "id": "E40",
+    "name": "Recolor orange components that touch a grid corner",
+    "difficulty": "easy",
+    "written_solution": "Check every orange(7) component. If any cell of that component sits in one of the four corners of the whole grid, recolor the entire component to blue(1). Other orange(7) components stay orange(7).",
+    "program_solution": "(rule!\n  (let* ((h (rows g))\n         (w (cols g))\n         (corners (list (list 0 0) (list 0 (- w 1)) (list (- h 1) 0) (list (- h 1) (- w 1)))))\n    (for/fold ([out g]) ([obj (in-list (filter (lambda (o) (= (obj-color o) 7)) (objects g 0)))])\n      (if (any? (lambda (p) (member? p corners)) (obj-cells obj))\n          (paint-cells out (obj-cells obj) 1)\n          out))))"
+  },
+  {
+    "id": "E41",
+    "name": "Recolor the smallest red component",
+    "difficulty": "easy",
+    "written_solution": "Compare the red(2) connected components by area. The unique smallest one becomes cyan(8); all larger red(2) components and any distractor colors stay as they are.",
+    "program_solution": "(rule!\n  (let* ((reds (filter (lambda (o) (= (obj-color o) 2)) (objects g 0)))\n         (target (first (sort reds (lambda (a b) (< (obj-size a) (obj-size b)))))))\n    (paint-cells g (obj-cells target) 8)))"
+  },
+  {
+    "id": "E42",
+    "name": "Grow a blue plus around each red singleton",
+    "difficulty": "easy",
+    "written_solution": "Each red(2) singleton grows a blue(1) orthogonal halo. Paint the up, down, left, and right neighbors blue(1) wherever those neighbor cells are empty. Keep the red(2) center and any blockers unchanged.",
+    "program_solution": "(rule!\n  (for/fold ([out g]) ([obj (in-list (filter (lambda (o) (and (= (obj-color o) 2) (= (obj-size o) 1))) (objects g 0)))])\n    (let ((p (first (obj-cells obj))))\n      (foldl (lambda (d acc)\n               (let ((nr (+ (first p) (first d)))\n                     (nc (+ (second p) (second d))))\n                 (if (and (in-bounds? nr nc (rows g) (cols g)) (= (at g nr nc) 0))\n                     (set-cell acc nr nc 1)\n                     acc)))\n             out\n             cardinal-deltas))))"
+  },
+  {
+    "id": "M36",
+    "name": "Top legend remaps object colors",
+    "difficulty": "medium",
+    "written_solution": "The top two rows form a color legend: each nonzero source color in row 0 maps to the aligned nonzero target color in row 1. Recolor every object below the legend using that mapping, while leaving the legend rows themselves unchanged.",
+    "program_solution": "(rule!\n  (let ((mapping\n         (filter (lambda (p) (and (not (= (first p) 0)) (not (= (second p) 0))))\n                 (for/list ([c (in-range (cols g))]) (list (at g 0 c) (at g 1 c))))))\n    (grid-from-fn (rows g) (cols g)\n      (lambda (r c)\n        (let* ((v (at g r c))\n               (hit (filter (lambda (p) (= (first p) v)) mapping)))\n          (if (and (>= r 2) (not (empty? hit)))\n              (second (first hit))\n              v))))))"
+  },
+  {
+    "id": "M37",
+    "name": "Match objects to a template shape",
+    "difficulty": "medium",
+    "written_solution": "The unique cyan(8) template object shows the target shape. Any red(2) object whose normalized shape matches the template is recolored to green(3); non-matching red(2) objects stay red(2). The template itself stays cyan(8).",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (cell<? a b)\n      (or (< (first a) (first b))\n          (and (= (first a) (first b)) (< (second a) (second b)))))\n    (define (norm cells) (sort (normalize-cells cells) cell<?))\n    (define template (norm (obj-cells (first (filter (lambda (o) (= (obj-color o) 8)) (objects g 0))))))\n    (for/fold ([out g]) ([obj (in-list (filter (lambda (o) (= (obj-color o) 2)) (objects g 0)))])\n      (if (equal? (norm (obj-cells obj)) template)\n          (paint-cells out (obj-cells obj) 3)\n          out))))"
+  },
+  {
+    "id": "M38",
+    "name": "Draw rectangle outlines from opposite-corner markers",
+    "difficulty": "medium",
+    "written_solution": "Each non-background color appears exactly twice as single markers. Treat those two cells as opposite corners of a rectangle and draw the rectangle outline in that same color, keeping the corner markers as part of the border.",
+    "program_solution": "(rule!\n  (let ((colors (sort (filter (lambda (v) (not (= v 0))) (grid-colors g)) <)))\n    (for/fold ([out g]) ([color (in-list colors)])\n      (let ((pts (find-color g color)))\n        (if (= (length pts) 2)\n            (let* ((a (first pts))\n                   (b (second pts))\n                   (r1 (min (first a) (first b)))\n                   (r2 (max (first a) (first b)))\n                   (c1 (min (second a) (second b)))\n                   (c2 (max (second a) (second b)))\n                   (cells (filter (lambda (p) (or (= (first p) r1) (= (first p) r2)\n                                                   (= (second p) c1) (= (second p) c2)))\n                                  (positions-in-rect r1 c1 r2 c2))))\n              (paint-cells out cells color))\n            out)))))"
+  },
+  {
+    "id": "M39",
+    "name": "Slide all objects rightward until the wall",
+    "difficulty": "medium",
+    "written_solution": "The gray(5) vertical line is a wall. Remove the colored objects on its left, then slide each whole object rigidly to the right until the next step would hit the wall or another settled object. Shapes and colors are preserved.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define movable\n      (sort (filter (lambda (o) (or (= (obj-color o) 2) (= (obj-color o) 3) (= (obj-color o) 4))) (objects g 0))\n            (lambda (a b)\n              (if (= (obj-c2 a) (obj-c2 b))\n                  (> (obj-r1 a) (obj-r1 b))\n                  (> (obj-c2 a) (obj-c2 b))))))\n    (define cleared (foldl (lambda (obj acc) (erase-cells acc (obj-cells obj) 0)) g movable))\n    (define occupied\n      (for/set ([cell (in-list (grid-cells cleared))] #:when (= (third cell) 5))\n        (cons (first cell) (second cell))))\n    (define (blocked? cells occ)\n      (any? (lambda (p)\n              (or (not (in-bounds? (first p) (second p) (rows g) (cols g)))\n                  (set-member? occ (cons (first p) (second p)))))\n            cells))\n    (define (shift cells) (map (lambda (p) (list (first p) (+ (second p) 1))) cells))\n    (define (slide-cells cells occ)\n      (let loop ([cur cells])\n        (let ((nxt (shift cur)))\n          (if (blocked? nxt occ) cur (loop nxt)))))\n    (let-values ([(out final-occ)\n                  (for/fold ([out cleared] [occ occupied]) ([obj (in-list movable)])\n                    (let* ((landed (slide-cells (obj-cells obj) occ))\n                           (new-out (paint-cells out landed (obj-color obj)))\n                           (new-occ (for/fold ([o occ]) ([p (in-list landed)])\n                                      (set-add o (cons (first p) (second p))))))\n                      (values new-out new-occ)))])\n      out)))"
+  },
+  {
+    "id": "M40",
+    "name": "Rotate each blue object using its control marker",
+    "difficulty": "medium",
+    "written_solution": "Each magenta(6) object has a control digit immediately above the top-left corner of its bbox. The digit says how much to rotate that object within its own square box: 1 → identity, 2 → 90° clockwise, 3 → 180°, and 4 → 270° clockwise.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (renorm cells) (normalize-cells cells))\n    (define (rot90 cells h w) (renorm (map (lambda (p) (list (second p) (- h 1 (first p)))) cells)))\n    (define (rot180 cells h w) (renorm (map (lambda (p) (list (- h 1 (first p)) (- w 1 (second p)))) cells)))\n    (define (rot270 cells h w) (renorm (map (lambda (p) (list (- w 1 (second p)) (first p))) cells)))\n    (for/fold ([out g]) ([obj (in-list (filter (lambda (o) (= (obj-color o) 6)) (objects g 0)))])\n      (let* ((code (safe-at g (- (obj-r1 obj) 1) (obj-c1 obj) 0))\n             (shape (normalize-cells (obj-cells obj)))\n             (hh (obj-h obj))\n             (ww (obj-w obj))\n             (tshape (cond [(= code 1) shape]\n                           [(= code 2) (rot90 shape hh ww)]\n                           [(= code 3) (rot180 shape hh ww)]\n                           [else (rot270 shape hh ww)]))\n             (cleared (erase-cells out (obj-cells obj) 0))\n             (placed (map (lambda (p) (list (+ (obj-r1 obj) (first p)) (+ (obj-c1 obj) (second p)))) tshape)))\n        (paint-cells cleared placed 6)))))"
+  },
+  {
+    "id": "M41",
+    "name": "Recolor objects by number of holes",
+    "difficulty": "medium",
+    "written_solution": "Every object starts as magenta(6), but its final color depends on how many enclosed holes it contains. Components with no holes become red(2), components with one hole become green(3), and components with two or more holes become yellow(4).",
+    "program_solution": "(rule!\n  (for/fold ([out g]) ([obj (in-list (filter (lambda (o) (= (obj-color o) 6)) (objects g 0)))])\n    (let* ((n (topo-count-holes g obj 0))\n           (color (cond [(= n 0) 2] [(= n 1) 3] [else 4])))\n      (paint-cells out (obj-cells obj) color))))"
+  },
+  {
+    "id": "M42",
+    "name": "Marker count selects the matching-size object",
+    "difficulty": "medium",
+    "written_solution": "Count the blue(1) markers in the top row. Then find the red(2) component below whose area equals that count and recolor that entire component to green(3). The other red(2) objects stay red(2).",
+    "program_solution": "(rule!\n  (let ((target (count-where (lambda (v) (= v 1)) (row g 0))))\n    (for/fold ([out g]) ([obj (in-list (filter (lambda (o) (= (obj-color o) 2)) (objects g 0)))])\n      (if (= (obj-size obj) target)\n          (paint-cells out (obj-cells obj) 3)\n          out))))"
+  },
+  {
+    "id": "H36",
+    "name": "Fill the common interior of all hollow frames",
+    "difficulty": "hard",
+    "written_solution": "Each colored hollow rectangle contributes its interior region. Compute the overlap common to all of those interiors and fill exactly that common region with red(2), while leaving the original frames in place.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (border-cells obj)\n      (filter (lambda (p) (or (= (first p) (obj-r1 obj)) (= (first p) (obj-r2 obj))\n                              (= (second p) (obj-c1 obj)) (= (second p) (obj-c2 obj))))\n              (positions-in-rect (obj-r1 obj) (obj-c1 obj) (obj-r2 obj) (obj-c2 obj))))\n    (define (cell<? a b)\n      (or (< (first a) (first b))\n          (and (= (first a) (first b)) (< (second a) (second b)))))\n    (define frames\n      (filter (lambda (obj)\n                (and (not (= (obj-color obj) 8))\n                     (equal? (sort (obj-cells obj) cell<?) (sort (border-cells obj) cell<?))))\n              (objects g 0)))\n    (if (empty? frames)\n        g\n        (let* ((first-interior (positions-in-rect (+ (obj-r1 (first frames)) 1)\n                                                  (+ (obj-c1 (first frames)) 1)\n                                                  (- (obj-r2 (first frames)) 1)\n                                                  (- (obj-c2 (first frames)) 1)))\n               (common (filter (lambda (p)\n                                  (all? (lambda (obj)\n                                          (and (> (first p) (obj-r1 obj)) (< (first p) (obj-r2 obj))\n                                               (> (second p) (obj-c1 obj)) (< (second p) (obj-c2 obj))))\n                                        frames))\n                                first-interior)))\n          (paint-cells g common 2)))))"
+  },
+  {
+    "id": "H37",
+    "name": "Flood each chamber by distance modulo 3",
+    "difficulty": "hard",
+    "written_solution": "Use the seeds of red(2) as BFS sources and treat gray(5) cells as walls. Every reachable floor cell is recolored by its shortest-path distance modulo 3: distance 0 becomes green(3), distance 1 becomes yellow(4), and distance 2 becomes gray(5).",
+    "program_solution": "(rule!\n  (let ((dist (make-hash)))\n    (define queue (map (lambda (p) (cons (first p) (second p))) (find-color g 2)))\n    (for ([p (in-list queue)]) (hash-set! dist p 0))\n    (let bfs ([step 0])\n      (unless (empty? queue)\n        (let ((cur (first queue)))\n          (set! queue (rest queue))\n          (for ([d (in-list cardinal-deltas)])\n            (let ((nr (+ (car cur) (first d)))\n                  (nc (+ (cdr cur) (second d))))\n              (when (and (in-bounds? nr nc (rows g) (cols g))\n                         (not (hash-has-key? dist (cons nr nc)))\n                         (or (= (at g nr nc) 0) (= (at g nr nc) 2)))\n                (hash-set! dist (cons nr nc) (+ (hash-ref dist cur) 1))\n                (set! queue (append queue (list (cons nr nc))))))))\n        (bfs (+ step 1))))\n    (grid-from-fn (rows g) (cols g)\n      (lambda (r c)\n        (if (hash-has-key? dist (cons r c))\n            (let ((m (modulo (hash-ref dist (cons r c)) 3)))\n              (cond [(= m 0) 3] [(= m 1) 4] [else 5]))\n            (at g r c))))))"
+  },
+  {
+    "id": "H38",
+    "name": "Stamp the common intersection of multiple shapes",
+    "difficulty": "hard",
+    "written_solution": "Normalize all red(2) objects to their own top-left corners and intersect their cell sets. The shared subshape is then stamped in green(3) starting at the anchor cell marked 9, and the output contains only that stamped result.",
+    "program_solution": "(rule!\n  (let* ((shapes (map (lambda (obj) (normalize-cells (obj-cells obj)))\n                      (filter (lambda (o) (= (obj-color o) 2)) (objects g 0))))\n         (base (first shapes))\n         (common (filter (lambda (p) (all? (lambda (s) (member? p s)) shapes)) base))\n         (anchor (first (find-color g 9)))\n         (placed (map (lambda (p) (list (+ (first anchor) (first p)) (+ (second anchor) (second p)))) common)))\n    (paint-cells (empty-grid (rows g) (cols g) 0) placed 3)))"
+  },
+  {
+    "id": "H39",
+    "name": "Compose multiple transforms from a control strip",
+    "difficulty": "hard",
+    "written_solution": "Take the unique blue(1) template and apply the bottom control-strip operations from left to right. Here blue(1) → 90° clockwise, red(2) → 180°, green(3) → flip horizontal, yellow(4) → flip vertical. Stamp the final transformed shape in green(3) at the maroon(9) anchor.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define template (first (filter (lambda (o) (= (obj-color o) 2)) (objects g 0))))\n    (define (renorm cells) (normalize-cells cells))\n    (define (rot90 cells h w) (list (renorm (map (lambda (p) (list (second p) (- h 1 (first p)))) cells)) w h))\n    (define (rot180 cells h w) (list (renorm (map (lambda (p) (list (- h 1 (first p)) (- w 1 (second p)))) cells)) h w))\n    (define (flip-h cells h w) (list (renorm (map (lambda (p) (list (first p) (- w 1 (second p)))) cells)) h w))\n    (define (flip-v cells h w) (list (renorm (map (lambda (p) (list (- h 1 (first p)) (second p))) cells)) h w))\n    (define start (list (normalize-cells (obj-cells template)) (obj-h template) (obj-w template)))\n    (define ops (filter (lambda (v) (and (>= v 1) (<= v 4))) (row g (- (rows g) 1))))\n    (define final\n      (foldl (lambda (op state)\n               (let ((cells (first state)) (hh (second state)) (ww (third state)))\n                 (cond [(= op 1) (rot90 cells hh ww)]\n                       [(= op 2) (rot180 cells hh ww)]\n                       [(= op 3) (flip-h cells hh ww)]\n                       [else (flip-v cells hh ww)])))\n             start\n             ops))\n    (define anchor (first (find-color g 9)))\n    (define placed (map (lambda (p) (list (+ (first anchor) (first p)) (+ (second anchor) (second p)))) (first final)))\n    (paint-cells (empty-grid (rows g) (cols g) 0) placed 3)))"
+  },
+  {
+    "id": "H40",
+    "name": "Extract the hole of the selected hollow object",
+    "difficulty": "hard",
+    "written_solution": "the unique selector color in the top row tells you which hollow object to use. Find the non-singleton object with that same color, extract the shape of its hole region, normalize it, and stamp that hole pattern at the anchor in cyan(8).",
+    "program_solution": "(rule!\n  (let* ((selector (first (filter (lambda (v) (and (>= v 2) (<= v 7))) (row g 0))))\n         (target (first (filter (lambda (o) (and (= (obj-color o) selector) (> (obj-size o) 1))) (objects g 0))))\n         (regions (find-0-regions g 0))\n         (holes (append* (filter (lambda (reg)\n                                   (all? (lambda (p)\n                                           (and (> (first p) (obj-r1 target)) (< (first p) (obj-r2 target))\n                                                (> (second p) (obj-c1 target)) (< (second p) (obj-c2 target))))\n                                         reg))\n                                 regions)))\n         (shape (normalize-cells holes))\n         (anchor (first (find-color g 9)))\n         (placed (map (lambda (p) (list (+ (first anchor) (first p)) (+ (second anchor) (second p)))) shape)))\n    (paint-cells (empty-grid (rows g) (cols g) 0) placed 8)))"
+  },
+  {
+    "id": "H41",
+    "name": "Stamp dihedral variants of a template at local anchors",
+    "difficulty": "hard",
+    "written_solution": "Each anchor 9 has a control code immediately to its left. That code selects one of the 8 dihedral transforms of the template shape—identity, rotations, flips, and diagonal reflections. Stamp the chosen variant at each anchor in green(3).",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define template (first (filter (lambda (o) (= (obj-color o) 2)) (objects g 0))))\n    (define (renorm cells) (normalize-cells cells))\n    (define (rot90 cells h w) (list (renorm (map (lambda (p) (list (second p) (- h 1 (first p)))) cells)) w h))\n    (define (rot180 cells h w) (list (renorm (map (lambda (p) (list (- h 1 (first p)) (- w 1 (second p)))) cells)) h w))\n    (define (rot270 cells h w) (list (renorm (map (lambda (p) (list (- w 1 (second p)) (first p))) cells)) w h))\n    (define (flip-h cells h w) (list (renorm (map (lambda (p) (list (first p) (- w 1 (second p)))) cells)) h w))\n    (define (flip-v cells h w) (list (renorm (map (lambda (p) (list (- h 1 (first p)) (second p))) cells)) h w))\n    (define (flip-d cells h w) (list (renorm (map (lambda (p) (list (second p) (first p))) cells)) w h))\n    (define (flip-a cells h w) (list (renorm (map (lambda (p) (list (- w 1 (second p)) (- h 1 (first p)))) cells)) w h))\n    (define base (normalize-cells (obj-cells template)))\n    (define (apply-code code)\n      (cond [(= code 1) (list base (obj-h template) (obj-w template))]\n            [(= code 2) (rot90 base (obj-h template) (obj-w template))]\n            [(= code 3) (rot180 base (obj-h template) (obj-w template))]\n            [(= code 4) (rot270 base (obj-h template) (obj-w template))]\n            [(= code 5) (flip-h base (obj-h template) (obj-w template))]\n            [(= code 6) (flip-v base (obj-h template) (obj-w template))]\n            [(= code 7) (flip-d base (obj-h template) (obj-w template))]\n            [else (flip-a base (obj-h template) (obj-w template))]))\n    (foldl (lambda (anchor out)\n             (let* ((code (safe-at g (first anchor) (- (second anchor) 1) 0))\n                    (shape (first (apply-code code)))\n                    (placed (map (lambda (p) (list (+ (first anchor) (first p)) (+ (second anchor) (second p)))) shape)))\n               (paint-cells out placed 3)))\n           (empty-grid (rows g) (cols g) 0)\n           (find-color g 9))))"
+  },
+  {
+    "id": "H42",
+    "name": "Stamp the shape difference A minus B",
+    "difficulty": "hard",
+    "written_solution": "Normalize the red(2) A-shape and the yellow(4) B-shape to their own top-left corners. Subtract the B cells from the A cells and stamp the remaining difference shape at the maroon(9) anchor in magenta(6).",
+    "program_solution": "(rule!\n  (let* ((a (normalize-cells (obj-cells (first (filter (lambda (o) (= (obj-color o) 2)) (objects g 0))))))\n         (b (normalize-cells (obj-cells (first (filter (lambda (o) (= (obj-color o) 4)) (objects g 0))))))\n         (diff (filter (lambda (p) (not (member? p b))) a))\n         (anchor (first (find-color g 9)))\n         (placed (map (lambda (p) (list (+ (first anchor) (first p)) (+ (second anchor) (second p)))) diff)))\n    (paint-cells (empty-grid (rows g) (cols g) 0) placed 6)))"
+  }
+]

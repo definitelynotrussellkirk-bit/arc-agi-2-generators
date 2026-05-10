@@ -1,0 +1,2117 @@
+{
+  "meta": {
+    "title": "ARC-style Puzzle Bank — 21 more puzzles (set 4)",
+    "subtitle": "A fourth bank of 7 easy, 7 medium, and 7 hard puzzles with written and programmatic solutions.",
+    "reference_file": "arc_puzzle_bank_21_set4_reference.py"
+  },
+  "puzzles": [
+    {
+      "difficulty": "easy",
+      "title": "2x2 Square Selector",
+      "skills": [
+        "shape recognition",
+        "same-size recolor",
+        "4-connectivity"
+      ],
+      "scaffold": [
+        "Find all blue(1) connected components.",
+        "Normalize each shape.",
+        "Recolor only the exact 2x2 squares red(2)."
+      ],
+      "written_solution": "Find every blue(1) object that is exactly a 2x2 square. Recolor those square cells red(2). Leave the other blue(1) objects unchanged.",
+      "id": "S4_E1",
+      "train": [
+        {
+          "input": [
+            "00000000",
+            "01100100",
+            "01100100",
+            "00000110",
+            "00000000",
+            "01111000",
+            "00000000",
+            "00000000"
+          ],
+          "output": [
+            "00000000",
+            "02200100",
+            "02200100",
+            "00000110",
+            "00000000",
+            "01111000",
+            "00000000",
+            "00000000"
+          ]
+        },
+        {
+          "input": [
+            "000000000",
+            "010000110",
+            "010000110",
+            "010000000",
+            "010011100",
+            "000001000",
+            "011000000",
+            "011000000",
+            "000000000"
+          ],
+          "output": [
+            "000000000",
+            "010000220",
+            "010000220",
+            "010000000",
+            "010011100",
+            "000001000",
+            "022000000",
+            "022000000",
+            "000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000000000",
+          "0110000000",
+          "0110001000",
+          "0000001000",
+          "0000101100",
+          "0000100000",
+          "0000100110",
+          "0000000110",
+          "0111100000",
+          "0000000000"
+        ],
+        "output": [
+          "0000000000",
+          "0220000000",
+          "0220001000",
+          "0000001000",
+          "0000101100",
+          "0000100000",
+          "0000100220",
+          "0000000220",
+          "0111100000",
+          "0000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out=copyg(grid)\n    for comp in components(grid,{1},4):\n        if normalize(comp['cells'])==sorted(square2):\n            for r,c in comp['cells']:\n                out[r][c]=2\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define square2 (list (list 0 0) (list 0 1) (list 1 0) (list 1 1))) (define (norm-cells cells) (sort (normalize-cells cells) cell<)) (define (objs-color grid color) (filter (lambda (obj) (= (obj-color obj) color)) (objects grid 0))) (define (paint-obj grid obj color) (paint-cells grid (obj-cells obj) color)) (for/fold ((out g)) ((obj (in-list (objs-color g 1)))) (if (equal? (norm-cells (obj-cells obj)) square2) (paint-obj out obj 2) out))))"
+    },
+    {
+      "difficulty": "easy",
+      "title": "Lowest Red Object",
+      "skills": [
+        "vertical ranking",
+        "component extraction",
+        "object recolor"
+      ],
+      "scaffold": [
+        "Extract red(2) connected components.",
+        "Compare how low their bounding boxes reach.",
+        "Recolor only the lowest red object green(3)."
+      ],
+      "written_solution": "Among all red(2) objects, choose the one whose bbox reaches furthest down. Recolor that whole object green(3). Keep the higher red(2) objects unchanged.",
+      "id": "S4_E2",
+      "train": [
+        {
+          "input": [
+            "0000000000",
+            "0220000000",
+            "0220000000",
+            "0000000000",
+            "0000022200",
+            "0000000000",
+            "0000000000",
+            "0000002000",
+            "0000002000",
+            "0000002200"
+          ],
+          "output": [
+            "0000000000",
+            "0220000000",
+            "0220000000",
+            "0000000000",
+            "0000022200",
+            "0000000000",
+            "0000000000",
+            "0000003000",
+            "0000003000",
+            "0000003300"
+          ]
+        },
+        {
+          "input": [
+            "00000000000",
+            "00000000200",
+            "00000000200",
+            "00222000200",
+            "00020000000",
+            "00000000000",
+            "00002200000",
+            "00002200000",
+            "00000000000"
+          ],
+          "output": [
+            "00000000000",
+            "00000000200",
+            "00000000200",
+            "00222000200",
+            "00020000000",
+            "00000000000",
+            "00003300000",
+            "00003300000",
+            "00000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "00000000000",
+          "00000222200",
+          "00000000000",
+          "00000000000",
+          "02000000000",
+          "02000000000",
+          "02200000000",
+          "00000000200",
+          "00000000200",
+          "00000000200",
+          "00000000200"
+        ],
+        "output": [
+          "00000000000",
+          "00000222200",
+          "00000000000",
+          "00000000000",
+          "02000000000",
+          "02000000000",
+          "02200000000",
+          "00000000300",
+          "00000000300",
+          "00000000300",
+          "00000000300"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out=copyg(grid)\n    comps=components(grid,{2},4)\n    target=max(comps,key=lambda comp:(bbox(comp['cells'])[2], bbox(comp['cells'])[0], bbox(comp['cells'])[1]))\n    for r,c in target['cells']:\n        out[r][c]=3\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define (objs-color grid color) (filter (lambda (obj) (= (obj-color obj) color)) (objects grid 0))) (define (paint-obj grid obj color) (paint-cells grid (obj-cells obj) color)) (let ((target (first (sort (objs-color g 2) (lambda (a b) (cond ((not (= (obj-r2 a) (obj-r2 b))) (> (obj-r2 a) (obj-r2 b))) ((not (= (obj-r1 a) (obj-r1 b))) (> (obj-r1 a) (obj-r1 b))) (else (> (obj-c1 a) (obj-c1 b))))))))) (paint-obj g target 3))))"
+    },
+    {
+      "difficulty": "easy",
+      "title": "Vertical Endpoint Fill",
+      "skills": [
+        "line completion",
+        "column reasoning",
+        "same-color span fill"
+      ],
+      "scaffold": [
+        "Look for columns containing exactly two orange(7) markers.",
+        "Treat the two markers as the endpoints of a vertical segment.",
+        "Fill every cell between them orange(7)."
+      ],
+      "written_solution": "Whenever a column contains exactly two orange(7) cells, fill the whole vertical segment between them orange(7), including the endpoints.",
+      "id": "S4_E3",
+      "train": [
+        {
+          "input": [
+            "00000000",
+            "07000000",
+            "00000700",
+            "00000000",
+            "00000000",
+            "07000000",
+            "00000700",
+            "00000000"
+          ],
+          "output": [
+            "00000000",
+            "07000000",
+            "07000700",
+            "07000700",
+            "07000700",
+            "07000700",
+            "00000700",
+            "00000000"
+          ]
+        },
+        {
+          "input": [
+            "000700000",
+            "000000000",
+            "000000070",
+            "000000000",
+            "000700000",
+            "000000000",
+            "000000000",
+            "000000000",
+            "000000070"
+          ],
+          "output": [
+            "000700000",
+            "000700000",
+            "000700070",
+            "000700070",
+            "000700070",
+            "000000070",
+            "000000070",
+            "000000070",
+            "000000070"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000000070",
+          "0070000000",
+          "0000000000",
+          "0000000070",
+          "0000000000",
+          "0000070000",
+          "0000000000",
+          "0070000000",
+          "0000000000",
+          "0000070000"
+        ],
+        "output": [
+          "0000000070",
+          "0070000070",
+          "0070000070",
+          "0070000070",
+          "0070000000",
+          "0070070000",
+          "0070070000",
+          "0070070000",
+          "0000070000",
+          "0000070000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    return fill_between_vertical_markers(grid,7)",
+      "program_solution": "(rule! (let ((dummy 0)) (for/fold ((out g)) ((c (in-range (cols g)))) (let ((hits (filter (lambda (r) (= (at g r c) 7)) (range 0 (rows g))))) (if (= (length hits) 2) (for/fold ((acc out)) ((r (in-range (first hits) (+ (second hits) 1)))) (set-cell acc r c 7)) out)))))"
+    },
+    {
+      "difficulty": "easy",
+      "title": "Ring Centers",
+      "skills": [
+        "local enclosure",
+        "3x3 motif detection",
+        "center fill"
+      ],
+      "scaffold": [
+        "Scan for gray(5) 3x3 rings.",
+        "Check that the center of the ring is black(0).",
+        "Fill each such center with cyan(8)."
+      ],
+      "written_solution": "Find every gray(5) 3x3 ring and place a cyan(8) cell in its center. Leave the ring itself unchanged.",
+      "id": "S4_E4",
+      "train": [
+        {
+          "input": [
+            "00000055",
+            "05550055",
+            "05050000",
+            "05550000",
+            "00005550",
+            "00005050",
+            "00005550",
+            "00000000"
+          ],
+          "output": [
+            "00000055",
+            "05550055",
+            "05850000",
+            "05550000",
+            "00005550",
+            "00005850",
+            "00005550",
+            "00000000"
+          ]
+        },
+        {
+          "input": [
+            "0000000000",
+            "0000000000",
+            "0055500000",
+            "0050500000",
+            "0055500000",
+            "0000005550",
+            "0000005050",
+            "0000005550",
+            "0000000000"
+          ],
+          "output": [
+            "0000000000",
+            "0000000000",
+            "0055500000",
+            "0058500000",
+            "0055500000",
+            "0000005550",
+            "0000005850",
+            "0000005550",
+            "0000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000000000",
+          "0000055500",
+          "0000050500",
+          "0000055500",
+          "0000000000",
+          "0000000000",
+          "0555005550",
+          "0505005050",
+          "0555005550",
+          "0000000000"
+        ],
+        "output": [
+          "0000000000",
+          "0000055500",
+          "0000058500",
+          "0000055500",
+          "0000000000",
+          "0000000000",
+          "0555005550",
+          "0585005850",
+          "0555005550",
+          "0000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    return ring3_centers(grid,5,8)",
+      "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range 0 (- (rows g) 2))) (c (in-range 0 (- (cols g) 2)))) (let ((ring (list (at g r c) (at g r (+ c 1)) (at g r (+ c 2)) (at g (+ r 1) c) (at g (+ r 1) (+ c 2)) (at g (+ r 2) c) (at g (+ r 2) (+ c 1)) (at g (+ r 2) (+ c 2))))) (if (and (all? (lambda (v) (= v 5)) ring) (= (at g (+ r 1) (+ c 1)) 0)) (set-cell out (+ r 1) (+ c 1) 8) out)))))"
+    },
+    {
+      "difficulty": "easy",
+      "title": "T-Tetromino Selector",
+      "skills": [
+        "shape matching",
+        "rotation handling",
+        "component recolor"
+      ],
+      "scaffold": [
+        "Extract green(3) 4-connected components.",
+        "Recognize which components are T-tetrominoes in any rotation.",
+        "Recolor only those T-shaped objects magenta(6)."
+      ],
+      "written_solution": "Find every green(3) object shaped like a T tetromino, allowing rotations. Recolor those cells magenta(6) and leave the non-T green(3) objects unchanged.",
+      "id": "S4_E5",
+      "train": [
+        {
+          "input": [
+            "0000000000",
+            "0333003000",
+            "0030003000",
+            "0000003300",
+            "0000000000",
+            "0000000000",
+            "0033330000",
+            "0000000000",
+            "0000000000"
+          ],
+          "output": [
+            "0000000000",
+            "0666003000",
+            "0060003000",
+            "0000003300",
+            "0000000000",
+            "0000000000",
+            "0033330000",
+            "0000000000",
+            "0000000000"
+          ]
+        },
+        {
+          "input": [
+            "0000000000",
+            "0000000330",
+            "0030000330",
+            "0330000000",
+            "0030000000",
+            "0000003000",
+            "0000003300",
+            "0000003000",
+            "0000000000",
+            "0000000000"
+          ],
+          "output": [
+            "0000000000",
+            "0000000330",
+            "0060000330",
+            "0660000000",
+            "0060000000",
+            "0000006000",
+            "0000006600",
+            "0000006000",
+            "0000000000",
+            "0000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "00000000000",
+          "00030000000",
+          "00333000003",
+          "00000000003",
+          "00000000003",
+          "00000000003",
+          "00000033300",
+          "03000003000",
+          "03000000000",
+          "03300000000",
+          "00000000000"
+        ],
+        "output": [
+          "00000000000",
+          "00060000000",
+          "00666000003",
+          "00000000003",
+          "00000000003",
+          "00000000003",
+          "00000066600",
+          "03000006000",
+          "03000000000",
+          "03300000000",
+          "00000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out=copyg(grid)\n    for comp in components(grid,{3},4):\n        if tuple(normalize(comp['cells'])) in T_shapes:\n            for r,c in comp['cells']:\n                out[r][c]=6\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define t-shapes (list (list (list 0 0) (list 0 1) (list 0 2) (list 1 1)) (list (list 0 0) (list 1 0) (list 1 1) (list 2 0)) (list (list 0 1) (list 1 0) (list 1 1) (list 1 2)) (list (list 0 1) (list 1 0) (list 1 1) (list 2 1)))) (define (norm-cells cells) (sort (normalize-cells cells) cell<)) (define (objs-color grid color) (filter (lambda (obj) (= (obj-color obj) color)) (objects grid 0))) (define (paint-obj grid obj color) (paint-cells grid (obj-cells obj) color)) (define (shape-member? shape shapes) (member? shape shapes)) (for/fold ((out g)) ((obj (in-list (objs-color g 3)))) (if (shape-member? (norm-cells (obj-cells obj)) t-shapes) (paint-obj out obj 6) out))))"
+    },
+    {
+      "difficulty": "easy",
+      "title": "Left-Border Blue Objects",
+      "skills": [
+        "border contact",
+        "component filtering",
+        "same-size recolor"
+      ],
+      "scaffold": [
+        "Find blue(1) connected components.",
+        "Test whether each component touches the left border.",
+        "Recolor only the left-border components yellow(4)."
+      ],
+      "written_solution": "Recolor every blue(1) object that touches the left grid border to yellow(4). Keep the blue(1) objects that do not touch the left edge unchanged.",
+      "id": "S4_E6",
+      "train": [
+        {
+          "input": [
+            "000000000",
+            "100000000",
+            "100001000",
+            "100001000",
+            "000001100",
+            "110000000",
+            "110000000",
+            "000000000"
+          ],
+          "output": [
+            "000000000",
+            "400000000",
+            "400001000",
+            "400001000",
+            "000001100",
+            "440000000",
+            "440000000",
+            "000000000"
+          ]
+        },
+        {
+          "input": [
+            "1111000000",
+            "0000000000",
+            "0000000110",
+            "0000000110",
+            "0000000000",
+            "1000000000",
+            "1000000000",
+            "1100000000",
+            "0000000000"
+          ],
+          "output": [
+            "4444000000",
+            "0000000000",
+            "0000000110",
+            "0000000110",
+            "0000000000",
+            "4000000000",
+            "4000000000",
+            "4400000000",
+            "0000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000000000",
+          "1100000000",
+          "1100011100",
+          "0000001000",
+          "1000000000",
+          "1000000000",
+          "1000000000",
+          "1000000000",
+          "0000001110",
+          "0000000000"
+        ],
+        "output": [
+          "0000000000",
+          "4400000000",
+          "4400011100",
+          "0000001000",
+          "4000000000",
+          "4000000000",
+          "4000000000",
+          "4000000000",
+          "0000001110",
+          "0000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out=copyg(grid)\n    for comp in components(grid,{1},4):\n        if any(c==0 for r,c in comp['cells']):\n            for r,c in comp['cells']:\n                out[r][c]=4\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define (objs-color grid color) (filter (lambda (obj) (= (obj-color obj) color)) (objects grid 0))) (define (paint-obj grid obj color) (paint-cells grid (obj-cells obj) color)) (for/fold ((out g)) ((obj (in-list (objs-color g 1)))) (if (any? (lambda (p) (= (second p) 0)) (obj-cells obj)) (paint-obj out obj 4) out))))"
+    },
+    {
+      "difficulty": "easy",
+      "title": "Diagonal Domino Selector",
+      "skills": [
+        "8-connectivity",
+        "tiny shape classification",
+        "selective recolor"
+      ],
+      "scaffold": [
+        "Extract red(2) components using 8-connectivity.",
+        "Identify 2-cell diagonal dominoes.",
+        "Recolor only those diagonal dominoes cyan(8)."
+      ],
+      "written_solution": "Using diagonal adjacency, find every red(2) component that consists of exactly two diagonally touching cells. Recolor those components cyan(8). Leave horizontal and vertical dominoes red(2).",
+      "id": "S4_E7",
+      "train": [
+        {
+          "input": [
+            "00000000",
+            "02000220",
+            "00200000",
+            "00000000",
+            "00000000",
+            "02000200",
+            "02000020",
+            "00000000"
+          ],
+          "output": [
+            "00000000",
+            "08000220",
+            "00800000",
+            "00000000",
+            "00000000",
+            "02000800",
+            "02000080",
+            "00000000"
+          ]
+        },
+        {
+          "input": [
+            "000000020",
+            "000000002",
+            "000000000",
+            "002000000",
+            "002000000",
+            "000000000",
+            "000002200",
+            "020000000",
+            "002000000"
+          ],
+          "output": [
+            "000000080",
+            "000000008",
+            "000000000",
+            "002000000",
+            "002000000",
+            "000000000",
+            "000002200",
+            "080000000",
+            "008000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000000000",
+          "0200000200",
+          "0020000200",
+          "0000000000",
+          "0000200000",
+          "0000020000",
+          "0000000000",
+          "0022000200",
+          "0000000020",
+          "0000000000"
+        ],
+        "output": [
+          "0000000000",
+          "0800000200",
+          "0080000200",
+          "0000000000",
+          "0000800000",
+          "0000080000",
+          "0000000000",
+          "0022000800",
+          "0000000080",
+          "0000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out=copyg(grid)\n    for comp in components(grid,{2},8):\n        if len(comp['cells'])==2 and tuple(normalize(comp['cells'])) in diag2_shapes:\n            for r,c in comp['cells']:\n                out[r][c]=8\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define diag2-shapes (list (list (list 0 0) (list 1 1)) (list (list 0 1) (list 1 0)))) (define (norm-cells cells) (sort (normalize-cells cells) cell<)) (define (paint-obj grid obj color) (paint-cells grid (obj-cells obj) color)) (define (shape-member? shape shapes) (member? shape shapes)) (for/fold ((out g)) ((obj (in-list (filter (lambda (o) (= (obj-color o) 2)) (objects-8 g 0))))) (if (and (= (obj-size obj) 2) (shape-member? (norm-cells (obj-cells obj)) diag2-shapes)) (paint-obj out obj 8) out))))"
+    },
+    {
+      "difficulty": "medium",
+      "title": "Closest to Grid Center",
+      "skills": [
+        "spatial ranking",
+        "bounding-box centers",
+        "object recolor"
+      ],
+      "scaffold": [
+        "Find all green(3) objects.",
+        "Compute each object's bounding-box center.",
+        "Recolor the object whose center is closest to the center of the whole grid orange(7)."
+      ],
+      "written_solution": "Among the green(3) objects, locate the one whose bounding-box center is nearest the center of the grid. Recolor that object orange(7), leaving the others green(3).",
+      "id": "S4_M1",
+      "train": [
+        {
+          "input": [
+            "00000000000",
+            "03300000000",
+            "03300000000",
+            "00000000000",
+            "00003000000",
+            "00003000000",
+            "00003300030",
+            "00000000030",
+            "00000000030",
+            "00000000030",
+            "00000000000"
+          ],
+          "output": [
+            "00000000000",
+            "03300000000",
+            "03300000000",
+            "00000000000",
+            "00007000000",
+            "00007000000",
+            "00007700030",
+            "00000000030",
+            "00000000030",
+            "00000000030",
+            "00000000000"
+          ]
+        },
+        {
+          "input": [
+            "000000000000",
+            "000000033330",
+            "000000000000",
+            "000000000000",
+            "000003300000",
+            "000003300000",
+            "000000000000",
+            "030000000000",
+            "030000000000",
+            "033000000000"
+          ],
+          "output": [
+            "000000000000",
+            "000000033330",
+            "000000000000",
+            "000000000000",
+            "000007700000",
+            "000007700000",
+            "000000000000",
+            "030000000000",
+            "030000000000",
+            "033000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "000000000000",
+          "030000000000",
+          "030000000000",
+          "030000000000",
+          "000000000000",
+          "000003330000",
+          "000000300000",
+          "000000000000",
+          "000000000300",
+          "000000000300",
+          "000000000330",
+          "000000000000"
+        ],
+        "output": [
+          "000000000000",
+          "030000000000",
+          "030000000000",
+          "030000000000",
+          "000000000000",
+          "000007770000",
+          "000000700000",
+          "000000000000",
+          "000000000300",
+          "000000000300",
+          "000000000330",
+          "000000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out=copyg(grid)\n    h,w=len(grid),len(grid[0])\n    gc=((h-1)/2,(w-1)/2)\n    def dist(comp):\n        cr,cc=center_bbox(comp['cells'])\n        return abs(cr-gc[0])+abs(cc-gc[1])\n    comps=components(grid,{3},4)\n    target=min(comps,key=lambda comp:(dist(comp), bbox(comp['cells'])[0], bbox(comp['cells'])[1]))\n    for r,c in target['cells']:\n        out[r][c]=7\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define (objs-color grid color) (filter (lambda (obj) (= (obj-color obj) color)) (objects grid 0))) (define (paint-obj grid obj color) (paint-cells grid (obj-cells obj) color)) (define (bbox< a b) (cond ((not (= (obj-r1 a) (obj-r1 b))) (< (obj-r1 a) (obj-r1 b))) ((not (= (obj-c1 a) (obj-c1 b))) (< (obj-c1 a) (obj-c1 b))) ((not (= (obj-r2 a) (obj-r2 b))) (< (obj-r2 a) (obj-r2 b))) (else (< (obj-c2 a) (obj-c2 b))))) (define (center-distance2 obj) (+ (abs (- (+ (obj-r1 obj) (obj-r2 obj)) (- (rows g) 1))) (abs (- (+ (obj-c1 obj) (obj-c2 obj)) (- (cols g) 1))))) (let ((target (first (sort (objs-color g 3) (lambda (a b) (let ((da (center-distance2 a)) (db (center-distance2 b))) (if (= da db) (bbox< a b) (< da db)))))))) (paint-obj g target 7))))"
+    },
+    {
+      "difficulty": "medium",
+      "title": "Parallel Bars Become Solid",
+      "skills": [
+        "object pairing",
+        "rectangle completion",
+        "same-color fill"
+      ],
+      "scaffold": [
+        "Find single-column bars of the same color and height.",
+        "Match bars that share the same row span.",
+        "Fill the entire rectangle between each matched pair with that color."
+      ],
+      "written_solution": "Whenever two same-colored vertical bars have the same height and align on the same rows, fill the whole rectangle spanning those bars with that same color.",
+      "id": "S4_M2",
+      "train": [
+        {
+          "input": [
+            "000000000000",
+            "010010000000",
+            "010010000000",
+            "010010000000",
+            "010010000000",
+            "000000020020",
+            "000000020020",
+            "000000020020",
+            "000000000000"
+          ],
+          "output": [
+            "000000000000",
+            "011110000000",
+            "011110000000",
+            "011110000000",
+            "011110000000",
+            "000000022220",
+            "000000022220",
+            "000000022220",
+            "000000000000"
+          ]
+        },
+        {
+          "input": [
+            "00000000000",
+            "00000000000",
+            "00300030000",
+            "00300030000",
+            "00300030000",
+            "00000000404",
+            "00000000404",
+            "00000000404",
+            "00000000404",
+            "00000000000"
+          ],
+          "output": [
+            "00000000000",
+            "00000000000",
+            "00333330000",
+            "00333330000",
+            "00333330000",
+            "00000000444",
+            "00000000444",
+            "00000000444",
+            "00000000444",
+            "00000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000000000000",
+          "0100010000000",
+          "0100010000000",
+          "0100010000000",
+          "0100010000000",
+          "0000000000000",
+          "0000000060060",
+          "0000000060060",
+          "0000000060060",
+          "0000000000000",
+          "0000000000000"
+        ],
+        "output": [
+          "0000000000000",
+          "0111110000000",
+          "0111110000000",
+          "0111110000000",
+          "0111110000000",
+          "0000000000000",
+          "0000000066660",
+          "0000000066660",
+          "0000000066660",
+          "0000000000000",
+          "0000000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out=copyg(grid)\n    comps=components(grid,None,4)\n    # group vertical bars by color and row span\n    bars=[]\n    for comp in comps:\n        r1,c1,r2,c2=bbox(comp['cells'])\n        if c1==c2 and len(comp['cells'])==r2-r1+1 and len(comp['cells'])>=2:\n            bars.append((comp['color'], r1,r2,c1))\n    grouped=defaultdict(list)\n    for color,r1,r2,c in bars:\n        grouped[(color,r1,r2)].append(c)\n    for (color,r1,r2), cols in grouped.items():\n        cols=sorted(cols)\n        if len(cols)>=2:\n            # pair consecutive\n            for i in range(0,len(cols),2):\n                if i+1 < len(cols):\n                    c1,c2=cols[i],cols[i+1]\n                    for r in range(r1,r2+1):\n                        for c in range(c1,c2+1):\n                            out[r][c]=color\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define (bar? obj) (and (= (obj-c1 obj) (obj-c2 obj)) (= (obj-size obj) (+ 1 (- (obj-r2 obj) (obj-r1 obj)))) (>= (obj-size obj) 2))) (define (bar-key bar) (list (obj-color bar) (obj-r1 bar) (obj-r2 bar))) (define (same-key? a b) (and (= (first a) (first b)) (= (second a) (second b)) (= (third a) (third b)))) (define (unique-keys keys) (let loop ((remaining keys) (acc (list))) (cond ((empty? remaining) acc) ((any? (lambda (k) (same-key? k (first remaining))) acc) (loop (rest remaining) acc)) (else (loop (rest remaining) (append acc (list (first remaining)))))))) (let* ((bars (filter bar? (objects g 0))) (keys (unique-keys (map bar-key bars)))) (for/fold ((out g)) ((key (in-list keys))) (let* ((matching (filter (lambda (bar) (same-key? (bar-key bar) key)) bars)) (cols (sort (map obj-c1 matching) <)) (color (first key)) (r1 (second key)) (r2 (third key))) (let pair-loop ((remaining cols) (acc out)) (if (< (length remaining) 2) acc (let ((c1 (first remaining)) (c2 (second remaining))) (pair-loop (rest (rest remaining)) (for*/fold ((a acc)) ((r (in-range r1 (+ r2 1))) (c (in-range c1 (+ c2 1)))) (set-cell a r c color)))))))))))"
+    },
+    {
+      "difficulty": "medium",
+      "title": "Main-Diagonal Mirror",
+      "skills": [
+        "reflection symmetry",
+        "square-grid reasoning",
+        "copy without erase"
+      ],
+      "scaffold": [
+        "Work on the main diagonal of the square grid.",
+        "For each non-black cell, place a mirrored copy across that diagonal.",
+        "Keep the original cells too, producing a symmetric union."
+      ],
+      "written_solution": "Reflect every non-black(0) cell across the main diagonal of the square grid, adding the mirrored copy while preserving the original pattern.",
+      "id": "S4_M3",
+      "train": [
+        {
+          "input": [
+            "00000000",
+            "00000000",
+            "00000000",
+            "00000000",
+            "00030000",
+            "02030000",
+            "02200000",
+            "00000000"
+          ],
+          "output": [
+            "00000000",
+            "00000220",
+            "00000020",
+            "00003300",
+            "00030000",
+            "02030000",
+            "02200000",
+            "00000000"
+          ]
+        },
+        {
+          "input": [
+            "000000000",
+            "000000000",
+            "000000000",
+            "000000000",
+            "000000000",
+            "100000000",
+            "104000000",
+            "004440000",
+            "000000000"
+          ],
+          "output": [
+            "000001100",
+            "000000000",
+            "000000440",
+            "000000040",
+            "000000040",
+            "100000000",
+            "104000000",
+            "004440000",
+            "000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000000000",
+          "0000000000",
+          "0000000000",
+          "0000000000",
+          "0000000000",
+          "0007000000",
+          "0007000000",
+          "0007000000",
+          "0660000000",
+          "0060000000"
+        ],
+        "output": [
+          "0000000000",
+          "0000000060",
+          "0000000066",
+          "0000077700",
+          "0000000000",
+          "0007000000",
+          "0007000000",
+          "0007000000",
+          "0660000000",
+          "0060000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out=copyg(grid)\n    n=len(grid)\n    for r in range(n):\n        for c in range(n):\n            if grid[r][c]!=0:\n                out[c][r]=grid[r][c]\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range (cols g)))) (if (= (at g r c) 0) out (set-cell out c r (at g r c))))))"
+    },
+    {
+      "difficulty": "medium",
+      "title": "Marker Count Matches Size",
+      "skills": [
+        "counting",
+        "component size comparison",
+        "object selection"
+      ],
+      "scaffold": [
+        "Count the gray(5) marker cells.",
+        "Find blue(1) components and compare their sizes.",
+        "Recolor the blue object whose size matches the marker count red(2)."
+      ],
+      "written_solution": "Count the gray(5) markers at the top. Then find the blue(1) object with exactly that many cells and recolor it red(2).",
+      "id": "S4_M4",
+      "train": [
+        {
+          "input": [
+            "555000000000",
+            "000000000000",
+            "000000000000",
+            "010000110000",
+            "011000110000",
+            "000000000000",
+            "000000011110",
+            "000000000000",
+            "000000000000"
+          ],
+          "output": [
+            "555000000000",
+            "000000000000",
+            "000000000000",
+            "020000110000",
+            "022000110000",
+            "000000000000",
+            "000000011110",
+            "000000000000",
+            "000000000000"
+          ]
+        },
+        {
+          "input": [
+            "555500000000",
+            "000000000000",
+            "000000001000",
+            "001100001000",
+            "001100001000",
+            "000000000000",
+            "000000001000",
+            "000000011100",
+            "000000001000",
+            "000000000000"
+          ],
+          "output": [
+            "555500000000",
+            "000000000000",
+            "000000001000",
+            "002200001000",
+            "002200001000",
+            "000000000000",
+            "000000001000",
+            "000000011100",
+            "000000001000",
+            "000000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "5555500000000",
+          "0000000000000",
+          "0000000001100",
+          "0000000001100",
+          "0001000000000",
+          "0011100000000",
+          "0001000000000",
+          "0000000001000",
+          "0000000001000",
+          "0000000001100",
+          "0000000000000"
+        ],
+        "output": [
+          "5555500000000",
+          "0000000000000",
+          "0000000001100",
+          "0000000001100",
+          "0002000000000",
+          "0022200000000",
+          "0002000000000",
+          "0000000001000",
+          "0000000001000",
+          "0000000001100",
+          "0000000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out=copyg(grid)\n    count=sum(v==5 for row in grid for v in row)\n    comps=components(grid,{1},4)\n    target=min([comp for comp in comps if len(comp['cells'])==count], key=lambda comp:bbox(comp['cells']))\n    for r,c in target['cells']:\n        out[r][c]=2\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define (objs-color grid color) (filter (lambda (obj) (= (obj-color obj) color)) (objects grid 0))) (define (paint-obj grid obj color) (paint-cells grid (obj-cells obj) color)) (define (bbox< a b) (cond ((not (= (obj-r1 a) (obj-r1 b))) (< (obj-r1 a) (obj-r1 b))) ((not (= (obj-c1 a) (obj-c1 b))) (< (obj-c1 a) (obj-c1 b))) ((not (= (obj-r2 a) (obj-r2 b))) (< (obj-r2 a) (obj-r2 b))) (else (< (obj-c2 a) (obj-c2 b))))) (let* ((count5 (length (find-color g 5))) (target (first (sort (filter (lambda (obj) (= (obj-size obj) count5)) (objs-color g 1)) bbox<)))) (paint-obj g target 2))))"
+    },
+    {
+      "difficulty": "medium",
+      "title": "Rectangle to Center Cross",
+      "skills": [
+        "bounding boxes",
+        "odd-sized rectangles",
+        "shape reduction"
+      ],
+      "scaffold": [
+        "Identify solid yellow(4) rectangles with odd height and width.",
+        "Erase the rectangle's other cells.",
+        "Keep only its center row and center column, forming a cross."
+      ],
+      "written_solution": "Each solid yellow(4) rectangle is reduced to the cross made from its middle row and middle column. All other cells of the rectangle disappear.",
+      "id": "S4_M5",
+      "train": [
+        {
+          "input": [
+            "000000000000",
+            "044400000000",
+            "044400044400",
+            "044400044400",
+            "000000044400",
+            "000000044400",
+            "000000044400",
+            "000000000000",
+            "000000000000"
+          ],
+          "output": [
+            "000000000000",
+            "004000000000",
+            "044400004000",
+            "004000004000",
+            "000000044400",
+            "000000004000",
+            "000000004000",
+            "000000000000",
+            "000000000000"
+          ]
+        },
+        {
+          "input": [
+            "00000000000",
+            "04444400000",
+            "04444400000",
+            "04444400000",
+            "00000000000",
+            "00000444440",
+            "00000444440",
+            "00000444440",
+            "00000444440",
+            "00000444440",
+            "00000000000"
+          ],
+          "output": [
+            "00000000000",
+            "00040000000",
+            "04444400000",
+            "00040000000",
+            "00000000000",
+            "00000004000",
+            "00000004000",
+            "00000444440",
+            "00000004000",
+            "00000004000",
+            "00000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000000000000",
+          "0044400000000",
+          "0044400000000",
+          "0044400000000",
+          "0044400000000",
+          "0044400000000",
+          "0000000000000",
+          "0000000444440",
+          "0000000444440",
+          "0000000444440",
+          "0000000000000",
+          "0000000000000"
+        ],
+        "output": [
+          "0000000000000",
+          "0004000000000",
+          "0004000000000",
+          "0044400000000",
+          "0004000000000",
+          "0004000000000",
+          "0000000000000",
+          "0000000004000",
+          "0000000444440",
+          "0000000004000",
+          "0000000000000",
+          "0000000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out=copyg(grid)\n    for comp in components(grid,{4},4):\n        cells=comp['cells']\n        r1,c1,r2,c2=bbox(cells)\n        h,w=r2-r1+1,c2-c1+1\n        if h%2==1 and w%2==1 and is_solid_rectangle(cells):\n            for r,c in cells:\n                out[r][c]=0\n            mr=(r1+r2)//2\n            mc=(c1+c2)//2\n            for c in range(c1,c2+1):\n                out[mr][c]=4\n            for r in range(r1,r2+1):\n                out[r][mc]=4\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define (objs-color grid color) (filter (lambda (obj) (= (obj-color obj) color)) (objects grid 0))) (define (paint-obj grid obj color) (paint-cells grid (obj-cells obj) color)) (for/fold ((out g)) ((obj (in-list (objs-color g 4)))) (let* ((h (+ 1 (- (obj-r2 obj) (obj-r1 obj)))) (w (+ 1 (- (obj-c2 obj) (obj-c1 obj))))) (if (and (= (modulo h 2) 1) (= (modulo w 2) 1) (solid-rect? obj)) (let* ((cleared (paint-obj out obj 0)) (mr (quotient (+ (obj-r1 obj) (obj-r2 obj)) 2)) (mc (quotient (+ (obj-c1 obj) (obj-c2 obj)) 2)) (with-row (for/fold ((acc cleared)) ((c (in-range (obj-c1 obj) (+ (obj-c2 obj) 1)))) (set-cell acc mr c 4)))) (for/fold ((acc with-row)) ((r (in-range (obj-r1 obj) (+ (obj-r2 obj) 1)))) (set-cell acc r mc 4))) out)))))"
+    },
+    {
+      "difficulty": "medium",
+      "title": "Four Corners to Perimeter",
+      "skills": [
+        "corner detection",
+        "axis-aligned rectangles",
+        "outline drawing"
+      ],
+      "scaffold": [
+        "Group same-colored singleton corner cells.",
+        "Interpret each group of four as the corners of a rectangle.",
+        "Draw the full rectangle outline in that color."
+      ],
+      "written_solution": "Whenever four same-colored cells mark the corners of an axis-aligned rectangle, draw the complete perimeter of that rectangle in the same color.",
+      "id": "S4_M6",
+      "train": [
+        {
+          "input": [
+            "000000000000",
+            "020020000000",
+            "000000030030",
+            "000000000000",
+            "000000000000",
+            "020020000000",
+            "000000030030",
+            "000000000000",
+            "000000000000"
+          ],
+          "output": [
+            "000000000000",
+            "022220000000",
+            "020020033330",
+            "020020030030",
+            "020020030030",
+            "022220030030",
+            "000000033330",
+            "000000000000",
+            "000000000000"
+          ]
+        },
+        {
+          "input": [
+            "4004000000",
+            "0000000000",
+            "0000000000",
+            "4004000000",
+            "0000000000",
+            "0000060060",
+            "0000000000",
+            "0000000000",
+            "0000060060",
+            "0000000000"
+          ],
+          "output": [
+            "4444000000",
+            "4004000000",
+            "4004000000",
+            "4444000000",
+            "0000000000",
+            "0000066660",
+            "0000060060",
+            "0000060060",
+            "0000066660",
+            "0000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000000000000",
+          "0070007000000",
+          "0000000000000",
+          "0000000001010",
+          "0000000000000",
+          "0000000000000",
+          "0070007000000",
+          "0000000000000",
+          "0000000001010",
+          "0000000000000",
+          "0000000000000"
+        ],
+        "output": [
+          "0000000000000",
+          "0077777000000",
+          "0070007000000",
+          "0070007001110",
+          "0070007001010",
+          "0070007001010",
+          "0077777001010",
+          "0000000001010",
+          "0000000001110",
+          "0000000000000",
+          "0000000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out=copyg(grid)\n    pos_by_color=defaultdict(list)\n    h,w=len(grid),len(grid[0])\n    for r in range(h):\n        for c in range(w):\n            if grid[r][c]!=0:\n                pos_by_color[grid[r][c]].append((r,c))\n    for color, cells in pos_by_color.items():\n        if len(cells)==4:\n            rs=sorted(set(r for r,c in cells)); cs=sorted(set(c for r,c in cells))\n            if len(rs)==2 and len(cs)==2 and set(cells)=={(rs[0],cs[0]),(rs[0],cs[1]),(rs[1],cs[0]),(rs[1],cs[1])}:\n                r1,r2=rs; c1,c2=cs\n                for c in range(c1,c2+1):\n                    out[r1][c]=color; out[r2][c]=color\n                for r in range(r1,r2+1):\n                    out[r][c1]=color; out[r][c2]=color\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (for/fold ((out g)) ((color (in-list (grid-colors g 0)))) (let* ((cells (find-color g color)) (rs (sort (remove-duplicates (map first cells)) <)) (cs (sort (remove-duplicates (map second cells)) <))) (if (and (= (length cells) 4) (= (length rs) 2) (= (length cs) 2) (all? (lambda (p) (member? p cells)) (list (list (first rs) (first cs)) (list (first rs) (second cs)) (list (second rs) (first cs)) (list (second rs) (second cs))))) (let* ((r1 (first rs)) (r2 (second rs)) (c1 (first cs)) (c2 (second cs)) (with-rows (for/fold ((acc out)) ((c (in-range c1 (+ c2 1)))) (set-cell (set-cell acc r1 c color) r2 c color)))) (for/fold ((acc with-rows)) ((r (in-range r1 (+ r2 1)))) (set-cell (set-cell acc r c1 color) r c2 color))) out)))))"
+    },
+    {
+      "difficulty": "medium",
+      "title": "T to Plus Completion",
+      "skills": [
+        "shape completion",
+        "rotation handling",
+        "local extension"
+      ],
+      "scaffold": [
+        "Find green(3) T-tetrominoes in any rotation.",
+        "Locate the T's center cell and identify the missing arm.",
+        "Add that missing arm cell so the shape becomes a plus."
+      ],
+      "written_solution": "Each green(3) T shape is completed by adding its missing fourth arm, turning it into a 5-cell plus. The original T cells stay in place.",
+      "id": "S4_M7",
+      "train": [
+        {
+          "input": [
+            "0000000000",
+            "0333000000",
+            "0030000000",
+            "0000000000",
+            "0000000000",
+            "0000000300",
+            "0000003300",
+            "0000000300",
+            "0000000000"
+          ],
+          "output": [
+            "0030000000",
+            "0333000000",
+            "0030000000",
+            "0000000000",
+            "0000000000",
+            "0000000300",
+            "0000003330",
+            "0000000300",
+            "0000000000"
+          ]
+        },
+        {
+          "input": [
+            "00000000000",
+            "00000000000",
+            "00030000000",
+            "00333000000",
+            "00000000000",
+            "00000000000",
+            "00000003000",
+            "00000003300",
+            "00000003000",
+            "00000000000"
+          ],
+          "output": [
+            "00000000000",
+            "00000000000",
+            "00030000000",
+            "00333000000",
+            "00030000000",
+            "00000000000",
+            "00000003000",
+            "00000033300",
+            "00000003000",
+            "00000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "000000000000",
+          "000000033300",
+          "000000003000",
+          "000000000000",
+          "000000000000",
+          "000000000000",
+          "003000000000",
+          "003300000300",
+          "003000003330",
+          "000000000000",
+          "000000000000"
+        ],
+        "output": [
+          "000000003000",
+          "000000033300",
+          "000000003000",
+          "000000000000",
+          "000000000000",
+          "000000000000",
+          "003000000000",
+          "033300000300",
+          "003000003330",
+          "000000000300",
+          "000000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out=copyg(grid)\n    h,w=len(grid),len(grid[0])\n    for comp in components(grid,{3},4):\n        cells=set(comp['cells'])\n        if len(cells)!=4 or tuple(normalize(comp['cells'])) not in T_shapes:\n            continue\n        # find center degree 3\n        center=None\n        for r,c in cells:\n            n=sum((r+dr,c+dc) in cells for dr,dc in dirs4)\n            if n==3:\n                center=(r,c)\n                break\n        if center is None: \n            continue\n        r,c=center\n        for dr,dc in dirs4:\n            nr,nc=r+dr,c+dc\n            if (nr,nc) not in cells:\n                out[nr][nc]=3\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define t-shapes (list (list (list 0 0) (list 0 1) (list 0 2) (list 1 1)) (list (list 0 0) (list 1 0) (list 1 1) (list 2 0)) (list (list 0 1) (list 1 0) (list 1 1) (list 1 2)) (list (list 0 1) (list 1 0) (list 1 1) (list 2 1)))) (define (norm-cells cells) (sort (normalize-cells cells) cell<)) (define (objs-color grid color) (filter (lambda (obj) (= (obj-color obj) color)) (objects grid 0))) (define (shape-member? shape shapes) (member? shape shapes)) (define (degree-in-cells p cells) (length (filter (lambda (d) (member? (list (+ (first p) (first d)) (+ (second p) (second d))) cells)) cardinal-deltas))) (for/fold ((out g)) ((obj (in-list (objs-color g 3)))) (let ((cells (obj-cells obj))) (if (and (= (length cells) 4) (shape-member? (norm-cells cells) t-shapes)) (let ((centers (filter (lambda (p) (= (degree-in-cells p cells) 3)) cells))) (if (empty? centers) out (let ((center (first centers))) (for/fold ((acc out)) ((d (in-list cardinal-deltas))) (let ((nr (+ (first center) (first d))) (nc (+ (second center) (second d)))) (if (member? (list nr nc) cells) acc (set-cell acc nr nc 3))))))) out)))))"
+    },
+    {
+      "difficulty": "hard",
+      "title": "Four-Quadrant Symmetry",
+      "skills": [
+        "two-axis reflection",
+        "quadrant reasoning",
+        "pattern replication"
+      ],
+      "scaffold": [
+        "Use the upper-left quadrant as the source pattern.",
+        "Reflect it across the vertical midline and the horizontal midline.",
+        "Fill all four quadrants with the resulting symmetric copies."
+      ],
+      "written_solution": "Take the pattern in the upper-left quadrant and mirror it across both the vertical and horizontal midlines so that the whole grid becomes four-way symmetric.",
+      "id": "S4_H1",
+      "train": [
+        {
+          "input": [
+            "02000000",
+            "33000000",
+            "00400000",
+            "04000000",
+            "00000000",
+            "00000000",
+            "00000000",
+            "00000000"
+          ],
+          "output": [
+            "02000020",
+            "33000033",
+            "00400400",
+            "04000040",
+            "04000040",
+            "00400400",
+            "33000033",
+            "02000020"
+          ]
+        },
+        {
+          "input": [
+            "6000000000",
+            "6600000000",
+            "0000000000",
+            "0020000000",
+            "0200000000",
+            "0000000000",
+            "0000000000",
+            "0000000000",
+            "0000000000",
+            "0000000000"
+          ],
+          "output": [
+            "6000000006",
+            "6600000066",
+            "0000000000",
+            "0020000200",
+            "0200000020",
+            "0200000020",
+            "0020000200",
+            "0000000000",
+            "6600000066",
+            "6000000006"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "007000000000",
+          "070000000000",
+          "000700000000",
+          "000000000000",
+          "300000000000",
+          "003030000000",
+          "000000000000",
+          "000000000000",
+          "000000000000",
+          "000000000000",
+          "000000000000",
+          "000000000000"
+        ],
+        "output": [
+          "007000000700",
+          "070000000070",
+          "000700007000",
+          "000000000000",
+          "300000000003",
+          "003030030300",
+          "003030030300",
+          "300000000003",
+          "000000000000",
+          "000700007000",
+          "070000000070",
+          "007000000700"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out=copyg(grid)\n    h,w=len(grid),len(grid[0])\n    assert h==w and h%2==0\n    midr=h//2\n    midc=w//2\n    # source upper-left quadrant\n    for r in range(midr):\n        for c in range(midc):\n            val=grid[r][c]\n            if val!=0:\n                out[r][c]=val\n                out[r][w-1-c]=val\n                out[h-1-r][c]=val\n                out[h-1-r][w-1-c]=val\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (let ((midr (quotient (rows g) 2)) (midc (quotient (cols g) 2))) (for*/fold ((out g)) ((r (in-range midr)) (c (in-range midc))) (let ((v (at g r c))) (if (= v 0) out (set-cell (set-cell (set-cell (set-cell out r c v) r (- (cols g) 1 c) v) (- (rows g) 1 r) c v) (- (rows g) 1 r) (- (cols g) 1 c) v)))))))"
+    },
+    {
+      "difficulty": "hard",
+      "title": "Rotation-Coded Frames",
+      "skills": [
+        "template extraction",
+        "rotation by marker",
+        "frame-local stamping"
+      ],
+      "scaffold": [
+        "Read the small color-2 template near the top-left.",
+        "Each color-5 frame contains a cyan(8) marker in one interior corner; that corner encodes the rotation.",
+        "Stamp the rotated template into the frame interior and remove the marker."
+      ],
+      "written_solution": "Use the top-left red(2) template as a exemplar. For each gray(5) frame, look at which interior corner contains the cyan(8) marker, rotate the template accordingly, stamp it into the frame interior, and remove the marker.",
+      "id": "S4_H2",
+      "train": [
+        {
+          "input": [
+            "00000000000000",
+            "02000005555500",
+            "02200005800500",
+            "00000005000500",
+            "00000005000500",
+            "00000005555500",
+            "00000000000000",
+            "00000005555500",
+            "00000005000500",
+            "00000005000500",
+            "00000005008500",
+            "00000005555500",
+            "00000000000000"
+          ],
+          "output": [
+            "00000000000000",
+            "02000005555500",
+            "02200005200500",
+            "00000005220500",
+            "00000005000500",
+            "00000005555500",
+            "00000000000000",
+            "00000005555500",
+            "00000005220500",
+            "00000005020500",
+            "00000005000500",
+            "00000005555500",
+            "00000000000000"
+          ]
+        },
+        {
+          "input": [
+            "000000000000000",
+            "020000005555500",
+            "022000005008500",
+            "000000005000500",
+            "000000005000500",
+            "000000005555500",
+            "000000000000000",
+            "000000005555500",
+            "000000005000500",
+            "000000005000500",
+            "000000005800500",
+            "000000005555500",
+            "000000000000000"
+          ],
+          "output": [
+            "000000000000000",
+            "020000005555500",
+            "022000005220500",
+            "000000005200500",
+            "000000005000500",
+            "000000005555500",
+            "000000000000000",
+            "000000005555500",
+            "000000005020500",
+            "000000005220500",
+            "000000005000500",
+            "000000005555500",
+            "000000000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000000000000000",
+          "0200000005555500",
+          "0220000005000500",
+          "0000000005000500",
+          "0000000005800500",
+          "0000000005555500",
+          "0000000000000000",
+          "0000000000000000",
+          "0000000005555500",
+          "0000000005008500",
+          "0000000005000500",
+          "0000000005000500",
+          "0000000005555500",
+          "0000000000000000"
+        ],
+        "output": [
+          "0000000000000000",
+          "0200000005555500",
+          "0220000005020500",
+          "0000000005220500",
+          "0000000005000500",
+          "0000000005555500",
+          "0000000000000000",
+          "0000000000000000",
+          "0000000005555500",
+          "0000000005220500",
+          "0000000005200500",
+          "0000000005000500",
+          "0000000005555500",
+          "0000000000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out=copyg(grid)\n    # template: first component of color 2 not inside frame color 5\n    comps2=components(grid,{2},4)\n    # choose component with smallest bbox top-left\n    template=min(comps2,key=lambda comp:(bbox(comp['cells'])[0],bbox(comp['cells'])[1]))\n    template_shape=normalize(template['cells'])\n    # erase any markers? We'll overwrite interiors only\n    frames=[comp for comp in components(grid,{5},4) if is_rect_outline(comp['cells'])]\n    for frame in frames:\n        r1,c1,r2,c2=bbox(frame['cells'])\n        # find marker color 8 inside bbox\n        marker=None\n        for r in range(r1+1,r2):\n            for c in range(c1+1,c2):\n                if grid[r][c]==8:\n                    marker=(r,c)\n        if marker is None:\n            continue\n        mr,mc=marker\n        # mapping corner to rotation\n        corners={(r1+1,c1+1):0,(r1+1,c2-1):1,(r2-1,c2-1):2,(r2-1,c1+1):3}\n        # marker expected exactly at one interior corner\n        rot=corners[marker]\n        shape=rotate_norm_cells(template_shape, rot)\n        # clear marker interior\n        out[mr][mc]=0\n        # stamp in interior anchored at top-left interior\n        for dr,dc in shape:\n            rr,cc=r1+1+dr,c1+1+dc\n            out[rr][cc]=2\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define (norm-cells cells) (sort (normalize-cells cells) cell<)) (define (last-list xs) (if (empty? (rest xs)) (first xs) (last-list (rest xs)))) (define (objs-color grid color) (filter (lambda (obj) (= (obj-color obj) color)) (objects grid 0))) (define (outline-cells r1 c1 r2 c2) (remove-duplicates (append (for/list ((c (in-range c1 (+ c2 1)))) (list r1 c)) (for/list ((c (in-range c1 (+ c2 1)))) (list r2 c)) (for/list ((r (in-range r1 (+ r2 1)))) (list r c1)) (for/list ((r (in-range r1 (+ r2 1)))) (list r c2))))) (define (rect-outline? obj) (let* ((r1 (obj-r1 obj)) (c1 (obj-c1 obj)) (r2 (obj-r2 obj)) (c2 (obj-c2 obj)) (cells (obj-cells obj)) (expected (outline-cells r1 c1 r2 c2))) (and (>= (- r2 r1) 2) (>= (- c2 c1) 2) (= (length cells) (length expected)) (all? (lambda (p) (member? p cells)) expected)))) (define (bbox< a b) (cond ((not (= (obj-r1 a) (obj-r1 b))) (< (obj-r1 a) (obj-r1 b))) ((not (= (obj-c1 a) (obj-c1 b))) (< (obj-c1 a) (obj-c1 b))) ((not (= (obj-r2 a) (obj-r2 b))) (< (obj-r2 a) (obj-r2 b))) (else (< (obj-c2 a) (obj-c2 b))))) (define (rotate-norm shape times) (if (= (modulo times 4) 0) shape (let* ((maxr (apply max (map first shape))) (h (+ maxr 1)) (rotated (map (lambda (p) (list (second p) (- h 1 (first p)))) shape))) (rotate-norm (norm-cells rotated) (- times 1))))) (define (interior-markers grid frame) (let* ((r1 (obj-r1 frame)) (c1 (obj-c1 frame)) (r2 (obj-r2 frame)) (c2 (obj-c2 frame)) (hits (for*/list ((r (in-range (+ r1 1) r2)) (c (in-range (+ c1 1) c2))) (list r c (at grid r c))))) hits)) (define (find-interior-8 grid frame) (let ((hits (filter (lambda (m) (= (third m) 8)) (interior-markers grid frame)))) (if (empty? hits) #f (last-list hits)))) (define (corner-rot marker frame) (let ((r (first marker)) (c (second marker)) (r1 (obj-r1 frame)) (c1 (obj-c1 frame)) (r2 (obj-r2 frame)) (c2 (obj-c2 frame))) (cond ((and (= r (+ r1 1)) (= c (+ c1 1))) 0) ((and (= r (+ r1 1)) (= c (- c2 1))) 1) ((and (= r (- r2 1)) (= c (- c2 1))) 2) (else 3)))) (let* ((template (first (sort (objs-color g 2) bbox<))) (shape (norm-cells (obj-cells template))) (frames (filter rect-outline? (objs-color g 5)))) (for/fold ((out g)) ((frame (in-list frames))) (let ((marker (find-interior-8 g frame))) (if (not marker) out (let* ((rot (corner-rot marker frame)) (rot-shape (rotate-norm shape rot)) (cleared (set-cell out (first marker) (second marker) 0))) (for/fold ((acc cleared)) ((p (in-list rot-shape))) (set-cell acc (+ (obj-r1 frame) 1 (first p)) (+ (obj-c1 frame) 1 (second p)) 2)))))))))"
+    },
+    {
+      "difficulty": "hard",
+      "title": "Hole Count Match",
+      "skills": [
+        "topological reasoning",
+        "hole counting",
+        "marker-to-object matching"
+      ],
+      "scaffold": [
+        "Count the magenta(6) header markers.",
+        "Count the enclosed holes in each green(3) object.",
+        "Recolor the object whose hole count equals the marker count orange(7)."
+      ],
+      "written_solution": "The magenta(6) markers specify a number. Among the green(3) objects, find the one with that many enclosed holes and recolor the whole object orange(7).",
+      "id": "S4_H3",
+      "train": [
+        {
+          "input": [
+            "600000000000000",
+            "000000000000000",
+            "033000333033333",
+            "033000303030303",
+            "000000333030303",
+            "000000000030303",
+            "000000000033333",
+            "000000000000000",
+            "000000000000000",
+            "000000000000000"
+          ],
+          "output": [
+            "600000000000000",
+            "000000000000000",
+            "033000777033333",
+            "033000707030303",
+            "000000777030303",
+            "000000000030303",
+            "000000000033333",
+            "000000000000000",
+            "000000000000000",
+            "000000000000000"
+          ]
+        },
+        {
+          "input": [
+            "6600000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0333003333300000",
+            "0303003030300330",
+            "0333003030300330",
+            "0000003030300000",
+            "0000003333300000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "output": [
+            "6600000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0333007777700000",
+            "0303007070700330",
+            "0333007070700330",
+            "0000007070700000",
+            "0000007777700000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "6000000000000000",
+          "0000000000000000",
+          "0000000000000000",
+          "0333330000000000",
+          "0303030033000000",
+          "0303030033000000",
+          "0303030000000000",
+          "0333330000003330",
+          "0000000000003030",
+          "0000000000003330",
+          "0000000000000000",
+          "0000000000000000"
+        ],
+        "output": [
+          "6000000000000000",
+          "0000000000000000",
+          "0000000000000000",
+          "0333330000000000",
+          "0303030033000000",
+          "0303030033000000",
+          "0303030000000000",
+          "0333330000007770",
+          "0000000000007070",
+          "0000000000007770",
+          "0000000000000000",
+          "0000000000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out=copyg(grid)\n    marker_count=sum(v==6 for row in grid for v in row)\n    # target among green components\n    targets=[]\n    for comp in components(grid,{3},4):\n        holes=count_holes_component(grid,comp)\n        if holes==marker_count:\n            targets.append(comp)\n    # choose top-left if multiple\n    if targets:\n        target=min(targets,key=lambda comp:bbox(comp['cells']))\n        for r,c in target['cells']:\n            out[r][c]=7\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define (objs-color grid color) (filter (lambda (obj) (= (obj-color obj) color)) (objects grid 0))) (define (paint-obj grid obj color) (paint-cells grid (obj-cells obj) color)) (define (bbox< a b) (cond ((not (= (obj-r1 a) (obj-r1 b))) (< (obj-r1 a) (obj-r1 b))) ((not (= (obj-c1 a) (obj-c1 b))) (< (obj-c1 a) (obj-c1 b))) ((not (= (obj-r2 a) (obj-r2 b))) (< (obj-r2 a) (obj-r2 b))) (else (< (obj-c2 a) (obj-c2 b))))) (let* ((marker-count (length (find-color g 6))) (targets (filter (lambda (obj) (= (topo-count-holes g obj 0) marker-count)) (objs-color g 3)))) (if (empty? targets) g (paint-obj g (first (sort targets bbox<)) 7)))))"
+    },
+    {
+      "difficulty": "hard",
+      "title": "Count Comparison Matrix",
+      "skills": [
+        "meta-layout parsing",
+        "count comparison",
+        "matrix synthesis"
+      ],
+      "scaffold": [
+        "Read the three 2x2 count blocks across the top and the three 2x2 count blocks down the left.",
+        "For each row/column pair, compare the two counts.",
+        "Fill the corresponding 2x2 matrix block: yellow(4) if top > left, green(3) if top < left, cyan(8) if equal."
+      ],
+      "written_solution": "Compare each top header count with each left header count. In the 3x3 matrix area, fill each 2x2 block yellow(4) when the top count is larger, green(3) when the left count is larger, and cyan(8) when they are equal.",
+      "id": "S4_H4",
+      "train": [
+        {
+          "input": [
+            "00010011011",
+            "00000010011",
+            "00000000000",
+            "22000000000",
+            "00000000000",
+            "00000000000",
+            "22000000000",
+            "20000000000",
+            "00000000000",
+            "20000000000",
+            "00000000000"
+          ],
+          "output": [
+            "00010011011",
+            "00000010011",
+            "00000000000",
+            "22033044044",
+            "00033044044",
+            "00000000000",
+            "22033088044",
+            "20033088044",
+            "00000000000",
+            "20088044044",
+            "00088044044"
+          ]
+        },
+        {
+          "input": [
+            "00011011010",
+            "00011000000",
+            "00000000000",
+            "20000000000",
+            "00000000000",
+            "00000000000",
+            "22000000000",
+            "22000000000",
+            "00000000000",
+            "22000000000",
+            "00000000000"
+          ],
+          "output": [
+            "00011011010",
+            "00011000000",
+            "00000000000",
+            "20044044088",
+            "00044044088",
+            "00000000000",
+            "22088033033",
+            "22088033033",
+            "00000000000",
+            "22044088033",
+            "00044088033"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "00011011011",
+          "00000011010",
+          "00000000000",
+          "22000000000",
+          "20000000000",
+          "00000000000",
+          "20000000000",
+          "00000000000",
+          "00000000000",
+          "22000000000",
+          "22000000000"
+        ],
+        "output": [
+          "00011011011",
+          "00000011010",
+          "00000000000",
+          "22033044088",
+          "20033044088",
+          "00000000000",
+          "20044044044",
+          "00044044044",
+          "00000000000",
+          "22033088033",
+          "22033088033"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    # fixed layout 11x11: top header 3 blocks rows 0:2 at cols [3:5,6:8,9:11]\n    # left header 3 blocks cols 0:2 at rows [3:5,6:8,9:11]\n    out=copyg(grid)\n    row_starts=[3,6,9]\n    col_starts=[3,6,9]\n    top_counts=[]\n    left_counts=[]\n    for cs in col_starts:\n        cnt=sum(grid[r][c]!=0 for r in range(0,2) for c in range(cs,cs+2))\n        top_counts.append(cnt)\n    for rs in row_starts:\n        cnt=sum(grid[r][c]!=0 for r in range(rs,rs+2) for c in range(0,2))\n        left_counts.append(cnt)\n    for i,rs in enumerate(row_starts):\n        for j,cs in enumerate(col_starts):\n            if top_counts[j]>left_counts[i]:\n                color=4\n            elif top_counts[j]<left_counts[i]:\n                color=3\n            else:\n                color=8\n            for r in range(rs,rs+2):\n                for c in range(cs,cs+2):\n                    out[r][c]=color\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define (count-nonzero-rect grid r0 c0 h w) (for*/sum ((r (in-range r0 (+ r0 h))) (c (in-range c0 (+ c0 w)))) (if (= (at grid r c) 0) 0 1))) (let* ((starts (list 3 6 9)) (top-counts (map (lambda (cs) (count-nonzero-rect g 0 cs 2 2)) starts)) (left-counts (map (lambda (rs) (count-nonzero-rect g rs 0 2 2)) starts))) (for*/fold ((out g)) ((i (in-range 3)) (j (in-range 3))) (let* ((rs (list-ref starts i)) (cs (list-ref starts j)) (tc (list-ref top-counts j)) (lc (list-ref left-counts i)) (color (cond ((> tc lc) 4) ((< tc lc) 3) (else 8)))) (for*/fold ((acc out)) ((r (in-range rs (+ rs 2))) (c (in-range cs (+ cs 2)))) (set-cell acc r c color)))))))"
+    },
+    {
+      "difficulty": "hard",
+      "title": "Pivot 4-Way Rotation",
+      "skills": [
+        "relative coordinates",
+        "rotation around pivot",
+        "set completion"
+      ],
+      "scaffold": [
+        "Locate the maroon(9) pivot.",
+        "Take the non-pivot object as a set of offsets from that pivot.",
+        "Stamp the 0°, 90°, 180°, and 270° versions around the pivot."
+      ],
+      "written_solution": "Treat the maroon(9) cell as a rotation center. Copy the given non-anchor shape into all four 90° clockwise orientations around that anchor, keeping the original orientation too.",
+      "id": "S4_H5",
+      "train": [
+        {
+          "input": [
+            "000000000",
+            "000002000",
+            "000002200",
+            "000000000",
+            "000090000",
+            "000000000",
+            "000000000",
+            "000000000",
+            "000000000"
+          ],
+          "output": [
+            "000000000",
+            "000002000",
+            "002002200",
+            "022000000",
+            "000090000",
+            "000000220",
+            "002200200",
+            "000200000",
+            "000000000"
+          ]
+        },
+        {
+          "input": [
+            "00000000000",
+            "00000060000",
+            "00000066600",
+            "00000000000",
+            "00000000000",
+            "00000900000",
+            "00000000000",
+            "00000000000",
+            "00000000000",
+            "00000000000",
+            "00000000000"
+          ],
+          "output": [
+            "00000000000",
+            "00000060000",
+            "00600066600",
+            "00600000000",
+            "06600000000",
+            "00000900000",
+            "00000000660",
+            "00000000600",
+            "00666000600",
+            "00006000000",
+            "00000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000000000000",
+          "0000000300000",
+          "0000000330000",
+          "0000000000000",
+          "0000000000000",
+          "0000000000000",
+          "0000009000000",
+          "0000000000000",
+          "0000000000000",
+          "0000000000000",
+          "0000000000000",
+          "0000000000000",
+          "0000000000000"
+        ],
+        "output": [
+          "0000000000000",
+          "0000000300000",
+          "0000000330000",
+          "0000000000000",
+          "0030000000000",
+          "0330000000000",
+          "0000009000000",
+          "0000000000330",
+          "0000000000300",
+          "0000000000000",
+          "0000330000000",
+          "0000030000000",
+          "0000000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out=copyg(grid)\n    h,w=len(grid),len(grid[0])\n    # pivot is 9\n    pivots=[(r,c) for r in range(h) for c in range(w) if grid[r][c]==9]\n    assert len(pivots)==1\n    pr,pc=pivots[0]\n    # choose non-pivot cells of color 2? Could support all nonzero except 9 and maybe keep others?\n    cells=[(r,c,grid[r][c]) for r in range(h) for c in range(w) if grid[r][c]!=0 and grid[r][c]!=9]\n    for r,c,color in cells:\n        dr,dc=r-pr,c-pc\n        rots=[(dr,dc),(dc,-dr),(-dr,-dc),(-dc,dr)]\n        for rr,cc in rots:\n            out[pr+rr][pc+cc]=color\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (let* ((pivot (first (find-color g 9))) (pr (first pivot)) (pc (second pivot)) (cells (filter (lambda (p) (let ((v (at g (first p) (second p)))) (and (not (= v 0)) (not (= v 9))))) (grid-positions g)))) (for/fold ((out g)) ((p (in-list cells))) (let* ((r (first p)) (c (second p)) (color (at g r c)) (dr (- r pr)) (dc (- c pc)) (rots (list (list dr dc) (list dc (- dr)) (list (- dr) (- dc)) (list (- dc) dr)))) (for/fold ((acc out)) ((off (in-list rots))) (let ((rr (+ pr (first off))) (cc (+ pc (second off)))) (if (in-bounds? rr cc (rows g) (cols g)) (set-cell acc rr cc color) acc))))))))"
+    },
+    {
+      "difficulty": "hard",
+      "title": "Colorized Template Frames",
+      "skills": [
+        "template extraction",
+        "color transfer",
+        "frame-local stamping"
+      ],
+      "scaffold": [
+        "Read the neutral color-1 template near the top-left.",
+        "Each color-5 frame contains a single colored marker in its interior.",
+        "Remove that marker and stamp the template inside the frame using the marker's color."
+      ],
+      "written_solution": "Use the neutral blue(1) template as a shape exemplar. Inside every gray(5) frame, replace the unique interior marker with a copy of the template recolored to that marker's color.",
+      "id": "S4_H6",
+      "train": [
+        {
+          "input": [
+            "0000000000000000",
+            "0111000005555500",
+            "0010000005200500",
+            "0000000005000500",
+            "0000000005000500",
+            "0000000005555500",
+            "0000000000000000",
+            "0000000005555500",
+            "0000000005400500",
+            "0000000005000500",
+            "0000000005000500",
+            "0000000005555500",
+            "0000000000000000"
+          ],
+          "output": [
+            "0000000000000000",
+            "0111000005555500",
+            "0010000005222500",
+            "0000000005020500",
+            "0000000005000500",
+            "0000000005555500",
+            "0000000000000000",
+            "0000000005555500",
+            "0000000005444500",
+            "0000000005040500",
+            "0000000005000500",
+            "0000000005555500",
+            "0000000000000000"
+          ]
+        },
+        {
+          "input": [
+            "00000000000000000",
+            "01110000005555500",
+            "00100000005700500",
+            "00000000005000500",
+            "00000000005000500",
+            "00000000005555500",
+            "00000000000000000",
+            "00000000005555500",
+            "00000000005300500",
+            "00000000005000500",
+            "00000000005000500",
+            "00000000005555500",
+            "00000000000000000"
+          ],
+          "output": [
+            "00000000000000000",
+            "01110000005555500",
+            "00100000005777500",
+            "00000000005070500",
+            "00000000005000500",
+            "00000000005555500",
+            "00000000000000000",
+            "00000000005555500",
+            "00000000005333500",
+            "00000000005030500",
+            "00000000005000500",
+            "00000000005555500",
+            "00000000000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "000000000000000000",
+          "011100000005555500",
+          "001000000005800500",
+          "000000000005000500",
+          "000000000005000500",
+          "000000000005555500",
+          "000000000000000000",
+          "000000000000000000",
+          "000000000005555500",
+          "000000000005600500",
+          "000000000005000500",
+          "000000000005000500",
+          "000000000005555500",
+          "000000000000000000"
+        ],
+        "output": [
+          "000000000000000000",
+          "011100000005555500",
+          "001000000005888500",
+          "000000000005080500",
+          "000000000005000500",
+          "000000000005555500",
+          "000000000000000000",
+          "000000000000000000",
+          "000000000005555500",
+          "000000000005666500",
+          "000000000005060500",
+          "000000000005000500",
+          "000000000005555500",
+          "000000000000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out=copyg(grid)\n    # template: neutral color 1 component with smallest bbox\n    template=min(components(grid,{1},4), key=lambda comp:bbox(comp['cells']))\n    shape=normalize(template['cells'])\n    frames=[comp for comp in components(grid,{5},4) if is_rect_outline(comp['cells'])]\n    for frame in frames:\n        r1,c1,r2,c2=bbox(frame['cells'])\n        # find any nonzero interior marker not 5\n        marker=None\n        for r in range(r1+1,r2):\n            for c in range(c1+1,c2):\n                if grid[r][c] not in (0,5):\n                    marker=(r,c,grid[r][c])\n        if marker is None:\n            continue\n        mr,mc,color=marker\n        out[mr][mc]=0\n        for dr,dc in shape:\n            out[r1+1+dr][c1+1+dc]=color\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define (norm-cells cells) (sort (normalize-cells cells) cell<)) (define (last-list xs) (if (empty? (rest xs)) (first xs) (last-list (rest xs)))) (define (objs-color grid color) (filter (lambda (obj) (= (obj-color obj) color)) (objects grid 0))) (define (outline-cells r1 c1 r2 c2) (remove-duplicates (append (for/list ((c (in-range c1 (+ c2 1)))) (list r1 c)) (for/list ((c (in-range c1 (+ c2 1)))) (list r2 c)) (for/list ((r (in-range r1 (+ r2 1)))) (list r c1)) (for/list ((r (in-range r1 (+ r2 1)))) (list r c2))))) (define (rect-outline? obj) (let* ((r1 (obj-r1 obj)) (c1 (obj-c1 obj)) (r2 (obj-r2 obj)) (c2 (obj-c2 obj)) (cells (obj-cells obj)) (expected (outline-cells r1 c1 r2 c2))) (and (>= (- r2 r1) 2) (>= (- c2 c1) 2) (= (length cells) (length expected)) (all? (lambda (p) (member? p cells)) expected)))) (define (bbox< a b) (cond ((not (= (obj-r1 a) (obj-r1 b))) (< (obj-r1 a) (obj-r1 b))) ((not (= (obj-c1 a) (obj-c1 b))) (< (obj-c1 a) (obj-c1 b))) ((not (= (obj-r2 a) (obj-r2 b))) (< (obj-r2 a) (obj-r2 b))) (else (< (obj-c2 a) (obj-c2 b))))) (define (interior-markers grid frame) (let* ((r1 (obj-r1 frame)) (c1 (obj-c1 frame)) (r2 (obj-r2 frame)) (c2 (obj-c2 frame)) (hits (for*/list ((r (in-range (+ r1 1) r2)) (c (in-range (+ c1 1) c2))) (list r c (at grid r c))))) hits)) (define (find-interior-colored grid frame) (let ((hits (filter (lambda (m) (not (member? (third m) (list 0 5)))) (interior-markers grid frame)))) (if (empty? hits) #f (last-list hits)))) (let* ((template (first (sort (objs-color g 1) bbox<))) (shape (norm-cells (obj-cells template))) (frames (filter rect-outline? (objs-color g 5)))) (for/fold ((out g)) ((frame (in-list frames))) (let ((marker (find-interior-colored g frame))) (if (not marker) out (let ((cleared (set-cell out (first marker) (second marker) 0)) (color (third marker))) (for/fold ((acc cleared)) ((p (in-list shape))) (set-cell acc (+ (obj-r1 frame) 1 (first p)) (+ (obj-c1 frame) 1 (second p)) color)))))))))"
+    },
+    {
+      "difficulty": "hard",
+      "title": "Prototype Legend Recolor",
+      "skills": [
+        "legend parsing",
+        "shape matching",
+        "symbol-grounded recolor"
+      ],
+      "scaffold": [
+        "Read the prototype shapes on the left side of the separator.",
+        "Each prototype has an associated sample color in the legend.",
+        "Find matching neutral shapes on the right and recolor them according to the legend."
+      ],
+      "written_solution": "The left side is a shape legend: each neutral exemplar shape is paired with an output color. Recolor every matching neutral shape on the right side to the color specified by its exemplar.",
+      "id": "S4_H7",
+      "train": [
+        {
+          "input": [
+            "000000000000000",
+            "110020001100000",
+            "110000001100000",
+            "000000000000000",
+            "000000000000000",
+            "100070000100000",
+            "110000000110000",
+            "000000000000000",
+            "111040000011100",
+            "010000000001000",
+            "000000000000000",
+            "000000000000000"
+          ],
+          "output": [
+            "000000000000000",
+            "110020002200000",
+            "110000002200000",
+            "000000000000000",
+            "000000000000000",
+            "100070000700000",
+            "110000000770000",
+            "000000000000000",
+            "111040000044400",
+            "010000000004000",
+            "000000000000000",
+            "000000000000000"
+          ]
+        },
+        {
+          "input": [
+            "0000000000000000",
+            "1000600000111000",
+            "1100000000010000",
+            "0000000000000000",
+            "0000000000000000",
+            "1110300000000000",
+            "0100000001100000",
+            "0000000001100000",
+            "0000000000000000",
+            "1100800000010000",
+            "1100000000011000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "output": [
+            "0000000000000000",
+            "1000600000333000",
+            "1100000000030000",
+            "0000000000000000",
+            "0000000000000000",
+            "1110300000000000",
+            "0100000008800000",
+            "0000000008800000",
+            "0000000000000000",
+            "1100800000060000",
+            "1100000000066000",
+            "0000000000000000",
+            "0000000000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "000000000000000000",
+          "110020000010000000",
+          "110000000011001100",
+          "000000000000001100",
+          "000000000000000000",
+          "111070000001110000",
+          "010000000000100000",
+          "000000000000000000",
+          "000000000000000000",
+          "100040000000000000",
+          "110000000000001100",
+          "000000000000001100",
+          "000000000000000000",
+          "000000000000000000"
+        ],
+        "output": [
+          "000000000000000000",
+          "110020000040000000",
+          "110000000044002200",
+          "000000000000002200",
+          "000000000000000000",
+          "111070000007770000",
+          "010000000000700000",
+          "000000000000000000",
+          "000000000000000000",
+          "100040000000000000",
+          "110000000000002200",
+          "000000000000002200",
+          "000000000000000000",
+          "000000000000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out=copyg(grid)\n    h,w=len(grid),len(grid[0])\n    zero_cols=[c for c in range(w) if all(grid[r][c]==0 for r in range(h)) and any(any(v!=0 for v in row[:c]) for row in grid) and any(any(v!=0 for v in row[c+1:]) for row in grid)]\n    sep=min(zero_cols, key=lambda c: abs(c-w/2))\n    comps_left=[comp for comp in components(grid,{1},4) if bbox(comp['cells'])[3] < sep]\n    mapping={}\n    for comp in comps_left:\n        r1,c1,r2,c2=bbox(comp['cells'])\n        sample=None\n        for r in range(max(0,r1-1), min(h,r2+2)):\n            for c in range(c2+1,sep):\n                if grid[r][c] not in (0,1):\n                    sample=grid[r][c]\n        mapping[tuple(normalize(comp['cells']))]=sample\n    for comp in components(grid,{1},4):\n        if bbox(comp['cells'])[1] > sep:\n            color=mapping.get(tuple(normalize(comp['cells'])),1)\n            for r,c in comp['cells']:\n                out[r][c]=color\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define (norm-cells cells) (sort (normalize-cells cells) cell<)) (define (last-list xs) (if (empty? (rest xs)) (first xs) (last-list (rest xs)))) (define (objs-color grid color) (filter (lambda (obj) (= (obj-color obj) color)) (objects grid 0))) (define (paint-obj grid obj color) (paint-cells grid (obj-cells obj) color)) (define (col-all-zero? grid c) (all? (lambda (r) (= (at grid r c) 0)) (range 0 (rows grid)))) (define (col-left-nonzero? grid c) (any? (lambda (r) (any? (lambda (cc) (not (= (at grid r cc) 0))) (range 0 c))) (range 0 (rows grid)))) (define (col-right-nonzero? grid c) (any? (lambda (r) (any? (lambda (cc) (not (= (at grid r cc) 0))) (range (+ c 1) (cols grid)))) (range 0 (rows grid)))) (define (choose-sep-col grid) (let* ((cands (filter (lambda (c) (and (col-all-zero? grid c) (col-left-nonzero? grid c) (col-right-nonzero? grid c))) (range 0 (cols grid))))) (first (sort cands (lambda (a b) (let ((da (abs (- (* 2 a) (cols grid)))) (db (abs (- (* 2 b) (cols grid))))) (if (= da db) (< a b) (< da db)))))))) (define (sample-right-of-shape grid obj sep) (let* ((r1 (obj-r1 obj)) (r2 (obj-r2 obj)) (c2 (obj-c2 obj)) (hits (filter (lambda (v) (not (member? v (list 0 1)))) (for*/list ((r (in-range (max 0 (- r1 1)) (min (rows grid) (+ r2 2)))) (c (in-range (+ c2 1) sep))) (at grid r c))))) (if (empty? hits) #f (last-list hits)))) (let* ((sep (choose-sep-col g)) (left-objs (filter (lambda (obj) (< (obj-c2 obj) sep)) (objs-color g 1))) (mapping (map (lambda (obj) (list (norm-cells (obj-cells obj)) (sample-right-of-shape g obj sep))) left-objs))) (for/fold ((out g)) ((obj (in-list (filter (lambda (o) (> (obj-c1 o) sep)) (objs-color g 1))))) (let* ((shape (norm-cells (obj-cells obj))) (hit (filter (lambda (row) (equal? (first row) shape)) mapping)) (color (if (empty? hit) 1 (second (first hit))))) (paint-obj out obj color))))))"
+    }
+  ]
+}

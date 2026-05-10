@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+title: "ARC-AGI-2 Puzzle Generators: A Corpus of 3,889 Combinatorial Generators with Verified Racket Solutions"
+message: "If you use this corpus, please cite it as below."
+type: software
+authors:
+  - family-names: "<your-family-name>"
+    given-names: "<your-given-name>"
+date-released: 2026-05-10
+version: "0.1.0"
+license: MIT
+keywords:
+  - arc-agi
+  - arc-agi-2
+  - abstract-reasoning
+  - procedural-generation
+  - racket
+  - dsl
+  - benchmark
+abstract: >
+  A corpus of 3,889 deterministic puzzle generators for ARC-AGI-2,
+  paired with verified Racket solutions and a runner that pipes
+  generator output through a real Racket interpreter to validate
+  every produced (input, output) pair. The corpus has a bounded
+  combinatorial reach of 2.56 × 10¹¹ unique configurations
+  (2.56 × 10¹⁴ with a per-generator seed budget of 1,000).

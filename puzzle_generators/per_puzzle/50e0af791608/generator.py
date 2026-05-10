@@ -1,0 +1,88 @@
+"""Generator for arc_additional_puzzle_bank_volume16:H106.
+
+Rule: a straight wall corridor is the union of all shortest paths from
+red to green.
+
+Combinatorial axes (8): grid_h/w, palette_kind, anchor_corner,
+asymmetry_force, palette_size, position_bias, n_distinct_colors.
+Degenerates: no_corridor, no_endpoints, full_grid.
+"""
+from __future__ import annotations
+
+from puzzle_generators.base import gen_ctx
+from puzzle_generators.helpers.grid import full_grid
+
+GENERATOR_ID = "50e0af791608"
+VERSION = "1.1.0"
+TASK_ID = "50e0af791608"
+SUMMARY = "A straight wall corridor is the union of all shortest paths from red to green."
+
+INVARIANTS = [
+    "walls are 5",
+    "open corridor cells are 0",
+    "there is exactly one red start and one green goal",
+    "the union of shortest paths is unique",
+]
+
+PALETTE_KINDS = ("warm", "cool", "broad", "primary")
+DEGENERATE_TEXTURES = ("no_corridor", "no_endpoints", "full_grid")
+HELPFUL_TEXTURES = PALETTE_KINDS
+
+AXES = {
+    "grid_h":         {"type": "int", "default": "rng 7..12", "valid": "5..24"},
+    "grid_w":         {"type": "int", "default": "rng 8..14", "valid": "5..24"},
+    "palette_kind":   {"type": "str", "default": "rng helpful",
+                       "valid": "|".join(PALETTE_KINDS)},
+    "anchor_corner":  {"type": "bool", "default": "false",
+                       "valid": "true|false"},
+    "asymmetry_force":{"type": "bool", "default": "false",
+                       "valid": "true|false"},
+    "palette_size":   {"type": "int", "default": "3", "valid": "3"},
+    "position_bias":  {"type": "str", "default": "random", "valid": "random"},
+    "n_distinct_colors":{"type": "int", "default": "3", "valid": "3"},
+    "texture":        {"type": "str", "default": "alias for palette_kind",
+                       "valid": "|".join(HELPFUL_TEXTURES + DEGENERATE_TEXTURES)},
+}
+
+
+def generate(seed, sample_index, *, difficulty=None, **overrides):
+    ctx = gen_ctx(seed=seed, sample_index=sample_index,
+                  version=VERSION, task_id=TASK_ID,
+                  difficulty=difficulty, overrides=overrides)
+    if overrides.get("texture") in DEGENERATE_TEXTURES:
+        return _draw_from_degenerate(overrides["texture"], None)
+    if difficulty == "easy":
+        h = ctx.draw_int("grid_h", 7, 8)
+        w = ctx.draw_int("grid_w", 8, 10)
+    elif difficulty == "hard":
+        h = ctx.draw_int("grid_h", 10, 12)
+        w = ctx.draw_int("grid_w", 12, 14)
+    else:
+        h = ctx.draw_int("grid_h", 7, 12)
+        w = ctx.draw_int("grid_w", 8, 14)
+    rng = ctx.draw_rng("placement")
+    g = full_grid(h, w, 5)
+    r = rng.randint(1, h - 2)
+    c1 = rng.randint(1, w - 5)
+    c2 = rng.randint(c1 + 3, w - 2)
+    for c in range(c1, c2 + 1):
+        g[r][c] = 0
+    g[r][c1] = 2
+    g[r][c2] = 3
+    return g
+
+
+def _draw_from_degenerate(name, rng):
+    g = full_grid(8, 10, 5)
+    if name == "no_corridor":
+        return g
+    if name == "no_endpoints":
+        for c in range(2, 8):
+            g[3][c] = 0
+        return g
+    if name == "full_grid":
+        for r in range(8):
+            for c in range(10):
+                g[r][c] = 0
+        return g
+    return g

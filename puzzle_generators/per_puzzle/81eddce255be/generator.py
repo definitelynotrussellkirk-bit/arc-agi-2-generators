@@ -1,0 +1,104 @@
+"""Generator for arc_puzzle_bank_fifth21:M29 — header-count area select.
+
+Rule: count of 1s in row 0 = K. Keep blobs below row 0 with size K;
+drop the rest.
+
+Combinatorial axes (8): grid_h, grid_w, palette_kind, K,
+palette_size, position_bias, n_distinct_colors, density, texture.
+Degenerates: no_markers, no_matching_blob, all_same_size.
+"""
+from __future__ import annotations
+
+from puzzle_generators.base import gen_ctx
+from puzzle_generators.helpers.grid import full_grid
+from puzzle_generators.helpers.blobs import grow_blob
+
+GENERATOR_ID = "81eddce255be"
+VERSION = "1.1.0"
+TASK_ID = "81eddce255be"
+SUMMARY = "Row-0 K 1-cells (K=2..4) + 3 blobs at distinct sizes, exactly one of size K."
+
+INVARIANTS = [
+    "background is 0",
+    "row 0 has 2-4 1-cells",
+    "below row 0: 3 blobs at strictly distinct sizes; exactly one matches K",
+]
+
+PALETTE_KINDS = ("default", "warm", "cool", "varied")
+DEGENERATE_TEXTURES = ("no_markers", "no_matching_blob", "all_same_size")
+HELPFUL_TEXTURES = PALETTE_KINDS
+
+AXES = {
+    "grid_h":         {"type": "int", "default": "rng 8..11", "valid": "7..14"},
+    "grid_w":         {"type": "int", "default": "rng 9..12", "valid": "8..14"},
+    "palette_kind":   {"type": "str", "default": "rng helpful",
+                       "valid": "|".join(PALETTE_KINDS)},
+    "K":              {"type": "int", "default": "rng 2..4", "valid": "1..6"},
+    "palette_size":   {"type": "int", "default": "rng 3..4", "valid": "2..6"},
+    "position_bias":  {"type": "str", "default": "row0_count_with_below_blobs",
+                       "valid": "row0_count_with_below_blobs"},
+    "n_distinct_colors": {"type": "int", "default": "rng 3..4", "valid": "2..6"},
+    "density":        {"type": "str", "default": "sparse", "valid": "sparse"},
+    "texture":        {"type": "str", "default": "alias for palette_kind",
+                       "valid": "|".join(HELPFUL_TEXTURES + DEGENERATE_TEXTURES)},
+}
+
+
+def generate(seed, sample_index, *, difficulty=None, **overrides):
+    ctx = gen_ctx(seed=seed, sample_index=sample_index,
+                  version=VERSION, task_id=TASK_ID,
+                  difficulty=difficulty, overrides=overrides)
+    if overrides.get("texture") in DEGENERATE_TEXTURES:
+        return _draw_from_degenerate(overrides["texture"], None)
+    if difficulty == "easy":
+        h = ctx.draw_int("grid_h", 8, 9)
+        w = ctx.draw_int("grid_w", 9, 10)
+    elif difficulty == "hard":
+        h = ctx.draw_int("grid_h", 10, 11)
+        w = ctx.draw_int("grid_w", 11, 12)
+    else:
+        h = ctx.draw_int("grid_h", 8, 11)
+        w = ctx.draw_int("grid_w", 9, 12)
+    rng = ctx.draw_rng("layout")
+    g = full_grid(h, w, 0)
+    K = rng.randint(2, 4)
+    cols = rng.sample(range(w), K)
+    for c in cols:
+        g[0][c] = 1
+    used = {(0, c) for c in cols}
+    for c in range(w):
+        used.add((1, c))
+    other_sizes = [s for s in [2, 3, 4, 5, 6] if s != K][:2]
+    sizes = [K] + other_sizes
+    palette = rng.sample([2, 3, 4, 5, 6, 7, 8, 9], 3)
+    for size, color in zip(sizes, palette):
+        cells = grow_blob(rng, h, w, used, size, max_attempts=80)
+        if cells is None:
+            continue
+        for r, c in cells:
+            g[r][c] = color
+        used |= cells
+    return g
+
+
+def _draw_from_degenerate(name, rng):
+    h, w = 9, 10
+    g = full_grid(h, w, 0)
+    if name == "no_markers":
+        # row 0 blank → K=0, no blobs match, output blank
+        for (r, c) in [(3, 1), (3, 2), (4, 1)]: g[r][c] = 4  # size 3
+        for (r, c) in [(6, 5), (6, 6)]: g[r][c] = 6  # size 2
+        return g
+    if name == "no_matching_blob":
+        # K=2 but no blob has size 2 → rule fires zero times, output blank
+        g[0][1] = 1; g[0][3] = 1
+        for (r, c) in [(3, 1), (3, 2), (4, 1)]: g[r][c] = 4  # size 3
+        for (r, c) in [(6, 5), (6, 6), (6, 7), (7, 6)]: g[r][c] = 6  # size 4
+        return g
+    if name == "all_same_size":
+        # all blobs same size → K matches everything simultaneously
+        g[0][1] = 1; g[0][3] = 1; g[0][5] = 1  # K=3
+        for (r, c) in [(3, 1), (3, 2), (4, 1)]: g[r][c] = 4
+        for (r, c) in [(6, 5), (6, 6), (7, 6)]: g[r][c] = 6
+        return g
+    return g

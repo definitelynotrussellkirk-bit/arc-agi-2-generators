@@ -1,0 +1,233 @@
+[
+  {
+    "id": "E8",
+    "difficulty": "easy",
+    "title": "Horizontal sandwich fill",
+    "what_it_tests": "Immediate left/right matching with simultaneous updates.",
+    "staged_hint": "First mark zero cells whose left and right neighbors match; then copy that color into the center.",
+    "written_solution": "Whenever a row contains color–zero–same color with exactly one zero between them, fill that zero with the matching color.",
+    "program_name": "solve_E8",
+    "program_source": "def solve_E8(g):\n    h,w=dims(g); out=clone(g)\n    for r in range(h):\n        for c in range(1,w-1):\n            if g[r][c]==0 and g[r][c-1]!=0 and g[r][c-1]==g[r][c+1]:\n                out[r][c]=g[r][c-1]\n    return out\n",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range 1 (- (cols g) 1)))) (if (and (= (at g r c) 0) (not (= (at g r (- c 1)) 0)) (= (at g r (- c 1)) (at g r (+ c 1)))) (set-cell out r c (at g r (- c 1))) out))))"
+  },
+  {
+    "id": "E9",
+    "difficulty": "easy",
+    "title": "Complete the missing square corner",
+    "what_it_tests": "Local 2×2 completion from three-of-four evidence.",
+    "staged_hint": "Scan 2×2 windows; if three cells are the same nonzero color and the fourth is 0, fill the missing corner.",
+    "written_solution": "Whenever a 2×2 block contains exactly three cells of the same non-background color and one empty cell, fill the empty corner with that color.",
+    "program_name": "solve_E9",
+    "program_source": "def solve_E9(g):\n    h,w=dims(g); out=clone(g)\n    for r in range(h-1):\n        for c in range(w-1):\n            vals=[g[r][c],g[r][c+1],g[r+1][c],g[r+1][c+1]]\n            nz=[v for v in vals if v!=0]\n            if len(nz)==3 and len(set(nz))==1 and vals.count(0)==1:\n                if g[r][c]==0: out[r][c]=nz[0]\n                if g[r][c+1]==0: out[r][c+1]=nz[0]\n                if g[r+1][c]==0: out[r+1][c]=nz[0]\n                if g[r+1][c+1]==0: out[r+1][c+1]=nz[0]\n    return out\n",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (- (rows g) 1))) (c (in-range (- (cols g) 1)))) (let* ((cells (positions-in-rect r c (+ r 1) (+ c 1))) (vals (map (lambda (p) (at g (first p) (second p))) cells)) (nz (filter (lambda (v) (not (= v 0))) vals))) (if (and (= (length nz) 3) (= (length (remove-duplicates nz)) 1) (= (count-where (lambda (v) (= v 0)) vals) 1)) (let ((miss (first (filter (lambda (p) (= (at g (first p) (second p)) 0)) cells)))) (set-cell out (first miss) (second miss) (first nz))) out)))))"
+  },
+  {
+    "id": "E10",
+    "difficulty": "easy",
+    "title": "Fill the row between matching endpoints",
+    "what_it_tests": "Rowwise segment completion using endpoint agreement.",
+    "staged_hint": "Find rows that contain exactly two nonzero cells of the same color with only 0s between them; then fill the span.",
+    "written_solution": "If a row has exactly two nonzero cells, both the same color, and all cells between them are 0, fill the entire segment from the left endpoint to the right endpoint with that color.",
+    "program_name": "solve_E10",
+    "program_source": "def solve_E10(g):\n    out=clone(g)\n    for r,row in enumerate(g):\n        nz=[(c,v) for c,v in enumerate(row) if v!=0]\n        if len(nz)==2 and nz[0][1]==nz[1][1]:\n            c0,v=nz[0]; c1,_=nz[1]\n            if all(row[c]==0 for c in range(c0+1,c1)):\n                for c in range(c0,c1+1):\n                    out[r][c]=v\n    return out\n",
+    "program_solution": "(rule! (let ((dummy 0)) (for/fold ((out g)) ((r (in-range (rows g)))) (let ((nz (filter (lambda (cv) (not (= (second cv) 0))) (map (lambda (c) (list c (at g r c))) (range (cols g)))))) (if (and (= (length nz) 2) (= (second (first nz)) (second (second nz))) (all? (lambda (c) (= (at g r c) 0)) (range (+ (first (first nz)) 1) (first (second nz))))) (paint-cells out (map (lambda (c) (list r c)) (range (first (first nz)) (+ (first (second nz)) 1))) (second (first nz))) out)))))"
+  },
+  {
+    "id": "E11",
+    "difficulty": "easy",
+    "title": "X-center fill",
+    "what_it_tests": "Diagonal-neighbor pattern detection in a 3×3 neighborhood.",
+    "staged_hint": "Ignore cardinal neighbors. Only look at the four diagonals around each 0 cell.",
+    "written_solution": "If a black(0) cell has the same non-background color on all four diagonal neighbors, fill the center with that color.",
+    "program_name": "solve_E11",
+    "program_source": "def solve_E11(g):\n    h,w=dims(g); out=clone(g)\n    for r in range(1,h-1):\n        for c in range(1,w-1):\n            vals=[g[r-1][c-1],g[r-1][c+1],g[r+1][c-1],g[r+1][c+1]]\n            if g[r][c]==0 and vals[0]!=0 and len(set(vals))==1:\n                out[r][c]=vals[0]\n    return out\n",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range 1 (- (rows g) 1))) (c (in-range 1 (- (cols g) 1)))) (let ((vals (list (at g (- r 1) (- c 1)) (at g (- r 1) (+ c 1)) (at g (+ r 1) (- c 1)) (at g (+ r 1) (+ c 1))))) (if (and (= (at g r c) 0) (not (= (first vals) 0)) (= (length (remove-duplicates vals)) 1)) (set-cell out r c (first vals)) out)))))"
+  },
+  {
+    "id": "E12",
+    "difficulty": "easy",
+    "title": "Extend exact dominoes",
+    "what_it_tests": "Run-length discrimination with a one-cell extension.",
+    "staged_hint": "Detect horizontal runs of exact length 2; do not touch longer runs.",
+    "written_solution": "Every row segment of exact length 2 is extended one cell to the right, provided the next cell is 0. Longer runs are left alone.",
+    "program_name": "solve_E12",
+    "program_source": "def solve_E12(g):\n    h,w=dims(g); out=clone(g)\n    for r in range(h):\n        c=0\n        while c<w:\n            if g[r][c]!=0:\n                val=g[r][c]; start=c\n                while c+1<w and g[r][c+1]==val: c+=1\n                end=c\n                if end-start+1==2 and end+1<w and g[r][end+1]==0:\n                    out[r][end+1]=val\n            c+=1\n    return out\n",
+    "program_solution": "(rule! (let ((dummy 0)) (define (f4-horizontal-runs grid) (apply append (for/list ((r (in-range (rows grid)))) (let loop ((c 0) (acc (list))) (cond ((>= c (cols grid)) (reverse acc)) ((= (at grid r c) 0) (loop (+ c 1) acc)) (else (let* ((v (at grid r c)) (end (let walk ((cc c)) (if (and (< (+ cc 1) (cols grid)) (= (at grid r (+ cc 1)) v)) (walk (+ cc 1)) cc)))) (loop (+ end 1) (cons (list r c end v) acc))))))))) (for/fold ((out g)) ((run (in-list (f4-horizontal-runs g)))) (let ((r (first run)) (c1 (third run)) (v (fourth run))) (if (and (= (+ 1 (- c1 (second run))) 2) (< (+ c1 1) (cols g)) (= (at g r (+ c1 1)) 0)) (set-cell out r (+ c1 1) v) out)))))"
+  },
+  {
+    "id": "E13",
+    "difficulty": "easy",
+    "title": "Highlight 2×2 block anchors",
+    "what_it_tests": "Exact solid-square detection with selective recoloring.",
+    "staged_hint": "Find monochrome 2×2 blocks, but only change one designated cell inside each block.",
+    "written_solution": "For every solid 2×2 block of the same non-background color, recolor only its top-left cell to cyan(8) and leave the other three cells unchanged.",
+    "program_name": "solve_E13",
+    "program_source": "def solve_E13(g):\n    h,w=dims(g); out=clone(g)\n    for r in range(h-1):\n        for c in range(w-1):\n            vals=[g[r][c],g[r][c+1],g[r+1][c],g[r+1][c+1]]\n            if vals[0]!=0 and len(set(vals))==1:\n                out[r][c]=8\n    return out\n",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (- (rows g) 1))) (c (in-range (- (cols g) 1)))) (let ((v (at g r c))) (if (and (not (= v 0)) (= (at g r (+ c 1)) v) (= (at g (+ r 1) c) v) (= (at g (+ r 1) (+ c 1)) v)) (set-cell out r c 8) out)))))"
+  },
+  {
+    "id": "E14",
+    "difficulty": "easy",
+    "title": "Horizontal symmetrization",
+    "what_it_tests": "Global reflection across the horizontal midline.",
+    "staged_hint": "Mirror nonzero cells to the row that is equally far from the opposite edge.",
+    "written_solution": "Reflect every nonzero cell across the horizontal midline of the grid. Keep the original cells; add the mirrored copies.",
+    "program_name": "solve_E14",
+    "program_source": "def solve_E14(g):\n    h,w=dims(g); out=clone(g)\n    for r in range(h):\n        for c in range(w):\n            if g[r][c]!=0:\n                out[h-1-r][c]=g[r][c]\n    return out\n",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range (cols g)))) (let ((v (at g r c))) (if (= v 0) out (set-cell out (- (rows g) 1 r) c v))))))"
+  },
+  {
+    "id": "M8",
+    "difficulty": "medium",
+    "title": "Recolor the rightmost object",
+    "what_it_tests": "Connected-component extraction and ranking by position.",
+    "staged_hint": "First segment all objects. Then compare their maximum column positions.",
+    "written_solution": "Find the component whose cells extend farthest to the right, and recolor that entire object to cyan(8). Leave all other objects as they are.",
+    "program_name": "solve_M8",
+    "program_source": "def solve_M8(g):\n    comps=components(g)\n    # choose comp with largest max col; tie by area then min row\n    chosen=max(comps, key=lambda x: (max(c for r,c in x[1]), len(x[1]), -min(r for r,c in x[1])))\n    out=clone(g)\n    for r,c in chosen[1]:\n        out[r][c]=8\n    return out\n",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-list< a b) (cond ((empty? a) #f) ((< (first a) (first b)) #t) ((> (first a) (first b)) #f) (else (e8b-list< (rest a) (rest b))))) (define (e8b-list> a b) (e8b-list< b a)) (let* ((chosen (first (sort (objects g 0) (lambda (a b) (e8b-list> (list (apply max (map second (obj-cells a))) (obj-size a) (- (apply min (map first (obj-cells a))))) (list (apply max (map second (obj-cells b))) (obj-size b) (- (apply min (map first (obj-cells b))))))))))) (paint-cells g (obj-cells chosen) 8))))"
+  },
+  {
+    "id": "M9",
+    "difficulty": "medium",
+    "title": "Draw every object's bounding-box border",
+    "what_it_tests": "Object detection plus geometric abstraction to bounding rectangles.",
+    "staged_hint": "Do not preserve the original shapes. Replace each object by the perimeter of its bounding box.",
+    "written_solution": "Each nonzero component is a solid axis-aligned rectangle. For every component, keep only its bbox border in the component's color and clear the interior.",
+    "program_name": "solve_M9",
+    "program_source": "def solve_M9(g):\n    h,w=dims(g)\n    out=[[0]*w for _ in range(h)]\n    for col,cells in components(g):\n        r0,r1,c0,c1=bbox(cells)\n        draw_rect_border(out,r0,r1,c0,c1,col)\n    return out\n",
+    "program_solution": "(rule! (let ((dummy 0)) (define (f14-border-cells r0 c0 r1 c1) (for*/list ((r (in-range r0 (+ r1 1))) (c (in-range c0 (+ c1 1))) #:when (or (= r r0) (= r r1) (= c c0) (= c c1))) (list r c))) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((obj (in-list (objects g 0)))) (let ((bb (obj-bbox obj))) (paint-cells out (f14-border-cells (first bb) (second bb) (third bb) (fourth bb)) (obj-color obj))))))"
+  },
+  {
+    "id": "M10",
+    "difficulty": "medium",
+    "title": "Bridge aligned same-color objects",
+    "what_it_tests": "Relational reasoning between separate components of one color.",
+    "staged_hint": "Group components by color, then look for two components that overlap in row range and have a horizontal gap between them.",
+    "written_solution": "When a color has two separate objects whose row spans overlap, fill the horizontal gap between their bounding boxes across the overlapping rows using that same color.",
+    "program_name": "solve_M10",
+    "program_source": "def solve_M10(g):\n    out=clone(g)\n    by_color=defaultdict(list)\n    for col,cells in components(g):\n        by_color[col].append(cells)\n    for col, comps in by_color.items():\n        if len(comps)==2:\n            bbs=[bbox(cells) for cells in comps]\n            # sort left to right\n            (r0a,r1a,c0a,c1a),(r0b,r1b,c0b,c1b)=sorted(bbs,key=lambda b:b[2])\n            overlap_r0=max(r0a,r0b); overlap_r1=min(r1a,r1b)\n            if overlap_r0<=overlap_r1 and c1a+1<=c0b-1:\n                for r in range(overlap_r0,overlap_r1+1):\n                    for c in range(c1a+1,c0b):\n                        out[r][c]=col\n    return out\n",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-colors-reading grid) (remove-duplicates (filter (lambda (v) (not (= v 0))) (map (lambda (p) (at grid (first p) (second p))) (grid-positions grid))))) (for/fold ((out g)) ((color (in-list (e8b-colors-reading g)))) (let ((objs (filter (lambda (obj) (= (obj-color obj) color)) (objects g 0)))) (if (= (length objs) 2) (let* ((bbs (sort (map obj-bbox objs) (lambda (a b) (< (second a) (second b))))) (a (first bbs)) (b (second bbs)) (overlap-r0 (max (first a) (first b))) (overlap-r1 (min (third a) (third b)))) (if (and (<= overlap-r0 overlap-r1) (<= (+ (fourth a) 1) (- (second b) 1))) (paint-cells out (positions-in-rect overlap-r0 (+ (fourth a) 1) overlap-r1 (- (second b) 1)) color) out)) out)))))"
+  },
+  {
+    "id": "M11",
+    "difficulty": "medium",
+    "title": "Move the payload to the 9 marker",
+    "what_it_tests": "Local-frame translation of an extracted object.",
+    "staged_hint": "Crop the payload object, find its top-left corner, then paste the same local shape with that corner aligned to the 9 cell.",
+    "written_solution": "There is one payload object and one cell colored 9. Remove both from their original locations and place the payload again so that its bounding-box top-left corner lands exactly on the 9 cell.",
+    "program_name": "solve_M11",
+    "program_source": "def solve_M11(g):\n    comps=[(col,cells) for col,cells in components(g) if col!=9]\n    marker=[(r,c) for r,row in enumerate(g) for c,v in enumerate(row) if v==9]\n    assert len(comps)==1 and len(marker)==1\n    col,cells=comps[0]\n    mr,mc=marker[0]\n    r0,r1,c0,c1=bbox(cells)\n    out=[[0]*len(g[0]) for _ in range(len(g))]\n    for r,c in cells:\n        out[mr+(r-r0)][mc+(c-c0)] = col\n    return out\n",
+    "program_solution": "(rule! (let ((dummy 0)) (let* ((obj (first (filter (lambda (o) (not (= (obj-color o) 9))) (objects g 0)))) (marker (first (find-color g 9))) (bb (obj-bbox obj))) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((p (in-list (obj-cells obj)))) (set-cell out (+ (first marker) (- (first p) (first bb))) (+ (second marker) (- (second p) (second bb))) (obj-color obj))))))"
+  },
+  {
+    "id": "M12",
+    "difficulty": "medium",
+    "title": "Keep only vertically symmetric objects",
+    "what_it_tests": "Symmetry checking inside each object's own coordinate frame.",
+    "staged_hint": "Test symmetry after cropping each object to its own bounding box; do not judge symmetry in the global grid.",
+    "written_solution": "Preserve only those connected objects whose cropped shape is symmetric across a vertical axis through the center of their own bbox. Remove all other objects.",
+    "program_name": "solve_M12",
+    "program_source": "def solve_M12(g):\n    h,w=dims(g)\n    out=[[0]*w for _ in range(h)]\n    for col,cells in components(g):\n        if is_vert_sym(cells):\n            for r,c in cells:\n                out[r][c]=col\n    return out\n",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8-cell<? a b) (or (< (first a) (first b)) (and (= (first a) (first b)) (< (second a) (second b))))) (define (e8-norm cells) (sort (normalize-cells cells) e8-cell<?)) (define (e5b-symmetric-v? cells) (let* ((norm (e8-norm cells)) (maxc (apply max (map second norm)))) (and (not (empty? norm)) (all? (lambda (p) (member? (list (first p) (- maxc (second p))) norm)) norm)))) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((obj (in-list (objects g 0)))) (if (e5b-symmetric-v? (obj-cells obj)) (paint-cells out (obj-cells obj) (obj-color obj)) out))))"
+  },
+  {
+    "id": "M13",
+    "difficulty": "medium",
+    "title": "Fill each object's row gaps",
+    "what_it_tests": "Objectwise row-wise hull filling.",
+    "staged_hint": "Work row by row inside each object: if a row contains that object's color in multiple columns, fill the interval between the leftmost and rightmost occupied cells.",
+    "written_solution": "For every connected object, look at each row where that object appears and fill all cells between that row's leftmost and rightmost object cell with the object's color.",
+    "program_name": "solve_M13",
+    "program_source": "def solve_M13(g):\n    out=clone(g)\n    for col,cells in components(g):\n        rows=defaultdict(list)\n        for r,c in cells:\n            rows[r].append(c)\n        for r, cs in rows.items():\n            for c in range(min(cs), max(cs)+1):\n                out[r][c]=col\n    return out\n",
+    "program_solution": "(rule! (let ((dummy 0)) (for/fold ((out g)) ((obj (in-list (objects g 0)))) (for/fold ((acc out)) ((r (in-list (remove-duplicates (map first (obj-cells obj)))))) (let ((cs (map second (filter (lambda (p) (= (first p) r)) (obj-cells obj))))) (paint-cells acc (map (lambda (c) (list r c)) (range (apply min cs) (+ (apply max cs) 1))) (obj-color obj)))))))"
+  },
+  {
+    "id": "M14",
+    "difficulty": "medium",
+    "title": "Fill the holes of the largest hollow object",
+    "what_it_tests": "Hole detection and object ranking by area.",
+    "staged_hint": "Find which objects actually contain enclosed 0-regions; among those, pick the largest one before filling anything.",
+    "written_solution": "Identify all hollow objects. Among them, choose the one with the largest area and fill all of its enclosed holes using that object's color. Leave every other object unchanged.",
+    "program_name": "solve_M14",
+    "program_source": "def solve_M14(g):\n    out=clone(g)\n    hollow=[]\n    for col,cells in components(g):\n        holes=hole_cells_of_component(g,cells)\n        if holes:\n            hollow.append((len(cells), col, cells, holes))\n    if not hollow:\n        return out\n    _, col, cells, holes = max(hollow, key=lambda x:x[0])\n    for r,c in holes:\n        out[r][c]=col\n    return out\n",
+    "program_solution": "(rule! (let ((dummy 0)) (define (f4-norm cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb))) (map (lambda (p) (list (- (first p) r0) (- (second p) c0))) cells))) (define (f4-norm-info cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb))) (list (f4-norm cells) (+ 1 (- r1 r0)) (+ 1 (- c1 c0))))) (define (nx-hole-cells cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (info (f4-norm-info cells)) (norm (first info)) (h (second info)) (w (third info)) (mask (paint-cells (empty-grid h w 0) norm 1)) (regions (filter (lambda (region) (not (any? (lambda (p) (or (= (first p) 0) (= (first p) (- h 1)) (= (second p) 0) (= (second p) (- w 1)))) region))) (find-0-regions mask 0)))) (apply append (map (lambda (region) (map (lambda (p) (list (+ r0 (first p)) (+ c0 (second p)))) region)) regions)))) (let ((hollow (filter (lambda (obj) (not (empty? (nx-hole-cells (obj-cells obj))))) (objects g 0)))) (if (empty? hollow) g (let* ((chosen (first (sort hollow (lambda (a b) (> (obj-size a) (obj-size b)))))) (holes (nx-hole-cells (obj-cells chosen)))) (paint-cells g holes (obj-color chosen)))))))"
+  },
+  {
+    "id": "H8",
+    "difficulty": "hard",
+    "title": "Stack normalized objects by width",
+    "what_it_tests": "Output resizing, object normalization, sorting, and repacking.",
+    "staged_hint": "Crop every object first. Then sort the cropped pieces by width from widest to narrowest and stack them top-to-bottom with one blank row between pieces.",
+    "written_solution": "Extract every connected object, crop it to its bbox, sort the cropped objects by width descending, and build a new output grid that stacks them vertically with one background row between neighboring objects. Left-align all stacked shapes.",
+    "program_name": "solve_H8",
+    "program_source": "def solve_H8(g):\n    comps=components(g)\n    items=[]\n    for col,cells in comps:\n        local,(H,W)=crop_cells(cells)\n        items.append((W,H,col,set(local)))\n    items.sort(key=lambda x:(-x[0], -x[1], x[2]))\n    out_h=sum(H for W,H,col,s in items) + max(0, len(items)-1)\n    out_w=max(W for W,H,col,s in items) if items else 0\n    out=[[0]*out_w for _ in range(out_h)]\n    r_off=0\n    for W,H,col,s in items:\n        for r,c in s:\n            out[r_off+r][c]=col\n        r_off += H + 1\n    return out\n",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-list< a b) (cond ((empty? a) #f) ((< (first a) (first b)) #t) ((> (first a) (first b)) #f) (else (e8b-list< (rest a) (rest b))))) (define (f4-norm cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb))) (map (lambda (p) (list (- (first p) r0) (- (second p) c0))) cells))) (define (f4-norm-info cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb))) (list (f4-norm cells) (+ 1 (- r1 r0)) (+ 1 (- c1 c0))))) (define (nx-vpack-shapes items) (if (empty? items) (list) (let* ((h (+ (apply + (map second items)) (- (length items) 1))) (w (apply max (map third items)))) (let loop ((xs items) (top 0) (out (empty-grid h w 0))) (if (empty? xs) out (let ((shape (first (first xs))) (ih (second (first xs))) (iw (third (first xs))) (color (fourth (first xs)))) (loop (rest xs) (+ top ih 1) (paint-cells out (map (lambda (p) (list (+ top (first p)) (second p))) shape) color)))))))) (let* ((items (for/list ((obj (in-list (objects g 0)))) (let ((info (f4-norm-info (obj-cells obj)))) (list (third info) (second info) (obj-color obj) (first info))))) (sorted (sort items (lambda (a b) (e8b-list< (list (- (first a)) (- (second a)) (third a)) (list (- (first b)) (- (second b)) (third b)))))) (pack-items (map (lambda (item) (list (fourth item) (second item) (first item) (third item))) sorted))) (nx-vpack-shapes pack-items))))"
+  },
+  {
+    "id": "H9",
+    "difficulty": "hard",
+    "title": "Normalized shape XOR",
+    "what_it_tests": "Shape normalization and comparison independent of absolute position.",
+    "staged_hint": "Crop the color-2 object and the color-3 object separately, align both cropped shapes to the same top-left origin, then keep only cells occupied by exactly one of them.",
+    "written_solution": "Take the red(2) object and the green(3) object, crop each to its own bbox, normalize both to the top-left corner of a shared canvas, and output cyan(8) wherever exactly one normalized shape occupies a cell.",
+    "program_name": "solve_H9",
+    "program_source": "def solve_H9(g):\n    comps=components(g)\n    # choose first color2 and first color3\n    c2=[cells for col,cells in comps if col==2][0]\n    c3=[cells for col,cells in comps if col==3][0]\n    s2,(H2,W2)=crop_cells(c2); s2=set(s2)\n    s3,(H3,W3)=crop_cells(c3); s3=set(s3)\n    H=max(H2,H3); W=max(W2,W3)\n    out=[[0]*W for _ in range(H)]\n    for r in range(H):\n        for c in range(W):\n            in2=(r,c) in s2\n            in3=(r,c) in s3\n            if in2 ^ in3:\n                out[r][c]=8\n    return out\n",
+    "program_solution": "(rule! (let ((dummy 0)) (define (f4-norm cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb))) (map (lambda (p) (list (- (first p) r0) (- (second p) c0))) cells))) (define (f4-norm-info cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb))) (list (f4-norm cells) (+ 1 (- r1 r0)) (+ 1 (- c1 c0))))) (let* ((c2 (first (filter (lambda (obj) (= (obj-color obj) 2)) (objects g 0)))) (c3 (first (filter (lambda (obj) (= (obj-color obj) 3)) (objects g 0)))) (i2 (f4-norm-info (obj-cells c2))) (i3 (f4-norm-info (obj-cells c3))) (s2 (first i2)) (s3 (first i3)) (h (max (second i2) (second i3))) (w (max (third i2) (third i3)))) (grid-from-fn h w (lambda (r c) (if (not (equal? (member? (list r c) s2) (member? (list r c) s3))) 8 0))))))"
+  },
+  {
+    "id": "H10",
+    "difficulty": "hard",
+    "title": "Rotate each object 180° in its own frame",
+    "what_it_tests": "Per-object local coordinate transforms without moving the bbox.",
+    "staged_hint": "Do not rotate the whole canvas. Rotate each cropped object inside its own bounding box, then paste it back into the same bbox location.",
+    "written_solution": "For every connected object, crop to its bbox, rotate that local shape by 180°, and place the rotated version back into the same bounding-box position on an otherwise empty grid.",
+    "program_name": "solve_H10",
+    "program_source": "def solve_H10(g):\n    h,w=dims(g)\n    out=[[0]*w for _ in range(h)]\n    for col,cells in components(g):\n        r0,r1,c0,c1=bbox(cells)\n        H=r1-r0+1; W=c1-c0+1\n        local,_=crop_cells(cells)\n        for r,c in local:\n            rr = H-1-r\n            cc = W-1-c\n            out[r0+rr][c0+cc]=col\n    return out\n",
+    "program_solution": "(rule! (let ((dummy 0)) (define (f4-norm cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb))) (map (lambda (p) (list (- (first p) r0) (- (second p) c0))) cells))) (define (f4-norm-info cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb))) (list (f4-norm cells) (+ 1 (- r1 r0)) (+ 1 (- c1 c0))))) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((obj (in-list (objects g 0)))) (let* ((bb (obj-bbox obj)) (info (f4-norm-info (obj-cells obj))) (h (second info)) (w (third info))) (for/fold ((acc out)) ((p (in-list (first info)))) (set-cell acc (+ (first bb) (- h 1 (first p))) (+ (second bb) (- w 1 (second p))) (obj-color obj)))))))"
+  },
+  {
+    "id": "H11",
+    "difficulty": "hard",
+    "title": "Extract the repeated shape family",
+    "what_it_tests": "Normalized-shape matching across colors and positions, plus output resizing.",
+    "staged_hint": "Compare objects by shape after cropping and normalization, ignoring color and location. Find the shape that appears more than once.",
+    "written_solution": "Among the input objects, two share the same normalized shape while at least one other object is different. Output the repeated normalized shape alone, recolored entirely to cyan(8).",
+    "program_name": "solve_H11",
+    "program_source": "def solve_H11(g):\n    comps=components(g)\n    groups=defaultdict(list)\n    dims_map={}\n    for col,cells in comps:\n        local,(H,W)=crop_cells(cells)\n        key=tuple(sorted(local))\n        groups[key].append((col,cells,H,W))\n        dims_map[key]=(H,W)\n    key=max(groups.keys(), key=lambda k: (len(groups[k]), len(k)))\n    H,W=dims_map[key]\n    out=[[0]*W for _ in range(H)]\n    for r,c in key:\n        out[r][c]=8\n    return out\n",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-list< a b) (cond ((empty? a) #f) ((< (first a) (first b)) #t) ((> (first a) (first b)) #f) (else (e8b-list< (rest a) (rest b))))) (define (e8b-list> a b) (e8b-list< b a)) (define (f4-norm cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb))) (map (lambda (p) (list (- (first p) r0) (- (second p) c0))) cells))) (define (f4-norm-info cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb))) (list (f4-norm cells) (+ 1 (- r1 r0)) (+ 1 (- c1 c0))))) (let* ((entries (map (lambda (obj) (list (first (f4-norm-info (obj-cells obj))) (obj-cells obj))) (objects g 0))) (keys (remove-duplicates (map first entries))) (best (first (sort keys (lambda (a b) (e8b-list> (list (length (filter (lambda (e) (equal? (first e) a)) entries)) (length a)) (list (length (filter (lambda (e) (equal? (first e) b)) entries)) (length b))))))) (info (let ((bb (bbox-of-cells best))) (list (+ 1 (- (third bb) (first bb))) (+ 1 (- (fourth bb) (second bb))))))) (paint-cells (empty-grid (first info) (second info) 0) best 8))))"
+  },
+  {
+    "id": "H12",
+    "difficulty": "hard",
+    "title": "Arrange four objects by area in a 2×2 pack",
+    "what_it_tests": "Multi-object ranking, output resizing, and two-dimensional packing.",
+    "staged_hint": "Crop all four objects, sort them by area ascending, then assign them in reading order to the top-left, top-right, bottom-left, and bottom-right cells of a new 2×2 packing layout with one blank row and one blank column as separators.",
+    "written_solution": "Extract and crop the four objects. Sort them by area from smallest to largest. Place them into a new output canvas in row-major order: smallest in the top-left cell, next in the top-right, next in the bottom-left, and largest in the bottom-right, with one background row and one background column separating the packed quadrants.",
+    "program_name": "solve_H12",
+    "program_source": "def solve_H12(g):\n    comps=components(g)\n    items=[]\n    for col,cells in comps:\n        local,(H,W)=crop_cells(cells)\n        items.append((len(cells), W, H, col, set(local)))\n    items.sort(key=lambda x:(x[0], x[1], x[2], x[3]))\n    # take first four\n    items=items[:4]\n    (a_area,aW,aH,aCol,aS),(b_area,bW,bH,bCol,bS),(c_area,cW,cH,cCol,cS),(d_area,dW,dH,dCol,dS)=items\n    left_w=max(aW,cW); right_w=max(bW,dW)\n    top_h=max(aH,bH); bot_h=max(cH,dH)\n    H=top_h+1+bot_h; W=left_w+1+right_w\n    out=[[0]*W for _ in range(H)]\n    # TL\n    for r,c in aS: out[r][c]=aCol\n    # TR\n    for r,c in bS: out[r][left_w+1+c]=bCol\n    # BL\n    for r,c in cS: out[top_h+1+r][c]=cCol\n    # BR\n    for r,c in dS: out[top_h+1+r][left_w+1+c]=dCol\n    return out\n",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-list< a b) (cond ((empty? a) #f) ((< (first a) (first b)) #t) ((> (first a) (first b)) #f) (else (e8b-list< (rest a) (rest b))))) (define (f4-norm cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb))) (map (lambda (p) (list (- (first p) r0) (- (second p) c0))) cells))) (define (f4-norm-info cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb))) (list (f4-norm cells) (+ 1 (- r1 r0)) (+ 1 (- c1 c0))))) (let* ((items (take (sort (objects g 0) (lambda (a b) (let ((ia (f4-norm-info (obj-cells a))) (ib (f4-norm-info (obj-cells b)))) (e8b-list< (list (obj-size a) (third ia) (second ia) (obj-color a)) (list (obj-size b) (third ib) (second ib) (obj-color b)))))) 4)) (infos (map (lambda (obj) (f4-norm-info (obj-cells obj))) items)) (a (first infos)) (b (second infos)) (c (third infos)) (d (fourth infos)) (left-w (max (third a) (third c))) (right-w (max (third b) (third d))) (top-h (max (second a) (second b))) (bot-h (max (second c) (second d))) (out0 (empty-grid (+ top-h 1 bot-h) (+ left-w 1 right-w) 0))) (let* ((out1 (paint-cells out0 (first a) (obj-color (first items)))) (out2 (paint-cells out1 (map (lambda (p) (list (first p) (+ left-w 1 (second p)))) (first b)) (obj-color (second items)))) (out3 (paint-cells out2 (map (lambda (p) (list (+ top-h 1 (first p)) (second p))) (first c)) (obj-color (third items)))) (out4 (paint-cells out3 (map (lambda (p) (list (+ top-h 1 (first p)) (+ left-w 1 (second p)))) (first d)) (obj-color (fourth items))))) out4))))"
+  },
+  {
+    "id": "H13",
+    "difficulty": "hard",
+    "title": "Pack the hole patterns",
+    "what_it_tests": "Hole extraction, normalization of derived structures, and packing.",
+    "staged_hint": "Ignore the outer shells once you have found the holes. Treat each hole pattern as its own derived object, crop it, and then pack the resulting patterns left-to-right.",
+    "written_solution": "For every hollow object, extract only its enclosed hole cells, recolor those hole cells with the color of the object they came from, crop each resulting hole pattern to its own bbox, and pack the cropped hole patterns left-to-right with one background column between them.",
+    "program_name": "solve_H13",
+    "program_source": "def solve_H13(g):\n    # extract hole patterns, crop them to hole bbox, pack left->right with gap 1 by original left order\n    items=[]\n    for col,cells in components(g):\n        holes=hole_cells_of_component(g,cells)\n        if holes:\n            hr0,hr1,hc0,hc1=bbox(holes)\n            local=[(r-hr0,c-hc0) for r,c in holes]\n            H=hr1-hr0+1; W=hc1-hc0+1\n            comp_bb=bbox(cells)\n            items.append((comp_bb[2], H, W, col, set(local)))\n    items.sort(key=lambda x:x[0])\n    if not items:\n        return [[]]\n    H=max(item[1] for item in items)\n    W=sum(item[2] for item in items)+max(0,len(items)-1)\n    out=[[0]*W for _ in range(H)]\n    off=0\n    for _,h,w,col,s in items:\n        for r,c in s: out[r][off+c]=col\n        off += w+1\n    return out\n",
+    "program_solution": "(rule! (let ((dummy 0)) (define (fifth xs) (list-ref xs 4)) (define (f4-norm cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb))) (map (lambda (p) (list (- (first p) r0) (- (second p) c0))) cells))) (define (f4-norm-info cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb))) (list (f4-norm cells) (+ 1 (- r1 r0)) (+ 1 (- c1 c0))))) (define (nx-hole-cells cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (info (f4-norm-info cells)) (norm (first info)) (h (second info)) (w (third info)) (mask (paint-cells (empty-grid h w 0) norm 1)) (regions (filter (lambda (region) (not (any? (lambda (p) (or (= (first p) 0) (= (first p) (- h 1)) (= (second p) 0) (= (second p) (- w 1)))) region))) (find-0-regions mask 0)))) (apply append (map (lambda (region) (map (lambda (p) (list (+ r0 (first p)) (+ c0 (second p)))) region)) regions)))) (define (nx-hpack-shapes items) (if (empty? items) (list) (let* ((h (apply max (map second items))) (w (+ (apply + (map third items)) (- (length items) 1)))) (let loop ((xs items) (left 0) (out (empty-grid h w 0))) (if (empty? xs) out (let ((shape (first (first xs))) (ih (second (first xs))) (iw (third (first xs))) (color (fourth (first xs)))) (loop (rest xs) (+ left iw 1) (paint-cells out (map (lambda (p) (list (first p) (+ left (second p)))) shape) color)))))))) (let* ((items (filter values (for/list ((obj (in-list (objects g 0)))) (let ((holes (nx-hole-cells (obj-cells obj)))) (if (empty? holes) #f (let* ((hbb (bbox-of-cells holes)) (local (map (lambda (p) (list (- (first p) (first hbb)) (- (second p) (second hbb)))) holes)) (cbb (obj-bbox obj))) (list (second cbb) local (+ 1 (- (third hbb) (first hbb))) (+ 1 (- (fourth hbb) (second hbb))) (obj-color obj)))))))) (sorted (sort items (lambda (a b) (< (first a) (first b))))) (pack-items (map (lambda (item) (list (second item) (third item) (fourth item) (fifth item))) sorted))) (if (empty? pack-items) (list) (nx-hpack-shapes pack-items)))))"
+  },
+  {
+    "id": "H14",
+    "difficulty": "hard",
+    "title": "Transfer the hole pattern to the solid twin",
+    "what_it_tests": "Local-frame correspondence between a hollow template and a same-sized solid target.",
+    "staged_hint": "Use the hollow object only as a template: record its hole coordinates relative to its own bounding box, then erase the corresponding relative cells inside the solid object's bounding box.",
+    "written_solution": "Find the hollow object and the solid object with the same bounding-box size. Compute the hollow object's hole pattern in local coordinates, then carve out zeros at the corresponding local positions inside the solid object's bbox. Keep the hollow template unchanged.",
+    "program_name": "solve_H14",
+    "program_source": "def solve_H14(g):\n    comps=components(g)\n    hollow=[]; solid=[]\n    for col,cells in comps:\n        holes=hole_cells_of_component(g,cells)\n        bb=bbox(cells)\n        if holes:\n            hollow.append((col,cells,holes,bb))\n        else:\n            solid.append((col,cells,bb))\n    # match by bbox dims\n    out=clone(g)\n    for hcol,hcells,holes,hbb in hollow:\n        hH=hbb[1]-hbb[0]+1; hW=hbb[3]-hbb[2]+1\n        rel=[(r-hbb[0], c-hbb[2]) for r,c in holes]\n        for scol,scells,sbb in solid:\n            sH=sbb[1]-sbb[0]+1; sW=sbb[3]-sbb[2]+1\n            if (sH,sW)==(hH,hW):\n                for rr,cc in rel:\n                    out[sbb[0]+rr][sbb[2]+cc]=0\n                return out\n    return out\n",
+    "program_solution": "(rule! (let ((dummy 0)) (define (f4-norm cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb))) (map (lambda (p) (list (- (first p) r0) (- (second p) c0))) cells))) (define (f4-norm-info cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb))) (list (f4-norm cells) (+ 1 (- r1 r0)) (+ 1 (- c1 c0))))) (define (nx-hole-cells cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (info (f4-norm-info cells)) (norm (first info)) (h (second info)) (w (third info)) (mask (paint-cells (empty-grid h w 0) norm 1)) (regions (filter (lambda (region) (not (any? (lambda (p) (or (= (first p) 0) (= (first p) (- h 1)) (= (second p) 0) (= (second p) (- w 1)))) region))) (find-0-regions mask 0)))) (apply append (map (lambda (region) (map (lambda (p) (list (+ r0 (first p)) (+ c0 (second p)))) region)) regions)))) (let* ((objs (objects g 0)) (hollows (filter (lambda (obj) (not (empty? (nx-hole-cells (obj-cells obj))))) objs)) (solids (filter (lambda (obj) (empty? (nx-hole-cells (obj-cells obj)))) objs))) (let loop-h ((hs hollows)) (if (empty? hs) g (let* ((hobj (first hs)) (hbb (obj-bbox hobj)) (hh (+ 1 (- (third hbb) (first hbb)))) (hw (+ 1 (- (fourth hbb) (second hbb)))) (rel (map (lambda (p) (list (- (first p) (first hbb)) (- (second p) (second hbb)))) (nx-hole-cells (obj-cells hobj)))) (match (filter (lambda (sobj) (let ((sbb (obj-bbox sobj))) (and (= (+ 1 (- (third sbb) (first sbb))) hh) (= (+ 1 (- (fourth sbb) (second sbb))) hw)))) solids))) (if (empty? match) (loop-h (rest hs)) (let ((sbb (obj-bbox (first match)))) (paint-cells g (map (lambda (p) (list (+ (first sbb) (first p)) (+ (second sbb) (second p)))) rel) 0)))))))))"
+  }
+]

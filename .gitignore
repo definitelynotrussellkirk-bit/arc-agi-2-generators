@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Caches built locally — these are derived and shouldn't be committed.
+puzzle_generators/.catalog.db
+puzzle_generators/catalog.db
+data/derived/generator_lint.jsonl
+data/derived/concepts.jsonl
+data/derived/behavioral_hash.jsonl
+
+# Raw ARC data (license — fetch via scripts/fetch_arc_data.py)
+data/raw/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Racket compiled artifacts (build cache, regenerated on first run)
+**/compiled/
+*.zo
+*.dep

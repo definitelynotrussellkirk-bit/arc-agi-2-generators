@@ -1,0 +1,340 @@
+[
+  {
+    "difficulty": "easy",
+    "name": "One-Gap Bridge",
+    "tags": [
+      "local",
+      "interval",
+      "completion"
+    ],
+    "written_rule": "Whenever two same-color cells in the same row or column are separated by exactly one 0, fill that middle cell with the same color. Leave everything else unchanged.",
+    "program_function": "solve_easy_p01",
+    "primitive_names": [
+      "one_gap_bridge"
+    ],
+    "id": "easy_p01",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range (cols g)))) (if (not (= (at g r c) 0)) out (let* ((hfill (and (> c 0) (< c (- (cols g) 1)) (not (= (at g r (- c 1)) 0)) (= (at g r (- c 1)) (at g r (+ c 1))))) (vfill (and (> r 0) (< r (- (rows g) 1)) (not (= (at g (- r 1) c) 0)) (= (at g (- r 1) c) (at g (+ r 1) c))))) (if hfill (set-cell out r c (at g r (- c 1))) (if vfill (set-cell out r c (at g (- r 1) c)) out)))))))"
+  },
+  {
+    "difficulty": "easy",
+    "name": "Anti-Diagonal Orbit",
+    "tags": [
+      "symmetry",
+      "reflection",
+      "same_size"
+    ],
+    "written_rule": "For every colored cell, also color its reflection across the anti-diagonal of the square grid. Keep the original cells too.",
+    "program_function": "solve_easy_p02",
+    "primitive_names": [
+      "anti_diagonal_orbit"
+    ],
+    "id": "easy_p02",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range (cols g)))) (let ((v (at g r c))) (if (= v 0) out (set-cell out (- (rows g) 1 c) (- (rows g) 1 r) v))))))"
+  },
+  {
+    "difficulty": "easy",
+    "name": "Square Ring Bloom",
+    "tags": [
+      "local",
+      "shape_growth",
+      "square"
+    ],
+    "written_rule": "Each solid monochrome 2x2 square blooms into the surrounding 4x4 ring of the same color. Existing square cells stay colored.",
+    "program_function": "solve_easy_p03",
+    "primitive_names": [
+      "square_ring_bloom"
+    ],
+    "id": "easy_p03",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range 0 (- (rows g) 1))) (c (in-range 0 (- (cols g) 1)))) (let ((col (at g r c))) (if (and (not (= col 0)) (= (at g (+ r 1) c) col) (= (at g r (+ c 1)) col) (= (at g (+ r 1) (+ c 1)) col)) (for*/fold ((acc out)) ((rr (in-range (- r 1) (+ r 3))) (cc (in-range (- c 1) (+ c 3)))) (if (and (in-bounds? rr cc (rows g) (cols g)) (or (= rr (- r 1)) (= rr (+ r 2)) (= cc (- c 1)) (= cc (+ c 2)))) (set-cell acc rr cc col) acc)) out)))))"
+  },
+  {
+    "difficulty": "easy",
+    "name": "Bottommost Column Filter",
+    "tags": [
+      "filter",
+      "column",
+      "same_size"
+    ],
+    "written_rule": "In each column, keep only the lowest nonzero cell and erase every nonzero cell above it.",
+    "program_function": "solve_easy_p04",
+    "primitive_names": [
+      "bottom_keep"
+    ],
+    "id": "easy_p04",
+    "program_solution": "(rule! (let ((dummy 0)) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((c (in-range (cols g)))) (let ((hits (filter (lambda (r) (not (= (at g r c) 0))) (reverse (range 0 (rows g)))))) (if (empty? hits) out (let ((r (first hits))) (set-cell out r c (at g r c))))))))"
+  },
+  {
+    "difficulty": "easy",
+    "name": "Opposite-Corner Completion",
+    "tags": [
+      "rectangle",
+      "completion",
+      "geometry"
+    ],
+    "written_rule": "If a rectangle has one diagonal pair of same-color corners present and the other two corners empty, fill in the missing two corners with that color.",
+    "program_function": "solve_easy_p05",
+    "primitive_names": [
+      "opposite_corner_complete"
+    ],
+    "id": "easy_p05",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r0 (in-range (rows g))) (c0 (in-range (cols g))) (r1 (in-range (+ r0 1) (rows g))) (c1 (in-range (cols g)))) (let ((col (at g r0 c0))) (if (and (not (= col 0)) (not (= c1 c0)) (= (at g r1 c1) col) (= (at out r0 c1) 0) (= (at out r1 c0) 0)) (set-cell (set-cell out r0 c1 col) r1 c0 col) out)))))"
+  },
+  {
+    "difficulty": "easy",
+    "name": "Half-Turn Echo",
+    "tags": [
+      "symmetry",
+      "rotation",
+      "same_size"
+    ],
+    "written_rule": "For every colored cell, add its 180-degree rotated counterpart in the same color. Keep the originals.",
+    "program_function": "solve_easy_p06",
+    "primitive_names": [
+      "half_turn_echo"
+    ],
+    "id": "easy_p06",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range (cols g)))) (let ((v (at g r c))) (if (= v 0) out (set-cell out (- (rows g) 1 r) (- (cols g) 1 c) v))))))"
+  },
+  {
+    "difficulty": "easy",
+    "name": "Blocked Crosshair Projection",
+    "tags": [
+      "projection",
+      "walls",
+      "same_size"
+    ],
+    "written_rule": "Each colored seed projects its color horizontally and vertically through 0 cells until a wall-colored 5 cell or the border stops the beam. Walls remain 5.",
+    "program_function": "solve_easy_p07",
+    "primitive_names": [
+      "blocked_crosshair"
+    ],
+    "id": "easy_p07",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range (cols g)))) (let ((col (at g r c))) (if (or (= col 0) (= col 5)) out (for/fold ((acc out)) ((d (in-list cardinal-deltas))) (let ray ((rr (+ r (first d))) (cc (+ c (second d))) (a acc)) (cond ((not (in-bounds? rr cc (rows g) (cols g))) a) ((= (at g rr cc) 5) a) (else (ray (+ rr (first d)) (+ cc (second d)) (if (= (at g rr cc) 0) (set-cell a rr cc col) a)))))))))))"
+  },
+  {
+    "difficulty": "medium",
+    "name": "Color-Key Crop",
+    "tags": [
+      "selection",
+      "crop",
+      "marker"
+    ],
+    "written_rule": "The top-left key cell names a color. Find the connected object of that color elsewhere in the grid and output its tight bounding-box crop.",
+    "program_function": "solve_medium_p01",
+    "primitive_names": [
+      "color_key_crop"
+    ],
+    "id": "medium_p01",
+    "program_solution": "(rule! (let ((dummy 0)) (define (py-bbox obj) (list (obj-r1 obj) (obj-r2 obj) (obj-c1 obj) (obj-c2 obj))) (define (py-bb< a b) (cond ((not (= (first a) (first b))) (< (first a) (first b))) ((not (= (second a) (second b))) (< (second a) (second b))) ((not (= (third a) (third b))) (< (third a) (third b))) (else (< (fourth a) (fourth b))))) (define (obj-py-bb< a b) (py-bb< (py-bbox a) (py-bbox b))) (define (crop-obj grid obj) (let* ((r0 (obj-r1 obj)) (c0 (obj-c1 obj)) (h (obj-h obj)) (w (obj-w obj))) (for/fold ((out (empty-grid h w 0))) ((p (in-list (obj-cells obj)))) (set-cell out (- (first p) r0) (- (second p) c0) (at grid (first p) (second p)))))) (let* ((key (at g 0 0)) (comps (sort (filter (lambda (obj) (and (= (obj-color obj) key) (not (member? (list 0 0) (obj-cells obj))))) (objects g 0)) obj-py-bb<))) (if (empty? comps) (list (list 0)) (crop-obj g (first comps))))))"
+  },
+  {
+    "difficulty": "medium",
+    "name": "Hole Count Recolor",
+    "tags": [
+      "topology",
+      "recolor",
+      "objects"
+    ],
+    "written_rule": "Recolor each object only by how many holes it encloses: 0 holes become red(2), 1 hole becomes green(3), and 2 holes become yellow(4).",
+    "program_function": "solve_medium_p02",
+    "primitive_names": [
+      "hole_rank_palette"
+    ],
+    "id": "medium_p02",
+    "program_solution": "(rule! (let ((dummy 0)) (define (hole-count grid obj) (topo-count-holes grid obj 0)) (define (palette-by-hole-count n) (cond ((= n 0) 2) ((= n 1) 3) ((= n 2) 4) ((= n 3) 6) (else 9))) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((obj (in-list (objects g 0)))) (paint-cells out (obj-cells obj) (palette-by-hole-count (hole-count g obj))))))"
+  },
+  {
+    "difficulty": "medium",
+    "name": "Compartment Left Pack",
+    "tags": [
+      "gravity",
+      "walls",
+      "rowwise"
+    ],
+    "written_rule": "Treat each row segment between wall cells 5 as a separate compartment. Within each compartment, slide all colored cells as far left as possible while preserving their order.",
+    "program_function": "solve_medium_p03",
+    "primitive_names": [
+      "compartment_left_pack"
+    ],
+    "id": "medium_p03",
+    "program_solution": "(rule! (let ((dummy 0)) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((r (in-range (rows g)))) (let row-loop ((c 0) (acc out)) (if (>= c (cols g)) acc (if (= (at g r c) 5) (row-loop (+ c 1) (set-cell acc r c 5)) (let find-end ((j c)) (if (and (< j (cols g)) (not (= (at g r j) 5))) (find-end (+ j 1)) (let* ((vals (filter (lambda (v) (not (= v 0))) (map (lambda (cc) (at g r cc)) (range c j)))) (filled (for/fold ((a acc)) ((val (in-list vals)) (cc (in-range c (+ c (length vals))))) (set-cell a r cc val)))) (row-loop j filled))))))))))"
+  },
+  {
+    "difficulty": "medium",
+    "name": "External Seed Frame Fill",
+    "tags": [
+      "frames",
+      "seeded_fill",
+      "same_size"
+    ],
+    "written_rule": "Each hollow rectangular frame has a colored seed immediately outside it. Fill that frame's interior with the seed color while keeping the frame border as 5.",
+    "program_function": "solve_medium_p04",
+    "primitive_names": [
+      "external_seed_fill"
+    ],
+    "id": "medium_p04",
+    "program_solution": "(rule! (let ((dummy 0)) (define (py-bbox obj) (list (obj-r1 obj) (obj-r2 obj) (obj-c1 obj) (obj-c2 obj))) (define (py-bb< a b) (cond ((not (= (first a) (first b))) (< (first a) (first b))) ((not (= (second a) (second b))) (< (second a) (second b))) ((not (= (third a) (third b))) (< (third a) (third b))) (else (< (fourth a) (fourth b))))) (define (rect-frame? obj) (let* ((r0 (obj-r1 obj)) (r1 (obj-r2 obj)) (c0 (obj-c1 obj)) (c1 (obj-c2 obj))) (and (= (obj-color obj) 5) (all? (lambda (p) (let ((r (first p)) (c (second p))) (or (= r r0) (= r r1) (= c c0) (= c c1)))) (obj-cells obj)) (all? (lambda (p) (= (at g (first p) (second p)) 5)) (append (for/list ((c (in-range c0 (+ c1 1)))) (list r0 c)) (for/list ((c (in-range c0 (+ c1 1)))) (list r1 c)) (for/list ((r (in-range r0 (+ r1 1)))) (list r c0)) (for/list ((r (in-range r0 (+ r1 1)))) (list r c1))))))) (define (frame-bbs grid) (sort (map py-bbox (filter rect-frame? (objects grid 0))) py-bb<)) (for/fold ((out g)) ((bb (in-list (frame-bbs g)))) (let* ((r0 (first bb)) (r1 (second bb)) (c0 (third bb)) (c1 (fourth bb)) (mid (quotient (+ r0 r1) 2)) (left-seed (if (>= (- c0 1) 0) (at g mid (- c0 1)) 0)) (seed (if (and (= left-seed 0) (< (+ c1 1) (cols g))) (at g mid (+ c1 1)) left-seed))) (if (or (= seed 0) (= seed 5)) out (for*/fold ((acc out)) ((r (in-range (+ r0 1) r1)) (c (in-range (+ c0 1) c1))) (set-cell acc r c seed)))))))",
+    "written_solution": "Each hollow rectangular frame has a colored seed immediately outside it. Fill that frame's interior with the seed color while keeping the frame border as gray(5)."
+  },
+  {
+    "difficulty": "medium",
+    "name": "Width-Sorted Gallery",
+    "tags": [
+      "gallery",
+      "crop",
+      "ordering"
+    ],
+    "written_rule": "Crop each object to its tight box, sort the crops by width from narrowest to widest, and place them left-to-right with one background column between them.",
+    "program_function": "solve_medium_p05",
+    "primitive_names": [
+      "width_gallery"
+    ],
+    "id": "medium_p05",
+    "program_solution": "(rule! (let ((dummy 0)) (define (flat grid) (apply append grid)) (define (obj-width-gallery< a b) (cond ((not (= (obj-w a) (obj-w b))) (< (obj-w a) (obj-w b))) ((not (= (obj-h a) (obj-h b))) (< (obj-h a) (obj-h b))) (else (lex-grid< (crop-obj g a) (crop-obj g b))))) (define (lex-list< a b) (cond ((empty? a) (not (empty? b))) ((empty? b) #f) ((not (= (first a) (first b))) (< (first a) (first b))) (else (lex-list< (rest a) (rest b))))) (define (lex-grid< a b) (lex-list< (flat a) (flat b))) (define (crop-obj grid obj) (let* ((r0 (obj-r1 obj)) (c0 (obj-c1 obj)) (h (obj-h obj)) (w (obj-w obj))) (for/fold ((out (empty-grid h w 0))) ((p (in-list (obj-cells obj)))) (set-cell out (- (first p) r0) (- (second p) c0) (at grid (first p) (second p)))))) (define (paste-crop grid crop r0 c0) (for*/fold ((out grid)) ((r (in-range (rows crop))) (c (in-range (cols crop)))) (let ((v (at crop r c)) (rr (+ r0 r)) (cc (+ c0 c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows grid) (cols grid))) (set-cell out rr cc v) out)))) (define (gallery-top crops) (if (empty? crops) (list (list 0)) (let* ((h (apply max (map rows crops))) (w (+ (apply + (map cols crops)) (max 0 (- (length crops) 1))))) (let pack ((remaining crops) (left 0) (out (empty-grid h w 0))) (if (empty? remaining) out (let ((crop (first remaining))) (pack (rest remaining) (+ left (cols crop) 1) (paste-crop out crop 0 left)))))))) (let* ((objs (sort (objects g 0) obj-width-gallery<)) (crops (map (lambda (obj) (crop-obj g obj)) objs))) (if (empty? crops) (list (list 0)) (gallery-top crops)))))"
+  },
+  {
+    "difficulty": "medium",
+    "name": "Diagonal Segment Connect",
+    "tags": [
+      "diagonal",
+      "connection",
+      "markers"
+    ],
+    "written_rule": "Whenever two same-color markers lie on a clean diagonal with only 0s between them, fill the whole diagonal segment in that color.",
+    "program_function": "solve_medium_p06",
+    "primitive_names": [
+      "diagonal_segment_connect"
+    ],
+    "id": "medium_p06",
+    "program_solution": "(rule! (let ((dummy 0)) (define (positions-of-color grid color) (filter (lambda (p) (= (at grid (first p) (second p)) color)) (grid-positions grid))) (for/fold ((out g)) ((col (in-list (filter (lambda (v) (not (= v 0))) (grid-colors g 0))))) (let ((cells (positions-of-color g col))) (for*/fold ((acc out)) ((i (in-range (length cells))) (j (in-range (+ i 1) (length cells)))) (let* ((a (list-ref cells i)) (b (list-ref cells j)) (dr (- (first b) (first a))) (dc (- (second b) (second a)))) (if (and (not (= dr 0)) (= (abs dr) (abs dc))) (let* ((sr (if (> dr 0) 1 -1)) (sc (if (> dc 0) 1 -1)) (between (let loop ((rr (+ (first a) sr)) (cc (+ (second a) sc)) (ok #t)) (cond ((and (= rr (first b)) (= cc (second b))) ok) ((not (= (at g rr cc) 0)) #f) (else (loop (+ rr sr) (+ cc sc) ok)))))) (if between (let draw ((rr (first a)) (cc (second a)) (aout acc)) (let ((next (set-cell aout rr cc col))) (if (and (= rr (first b)) (= cc (second b))) next (draw (+ rr sr) (+ cc sc) next)))) acc)) acc)))))))"
+  },
+  {
+    "difficulty": "medium",
+    "name": "Center Dock to Marker",
+    "tags": [
+      "translation",
+      "marker",
+      "objects"
+    ],
+    "written_rule": "Move the unique object so that the center of its bbox lands on the marker cell colored 8. Remove the marker and keep the canvas size the same.",
+    "program_function": "solve_medium_p07",
+    "primitive_names": [
+      "bbox_center_dock"
+    ],
+    "id": "medium_p07",
+    "program_solution": "(rule! (let ((dummy 0)) (define (crop-obj grid obj) (let* ((r0 (obj-r1 obj)) (c0 (obj-c1 obj)) (h (obj-h obj)) (w (obj-w obj))) (for/fold ((out (empty-grid h w 0))) ((p (in-list (obj-cells obj)))) (set-cell out (- (first p) r0) (- (second p) c0) (at grid (first p) (second p)))))) (define (paste-crop grid crop r0 c0) (for*/fold ((out grid)) ((r (in-range (rows crop))) (c (in-range (cols crop)))) (let ((v (at crop r c)) (rr (+ r0 r)) (cc (+ c0 c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows grid) (cols grid))) (set-cell out rr cc v) out)))) (define (positions-of-color grid color) (filter (lambda (p) (= (at grid (first p) (second p)) color)) (grid-positions grid))) (let* ((markers (positions-of-color g 8)) (comps (filter (lambda (obj) (not (= (obj-color obj) 8))) (objects g 0)))) (if (or (empty? markers) (empty? comps)) g (let* ((marker (first markers)) (comp (first (sort comps (lambda (a b) (> (obj-size a) (obj-size b)))))) (crop (crop-obj g comp)) (top (- (first marker) (quotient (rows crop) 2))) (left (- (second marker) (quotient (cols crop) 2)))) (paste-crop (empty-grid (rows g) (cols g) 0) crop top left))))))"
+  },
+  {
+    "difficulty": "hard",
+    "name": "Scripted Transform Gallery",
+    "tags": [
+      "script",
+      "transforms",
+      "gallery"
+    ],
+    "written_rule": "Read the nonzero keys in the top row from left to right. Apply each keyed transform to the template object and output the transformed crops as a gallery in that same order.",
+    "program_function": "solve_hard_p01",
+    "primitive_names": [
+      "script_transform_gallery"
+    ],
+    "id": "hard_p01",
+    "program_solution": "(rule! (let ((dummy 0)) (define (crop-obj grid obj) (let* ((r0 (obj-r1 obj)) (c0 (obj-c1 obj)) (h (obj-h obj)) (w (obj-w obj))) (for/fold ((out (empty-grid h w 0))) ((p (in-list (obj-cells obj)))) (set-cell out (- (first p) r0) (- (second p) c0) (at grid (first p) (second p)))))) (define (paste-crop grid crop r0 c0) (for*/fold ((out grid)) ((r (in-range (rows crop))) (c (in-range (cols crop)))) (let ((v (at crop r c)) (rr (+ r0 r)) (cc (+ c0 c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows grid) (cols grid))) (set-cell out rr cc v) out)))) (define (transform-by-key grid key) (cond ((= key 1) grid) ((= key 2) (rotate-cw grid)) ((= key 3) (flip-lr grid)) ((= key 4) (rotate-180 grid)) ((= key 5) (flip-ud grid)) ((= key 6) (rotate-ccw grid)) (else grid))) (define (gallery-top crops) (if (empty? crops) (list (list 0)) (let* ((h (apply max (map rows crops))) (w (+ (apply + (map cols crops)) (max 0 (- (length crops) 1))))) (let pack ((remaining crops) (left 0) (out (empty-grid h w 0))) (if (empty? remaining) out (let ((crop (first remaining))) (pack (rest remaining) (+ left (cols crop) 1) (paste-crop out crop 0 left)))))))) (let* ((keys (filter (lambda (v) (member? v (list 1 2 3 4))) (first g))) (comps (filter (lambda (obj) (not (member? (obj-color obj) (list 1 2 3 4)))) (objects g 0)))) (if (empty? comps) (list (list 0)) (let* ((template (crop-obj g (first (sort comps (lambda (a b) (> (obj-size a) (obj-size b))))))) (variants (map (lambda (k) (transform-by-key template k)) keys))) (if (empty? variants) (list (list 0)) (gallery-top variants)))))))"
+  },
+  {
+    "difficulty": "hard",
+    "name": "Portal Shortest Path",
+    "tags": [
+      "pathfinding",
+      "portals",
+      "maze"
+    ],
+    "written_rule": "Find the shortest path from the start 2 to the goal 3 while avoiding wall cells 5. Stepping onto a portal teleports you instantly to its matching portal. Mark the traversed empty path cells with cyan(8).",
+    "program_function": "solve_hard_p02",
+    "primitive_names": [
+      "portal_shortest_path"
+    ],
+    "id": "hard_p02",
+    "program_solution": "(rule! (let ((dummy 0)) (define (positions-of-color grid color) (filter (lambda (p) (= (at grid (first p) (second p)) color)) (grid-positions grid))) (define (drop-last xs) (if (or (empty? xs) (empty? (rest xs))) (list) (cons (first xs) (drop-last (rest xs))))) (define (portal-map grid colors) (map (lambda (color) (list color (positions-of-color grid color))) colors)) (define (portal-dest grid portal-data pos) (let* ((v (at grid (first pos) (second pos))) (entry (find-first (lambda (row) (= (first row) v)) portal-data))) (if (and entry (= (length (second entry)) 2)) (let ((a (first (second entry))) (b (second (second entry)))) (if (equal? pos a) b a)) pos))) (define (bfs-segment grid start goal wall-colors portal-data) (let ((prev (make-hash)) (seen (make-hash)) (fuel-limit (* (rows grid) (cols grid) 6))) (define (neighbors cur) (filter values (map (lambda (d) (let ((rr (+ (first cur) (first d))) (cc (+ (second cur) (second d)))) (if (and (in-bounds? rr cc (rows grid) (cols grid)) (not (member? (at grid rr cc) wall-colors))) (portal-dest grid portal-data (list rr cc)) #f))) cardinal-deltas))) (define (rebuild cur acc) (if (eq? cur #f) acc (rebuild (hash-ref prev cur #f) (cons cur acc)))) (hash-set! prev start #f) (hash-set! seen start #t) (let bfs ((queue (list start)) (fuel fuel-limit)) (cond ((or (empty? queue) (<= fuel 0)) #f) ((equal? (first queue) goal) (rebuild goal (list))) (else (let* ((cur (first queue)) (next-queue (for/fold ((q (rest queue))) ((n (in-list (neighbors cur)))) (if (hash-has-key? seen n) q (begin (hash-set! seen n #t) (hash-set! prev n cur) (append q (list n))))))) (bfs next-queue (- fuel 1)))))))) (define (bfs-path grid start goal wall-colors portal-colors waypoints) (let ((portal-data (portal-map grid portal-colors))) (let loop ((targets (append waypoints (list goal))) (cur start) (full (list start))) (if (empty? targets) full (let ((seg (bfs-segment grid cur (first targets) wall-colors portal-data))) (if (not seg) #f (loop (rest targets) (first targets) (append full (rest seg))))))))) (let* ((starts (positions-of-color g 2)) (goals (positions-of-color g 3)) (portal-colors (filter (lambda (v) (member? v (list 6 7 9))) (grid-colors g 0)))) (if (or (empty? starts) (empty? goals)) g (let* ((path (bfs-path g (first starts) (first goals) (list 5) portal-colors (list)))) (if (not path) g (for/fold ((out g)) ((p (in-list (drop-last (rest path))))) (if (= (at out (first p) (second p)) 0) (set-cell out (first p) (second p) 8) out))))))))"
+  },
+  {
+    "difficulty": "hard",
+    "name": "Hole-Key Frame Assignment",
+    "tags": [
+      "assignment",
+      "topology",
+      "frames"
+    ],
+    "written_rule": "Each frame key encodes a target hole count: key 1 wants a 0-hole object, key 2 wants a 1-hole object, and key 3 wants a 2-hole object. Move each matching object into the corresponding frame, centered inside it.",
+    "program_function": "solve_hard_p03",
+    "primitive_names": [
+      "hole_key_frame_assign"
+    ],
+    "id": "hard_p03",
+    "program_solution": "(rule! (let ((dummy 0)) (define (py-bbox obj) (list (obj-r1 obj) (obj-r2 obj) (obj-c1 obj) (obj-c2 obj))) (define (py-bb< a b) (cond ((not (= (first a) (first b))) (< (first a) (first b))) ((not (= (second a) (second b))) (< (second a) (second b))) ((not (= (third a) (third b))) (< (third a) (third b))) (else (< (fourth a) (fourth b))))) (define (crop-obj grid obj) (let* ((r0 (obj-r1 obj)) (c0 (obj-c1 obj)) (h (obj-h obj)) (w (obj-w obj))) (for/fold ((out (empty-grid h w 0))) ((p (in-list (obj-cells obj)))) (set-cell out (- (first p) r0) (- (second p) c0) (at grid (first p) (second p)))))) (define (paste-crop grid crop r0 c0) (for*/fold ((out grid)) ((r (in-range (rows crop))) (c (in-range (cols crop)))) (let ((v (at crop r c)) (rr (+ r0 r)) (cc (+ c0 c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows grid) (cols grid))) (set-cell out rr cc v) out)))) (define (rect-frame? obj) (let* ((r0 (obj-r1 obj)) (r1 (obj-r2 obj)) (c0 (obj-c1 obj)) (c1 (obj-c2 obj))) (and (= (obj-color obj) 5) (all? (lambda (p) (let ((r (first p)) (c (second p))) (or (= r r0) (= r r1) (= c c0) (= c c1)))) (obj-cells obj)) (all? (lambda (p) (= (at g (first p) (second p)) 5)) (append (for/list ((c (in-range c0 (+ c1 1)))) (list r0 c)) (for/list ((c (in-range c0 (+ c1 1)))) (list r1 c)) (for/list ((r (in-range r0 (+ r1 1)))) (list r c0)) (for/list ((r (in-range r0 (+ r1 1)))) (list r c1))))))) (define (frame-bbs grid) (sort (map py-bbox (filter rect-frame? (objects grid 0))) py-bb<)) (define (bb-border-cells bb) (let ((r0 (first bb)) (r1 (second bb)) (c0 (third bb)) (c1 (fourth bb))) (remove-duplicates (append (for/list ((c (in-range c0 (+ c1 1)))) (list r0 c)) (for/list ((c (in-range c0 (+ c1 1)))) (list r1 c)) (for/list ((r (in-range r0 (+ r1 1)))) (list r c0)) (for/list ((r (in-range r0 (+ r1 1)))) (list r c1)))))) (define (floor-half n) (if (< n 0) (- (quotient (+ (- n) 1) 2)) (quotient n 2))) (define (center-in-rect grid crop bb) (let* ((r0 (first bb)) (r1 (second bb)) (c0 (third bb)) (c1 (fourth bb)) (top (+ r0 (floor-half (- (+ 1 (- r1 r0)) (rows crop))))) (left (+ c0 (floor-half (- (+ 1 (- c1 c0)) (cols crop)))))) (paste-crop grid crop top left))) (define (hole-count grid obj) (topo-count-holes grid obj 0)) (let* ((frames (frame-bbs g)) (temp0 (for/fold ((out g)) ((bb (in-list frames))) (let* ((r0 (first bb)) (r1 (second bb)) (c0 (third bb)) (c1 (fourth bb)) (key-pos (list (- r0 1) (quotient (+ c0 c1) 2))) (without-frame (erase-cells out (bb-border-cells bb) 0))) (if (in-bounds? (first key-pos) (second key-pos) (rows g) (cols g)) (set-cell without-frame (first key-pos) (second key-pos) 0) without-frame)))) (objs (objects temp0 0)) (with-frames (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((bb (in-list frames))) (paint-cells out (bb-border-cells bb) 5)))) (for/fold ((out with-frames)) ((bb (in-list frames))) (let* ((r0 (first bb)) (r1 (second bb)) (c0 (third bb)) (c1 (fourth bb)) (key-pos (list (- r0 1) (quotient (+ c0 c1) 2))) (key (if (in-bounds? (first key-pos) (second key-pos) (rows g) (cols g)) (at g (first key-pos) (second key-pos)) 0)) (holes (- key 1)) (candidates (filter (lambda (obj) (= (hole-count temp0 obj) holes)) objs)) (chosen (if (empty? candidates) #f (first (sort candidates (lambda (a b) (> (obj-size a) (obj-size b))))))) (with-key (if (in-bounds? (first key-pos) (second key-pos) (rows g) (cols g)) (set-cell out (first key-pos) (second key-pos) key) out))) (if chosen (center-in-rect with-key (crop-obj temp0 chosen) (list (+ r0 1) (- r1 1) (+ c0 1) (- c1 1))) with-key))))))",
+    "written_solution": "Each frame key encodes a target hole count: key blue(1) wants a 0-hole object, key red(2) wants a 1-hole object, and key green(3) wants a 2-hole object. Move each matching object into the corresponding frame, centered inside it."
+  },
+  {
+    "difficulty": "hard",
+    "name": "Left-Of Relation Matrix",
+    "tags": [
+      "relations",
+      "matrix",
+      "objects"
+    ],
+    "written_rule": "Order the objects by color value. Output a binary matrix where entry (i,j) is 1 iff object i is strictly left of object j, using bounding-box centers.",
+    "program_function": "solve_hard_p04",
+    "primitive_names": [
+      "left_of_matrix"
+    ],
+    "id": "hard_p04",
+    "program_solution": "(rule! (let ((dummy 0)) (define (py-bbox obj) (list (obj-r1 obj) (obj-r2 obj) (obj-c1 obj) (obj-c2 obj))) (define (obj-color< a b) (< (obj-color a) (obj-color b))) (define (center-of-py-bb bb) (list (quotient (+ (first bb) (second bb)) 2) (quotient (+ (third bb) (fourth bb)) 2))) (let* ((comps (sort (objects g 0) obj-color<)) (n (length comps)) (centers (map (lambda (obj) (center-of-py-bb (py-bbox obj))) comps))) (if (empty? comps) (list (list 0)) (grid-from-fn n n (lambda (i j) (if (= i j) 0 (if (< (second (list-ref centers i)) (second (list-ref centers j))) 1 0))))))))"
+  },
+  {
+    "difficulty": "hard",
+    "name": "Dual-Key Boolean Compose",
+    "tags": [
+      "boolean",
+      "transforms",
+      "composition"
+    ],
+    "written_rule": "Use the first key to transform one source shape, then use the second key to choose union, intersection, or xor with the other source shape. Output the resulting normalized shape in cyan(8).",
+    "program_function": "solve_hard_p05",
+    "primitive_names": [
+      "dual_key_boolean"
+    ],
+    "id": "hard_p05",
+    "program_solution": "(rule! (let ((dummy 0)) (define (py-bbox obj) (list (obj-r1 obj) (obj-r2 obj) (obj-c1 obj) (obj-c2 obj))) (define (py-bb< a b) (cond ((not (= (first a) (first b))) (< (first a) (first b))) ((not (= (second a) (second b))) (< (second a) (second b))) ((not (= (third a) (third b))) (< (third a) (third b))) (else (< (fourth a) (fourth b))))) (define (obj-py-bb< a b) (py-bb< (py-bbox a) (py-bbox b))) (define (crop-obj grid obj) (let* ((r0 (obj-r1 obj)) (c0 (obj-c1 obj)) (h (obj-h obj)) (w (obj-w obj))) (for/fold ((out (empty-grid h w 0))) ((p (in-list (obj-cells obj)))) (set-cell out (- (first p) r0) (- (second p) c0) (at grid (first p) (second p)))))) (define (paste-crop grid crop r0 c0) (for*/fold ((out grid)) ((r (in-range (rows crop))) (c (in-range (cols crop)))) (let ((v (at crop r c)) (rr (+ r0 r)) (cc (+ c0 c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows grid) (cols grid))) (set-cell out rr cc v) out)))) (define (transform-by-key grid key) (cond ((= key 1) grid) ((= key 2) (rotate-cw grid)) ((= key 3) (flip-lr grid)) ((= key 4) (rotate-180 grid)) ((= key 5) (flip-ud grid)) ((= key 6) (rotate-ccw grid)) (else grid))) (define (pad-to-same a b) (let* ((h (max (rows a) (rows b))) (w (max (cols a) (cols b))) (aa (paste-crop (empty-grid h w 0) a (quotient (- h (rows a)) 2) (quotient (- w (cols a)) 2))) (bb (paste-crop (empty-grid h w 0) b (quotient (- h (rows b)) 2) (quotient (- w (cols b)) 2)))) (list aa bb))) (let* ((row0 (first g)) (tkeys (filter (lambda (v) (member? v (list 1 2 3 4))) row0)) (okeys (filter (lambda (v) (member? v (list 6 7 8))) row0)) (tkey (if (empty? tkeys) 1 (first tkeys))) (okey (if (empty? okeys) 6 (first okeys))) (temp (for/fold ((out g)) ((c (in-range (cols g)))) (if (member? (at g 0 c) (list 1 2 3 4 6 7 8)) (set-cell out 0 c 0) out))) (comps (sort (objects temp 0) obj-py-bb<))) (if (< (length comps) 2) (list (list 0)) (let* ((a0 (transform-by-key (crop-obj temp (first comps)) tkey)) (b0 (crop-obj temp (second comps))) (same (pad-to-same a0 b0)) (a (first same)) (b (second same)) (out (grid-from-fn (rows a) (cols a) (lambda (r c) (let ((av (not (= (at a r c) 0))) (bv (not (= (at b r c) 0)))) (if (cond ((= okey 6) (or av bv)) ((= okey 7) (and av bv)) (else (not (equal? av bv)))) 8 0)))))) (crop-to-content out 0))))))"
+  },
+  {
+    "difficulty": "hard",
+    "name": "Ordered Checkpoint Path",
+    "tags": [
+      "pathfinding",
+      "ordered_goals",
+      "maze"
+    ],
+    "written_rule": "Find the shortest path from start 2 to goal 3 while visiting all numbered checkpoint cells in ascending order first. Avoid walls 5 and mark the traversed empty path cells with cyan(8).",
+    "program_function": "solve_hard_p06",
+    "primitive_names": [
+      "ordered_checkpoint_path"
+    ],
+    "id": "hard_p06",
+    "program_solution": "(rule! (let ((dummy 0)) (define (positions-of-color grid color) (filter (lambda (p) (= (at grid (first p) (second p)) color)) (grid-positions grid))) (define (drop-last xs) (if (or (empty? xs) (empty? (rest xs))) (list) (cons (first xs) (drop-last (rest xs))))) (define (portal-map grid colors) (map (lambda (color) (list color (positions-of-color grid color))) colors)) (define (portal-dest grid portal-data pos) (let* ((v (at grid (first pos) (second pos))) (entry (find-first (lambda (row) (= (first row) v)) portal-data))) (if (and entry (= (length (second entry)) 2)) (let ((a (first (second entry))) (b (second (second entry)))) (if (equal? pos a) b a)) pos))) (define (bfs-segment grid start goal wall-colors portal-data) (let ((prev (make-hash)) (seen (make-hash)) (fuel-limit (* (rows grid) (cols grid) 6))) (define (neighbors cur) (filter values (map (lambda (d) (let ((rr (+ (first cur) (first d))) (cc (+ (second cur) (second d)))) (if (and (in-bounds? rr cc (rows grid) (cols grid)) (not (member? (at grid rr cc) wall-colors))) (portal-dest grid portal-data (list rr cc)) #f))) cardinal-deltas))) (define (rebuild cur acc) (if (eq? cur #f) acc (rebuild (hash-ref prev cur #f) (cons cur acc)))) (hash-set! prev start #f) (hash-set! seen start #t) (let bfs ((queue (list start)) (fuel fuel-limit)) (cond ((or (empty? queue) (<= fuel 0)) #f) ((equal? (first queue) goal) (rebuild goal (list))) (else (let* ((cur (first queue)) (next-queue (for/fold ((q (rest queue))) ((n (in-list (neighbors cur)))) (if (hash-has-key? seen n) q (begin (hash-set! seen n #t) (hash-set! prev n cur) (append q (list n))))))) (bfs next-queue (- fuel 1)))))))) (define (bfs-path grid start goal wall-colors portal-colors waypoints) (let ((portal-data (portal-map grid portal-colors))) (let loop ((targets (append waypoints (list goal))) (cur start) (full (list start))) (if (empty? targets) full (let ((seg (bfs-segment grid cur (first targets) wall-colors portal-data))) (if (not seg) #f (loop (rest targets) (first targets) (append full (rest seg))))))))) (let* ((starts (positions-of-color g 2)) (goals (positions-of-color g 3)) (checkpoints (sort (filter values (map (lambda (p) (let ((v (at g (first p) (second p)))) (if (member? v (list 4 6 7 8 9)) (list v p) #f))) (grid-positions g))) (lambda (a b) (< (first a) (first b)))))) (if (or (empty? starts) (empty? goals)) g (let ((path (bfs-path g (first starts) (first goals) (list 5) (list) (map second checkpoints)))) (if (not path) g (for/fold ((out g)) ((p (in-list (drop-last (rest path))))) (if (= (at out (first p) (second p)) 0) (set-cell out (first p) (second p) 8) out))))))))"
+  },
+  {
+    "difficulty": "hard",
+    "name": "Wall-Geodesic Voronoi",
+    "tags": [
+      "distance",
+      "walls",
+      "fill"
+    ],
+    "written_rule": "Treat each nonzero non-wall cell as a seed color. Fill every reachable empty cell with the color of the seed that is closest by shortest path around the wall cells 5. Ties stay 0.",
+    "program_function": "solve_hard_p07",
+    "primitive_names": [
+      "wall_geodesic_voronoi"
+    ],
+    "id": "hard_p07",
+    "program_solution": "(rule! (let ((dummy 0)) (define (geodesic-distance grid start goal wall-color) (let ((queue (list (list (first start) (second start) 0))) (seen (make-hash)) (found #f)) (define (search) (unless (or (empty? queue) found) (define cur (first queue)) (set! queue (rest queue)) (define p (list (first cur) (second cur))) (define d (third cur)) (if (equal? p goal) (set! found d) (begin (for ((delta (in-list cardinal-deltas))) (define rr (+ (first p) (first delta))) (define cc (+ (second p) (second delta))) (define np (list rr cc)) (when (and (in-bounds? rr cc (rows grid) (cols grid)) (not (= (at grid rr cc) wall-color)) (not (hash-has-key? seen np))) (hash-set! seen np #t) (set! queue (append queue (list (list rr cc (+ d 1))))))) (search))))) (hash-set! seen start #t) (search) found)) (let* ((seeds (filter values (map (lambda (p) (let ((v (at g (first p) (second p)))) (if (and (not (= v 0)) (not (= v 5))) (list (first p) (second p) v) #f))) (grid-positions g))))) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range (cols g)))) (if (not (= (at g r c) 0)) out (let* ((dist-rows (filter values (map (lambda (s) (let ((d (geodesic-distance g (list (first s) (second s)) (list r c) 5))) (if d (list d (third s)) #f))) seeds))) (mind (if (empty? dist-rows) #f (apply min (map first dist-rows))))) (if (not mind) out (let* ((nearest (filter (lambda (x) (= (first x) mind)) dist-rows)) (colors (remove-duplicates (map second nearest)))) (if (= (length colors) 1) (set-cell out r c (first colors)) out)))))))))"
+  }
+]

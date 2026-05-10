@@ -1,0 +1,3379 @@
+# ARC-style Additional Puzzle Bank — Volume 17 (21 puzzles)
+
+This volume adds **21 more puzzles** grouped into **7 easy, 7 medium, and 7 hard**.
+
+Each puzzle includes **exactly 4 train/example pairs**, a test input, the expected test output, a written rule, and a compact reference-program solution.
+
+Compared with volume 16, this set leans into **marker spans, rectangle completion, divider reflections, chamber fills, mirror-beam tracing, nested-frame band selection, and transform-plus-translation tasks**.
+
+This volume emphasizes several reusable helper ideas: **`span_between_markers`**, **`mirror_across_divider`**, **`beam_trace`**, **`band_from_nested_frames`**, **`normalized_exactly_two`**, and **`maze_voronoi_partition`**.
+
+
+# Easy (7)
+
+## E113 — Recolor the endpoints of straight red segments
+
+**What it tests:** endpoint detection on horizontal and vertical monochrome segments
+
+
+**Train A input**
+
+```text
+00000000
+02222000
+00000020
+00000020
+00000020
+77000000
+00000000
+```
+
+
+**Train A output**
+
+```text
+00000000
+08228000
+00000080
+00000020
+00000080
+77000000
+00000000
+```
+
+
+**Train B input**
+
+```text
+000000060
+002000066
+002000000
+002000000
+002000000
+002000000
+000022200
+000000000
+```
+
+
+**Train B output**
+
+```text
+000000060
+008000066
+002000000
+002000000
+002000000
+008000000
+000082800
+000000000
+```
+
+
+**Train C input**
+
+```text
+330000000
+300000000
+000002222
+000000000
+020000000
+020000000
+020000000
+022200000
+000000000
+```
+
+
+**Train C output**
+
+```text
+330000000
+300000000
+000008228
+000000000
+020000000
+020000000
+020000000
+022200000
+000000000
+```
+
+
+**Train D input**
+
+```text
+0004000000
+0004000020
+0000000020
+0000000020
+0000000020
+0222220000
+0000000000
+0000000000
+```
+
+
+**Train D output**
+
+```text
+0004000000
+0004000080
+0000000020
+0000000020
+0000000080
+0822280000
+0000000000
+0000000000
+```
+
+
+**Test input**
+
+```text
+0000000006
+0222220006
+0000000000
+0000000200
+0000000200
+0000000200
+0000000200
+0000222000
+0000000000
+```
+
+
+**Expected test output**
+
+```text
+0000000006
+0822280006
+0000000000
+0000000800
+0000000200
+0000000200
+0000000800
+0000828000
+0000000000
+```
+
+
+**Written solution**
+
+Find each connected red(2) component that forms a straight horizontal or vertical segment. Recolor only its two extreme endpoint cells to cyan(8) and leave the interior red cells unchanged.
+
+
+**Program solution**
+
+`def solve(grid): for each color-2 component that is all in one row or one column, recolor the min/max endpoints to 8; return grid`
+
+
+## E114 — Add the missing corner of the green rectangle
+
+**What it tests:** axis-aligned rectangle completion from three corners
+
+
+**Train A input**
+
+```text
+00000000
+03000300
+00000000
+00000000
+03000000
+00000000
+00000077
+```
+
+
+**Train A output**
+
+```text
+00000000
+03000300
+00000000
+00000000
+03000400
+00000000
+00000077
+```
+
+
+**Train B input**
+
+```text
+88000000
+00000000
+00300000
+00000000
+00000000
+00300030
+00000000
+00000000
+```
+
+
+**Train B output**
+
+```text
+88000000
+00000000
+00300040
+00000000
+00000000
+00300030
+00000000
+00000000
+```
+
+
+**Train C input**
+
+```text
+000000000
+000000030
+000000000
+000000000
+000300030
+000000000
+600000000
+```
+
+
+**Train C output**
+
+```text
+000000000
+000400030
+000000000
+000000000
+000300030
+000000000
+600000000
+```
+
+
+**Train D input**
+
+```text
+000000000
+000000000
+030000300
+000000000
+000000000
+000000000
+000000300
+000000005
+000000005
+```
+
+
+**Train D output**
+
+```text
+000000000
+000000000
+030000300
+000000000
+000000000
+000000000
+040000300
+000000005
+000000005
+```
+
+
+**Test input**
+
+```text
+0000000000
+0030000030
+0000000000
+0000000000
+0000000000
+0030000000
+0000000000
+0000000007
+```
+
+
+**Expected test output**
+
+```text
+0000000000
+0030000030
+0000000000
+0000000000
+0000000000
+0030000040
+0000000000
+0000000007
+```
+
+
+**Written solution**
+
+The three green(3) cells are three corners of an axis-aligned rectangle. Determine the missing fourth corner from the two row values and two column values, and place a yellow(4) cell there.
+
+
+**Program solution**
+
+`def solve(grid): read the 3 green cells, take the missing combination of their two rows and two cols, and write 4 at that corner`
+
+
+## E115 — Fill the gaps between aligned red markers
+
+**What it tests:** row/column span completion between paired markers
+
+
+**Train A input**
+
+```text
+000000000
+000000020
+020002000
+000000000
+000000020
+000000000
+660000000
+000000000
+```
+
+
+**Train A output**
+
+```text
+000000000
+000000020
+028882080
+000000080
+000000020
+000000000
+660000000
+000000000
+```
+
+
+**Train B input**
+
+```text
+000000000
+000200000
+000000000
+000000000
+000000000
+000000000
+000200000
+000000007
+000000007
+```
+
+
+**Train B output**
+
+```text
+000000000
+000200000
+000800000
+000800000
+000800000
+000800000
+000200000
+000000007
+000000007
+```
+
+
+**Train C input**
+
+```text
+4000000000
+0000000020
+0000000000
+0000000000
+0000000020
+0200002000
+0000000000
+0000000000
+```
+
+
+**Train C output**
+
+```text
+4000000000
+0000000020
+0000000080
+0000000080
+0000000020
+0288882000
+0000000000
+0000000000
+```
+
+
+**Train D input**
+
+```text
+0000000003
+0000000003
+0020000000
+0000000000
+0000000000
+0000000000
+0000020020
+0020000000
+0000000000
+```
+
+
+**Train D output**
+
+```text
+0000000003
+0000000003
+0020000000
+0080000000
+0080000000
+0080000000
+0080028820
+0020000000
+0000000000
+```
+
+
+**Test input**
+
+```text
+0000000000
+0200000200
+0000000000
+0000000020
+0000000000
+0000000000
+0002020000
+0000000000
+0000000020
+6600000000
+```
+
+
+**Expected test output**
+
+```text
+0000000000
+0288888200
+0000000000
+0000000020
+0000000080
+0000000080
+0002820080
+0000000080
+0000000020
+6600000000
+```
+
+
+**Written solution**
+
+Whenever two red(2) markers lie in the same row or same column with only black(0) cells between them, fill the interior gap cells with cyan(8). Keep the red endpoints unchanged.
+
+
+**Program solution**
+
+`def solve(grid): for each aligned pair of 2s with only 0s between them, recolor the interior cells on that segment to 8`
+
+
+## E116 — Crop to the blue object bounding box
+
+**What it tests:** bounding-box crop around a selected color object
+
+
+**Train A input**
+
+```text
+770000000
+000000000
+000600000
+000660000
+000000000
+000000000
+000000000
+000000002
+```
+
+
+**Train A output**
+
+```text
+60
+66
+```
+
+
+**Train B input**
+
+```text
+0000000000
+0330000000
+0300000000
+0000000000
+0000006000
+0000066600
+0000000000
+0000000000
+0000000000
+```
+
+
+**Train B output**
+
+```text
+060
+666
+```
+
+
+**Train C input**
+
+```text
+00000000
+06600000
+00660000
+00000000
+00000000
+00000000
+00000088
+00000080
+```
+
+
+**Train C output**
+
+```text
+660
+066
+```
+
+
+**Train D input**
+
+```text
+0000000004
+0000000004
+0000000000
+0000660000
+0000660000
+0000600000
+0000000000
+0000000000
+0000000000
+7000000000
+```
+
+
+**Train D output**
+
+```text
+66
+66
+60
+```
+
+
+**Test input**
+
+```text
+33000000000
+00000000000
+00000060000
+00000660000
+00000066000
+00000000000
+00000000000
+00000000000
+00000000007
+```
+
+
+**Expected test output**
+
+```text
+060
+660
+066
+```
+
+
+**Written solution**
+
+Ignore all distractors and look only at the blue(6) object. Output the minimal rectangular crop that contains all blue cells, preserving the original blue shape and any zeros inside that box.
+
+
+**Program solution**
+
+`def solve(grid): find all color-6 cells, compute their bounding box, and return that subgrid`
+
+
+## E117 — Fill the inside of each orange frame
+
+**What it tests:** hollow rectangle detection and interior filling
+
+
+**Train A input**
+
+```text
+0000000003
+0777770000
+0700070000
+0700070000
+0777770000
+0000007770
+0000007070
+0000007770
+0000000000
+```
+
+
+**Train A output**
+
+```text
+0000000003
+0777770000
+0788870000
+0788870000
+0777770000
+0000007770
+0000007870
+0000007770
+0000000000
+```
+
+
+**Train B input**
+
+```text
+4000000000
+4000000000
+0077777000
+0070007000
+0070007000
+0070007000
+0077777000
+0000000000
+0000000000
+0000000000
+```
+
+
+**Train B output**
+
+```text
+4000000000
+4000000000
+0077777000
+0078887000
+0078887000
+0078887000
+0077777000
+0000000000
+0000000000
+0000000000
+```
+
+
+**Train C input**
+
+```text
+00000000000
+07777000000
+07007007770
+07777007070
+00000007070
+00000007070
+00000007770
+66000000000
+```
+
+
+**Train C output**
+
+```text
+00000000000
+07777000000
+07887007770
+07777007870
+00000007870
+00000007870
+00000007770
+66000000000
+```
+
+
+**Train D input**
+
+```text
+000000000002
+000000007770
+000000007070
+000000007070
+000000007770
+077777000000
+070007000000
+070007000000
+077777000000
+000000000000
+```
+
+
+**Train D output**
+
+```text
+000000000002
+000000007770
+000000007870
+000000007870
+000000007770
+077777000000
+078887000000
+078887000000
+077777000000
+000000000000
+```
+
+
+**Test input**
+
+```text
+00000000000
+07777700000
+07000700000
+07000700000
+07000700000
+07777700000
+00000077770
+00000070070
+00000070070
+00000077770
+33000000000
+```
+
+
+**Expected test output**
+
+```text
+00000000000
+07777700000
+07888700000
+07888700000
+07888700000
+07777700000
+00000077770
+00000078870
+00000078870
+00000077770
+33000000000
+```
+
+
+**Written solution**
+
+Each orange(7) connected component is a hollow rectangular frame. Fill every black(0) cell strictly inside each frame with cyan(8), while leaving the orange borders in place.
+
+
+**Program solution**
+
+`def solve(grid): for each color-7 component that matches a rectangle border, fill its interior zeros with 8`
+
+
+## E118 — Recolor bars by orientation
+
+**What it tests:** orientation classification of 1-cell-thick bars
+
+
+**Train A input**
+
+```text
+0000000007
+0111100000
+0000000010
+0000000010
+0000000010
+0000000000
+0001100000
+0000000000
+```
+
+
+**Train A output**
+
+```text
+0000000007
+0444400000
+0000000070
+0000000070
+0000000070
+0000000000
+0004400000
+0000000000
+```
+
+
+**Train B input**
+
+```text
+330000000
+000010000
+000010000
+000010000
+000010000
+000010000
+000000000
+011110000
+000000000
+```
+
+
+**Train B output**
+
+```text
+330000000
+000070000
+000070000
+000070000
+000070000
+000070000
+000000000
+044440000
+000000000
+```
+
+
+**Train C input**
+
+```text
+00000000000
+00000000010
+00111110010
+00000000010
+00000000010
+00000000000
+00000010000
+00000010008
+```
+
+
+**Train C output**
+
+```text
+00000000000
+00000000070
+00444440070
+00000000070
+00000000070
+00000000000
+00000070000
+00000070008
+```
+
+
+**Train D input**
+
+```text
+0000050000
+0000000110
+0000000000
+0100000000
+0100000000
+0100000000
+0100000000
+0000000000
+0000111000
+0000000000
+```
+
+
+**Train D output**
+
+```text
+0000050000
+0000000440
+0000000000
+0700000000
+0700000000
+0700000000
+0700000000
+0000000000
+0000444000
+0000000000
+```
+
+
+**Test input**
+
+```text
+000000000000
+011111100000
+000000000010
+000000000010
+000000000010
+000000000010
+000000000010
+000011100000
+000000000003
+```
+
+
+**Expected test output**
+
+```text
+000000000000
+044444400000
+000000000070
+000000000070
+000000000070
+000000000070
+000000000070
+000044400000
+000000000003
+```
+
+
+**Written solution**
+
+Every blue(1) component is a straight 1-cell-thick bar. Recolor horizontal bars to yellow(4) and vertical bars to orange(7).
+
+
+**Program solution**
+
+`def solve(grid): for each color-1 component, if it spans one row paint it 4, if it spans one column paint it 7`
+
+
+## E119 — Recolor the middle of each diagonal triple
+
+**What it tests:** diagonal-line midpoint detection
+
+
+**Train A input**
+
+```text
+000000000
+050000050
+005000500
+000505000
+000000000
+000000000
+660000000
+000000000
+```
+
+
+**Train A output**
+
+```text
+000000000
+050000050
+004000400
+000505000
+000000000
+000000000
+660000000
+000000000
+```
+
+
+**Train B input**
+
+```text
+500000000
+050000000
+005000000
+000050000
+000005000
+000000500
+000000000
+000000000
+000000002
+```
+
+
+**Train B output**
+
+```text
+500000000
+040000000
+005000000
+000050000
+000004000
+000000500
+000000000
+000000000
+000000002
+```
+
+
+**Train C input**
+
+```text
+0000000007
+0000000007
+0000005000
+0000050000
+0500500000
+0050000000
+0005000000
+0000000000
+```
+
+
+**Train C output**
+
+```text
+0000000007
+0000000007
+0000005000
+0000040000
+0500500000
+0040000000
+0005000000
+0000000000
+```
+
+
+**Train D input**
+
+```text
+0000000000
+0000000050
+0000000500
+0000005000
+0000000000
+0000005000
+0005050000
+0000500000
+0000050000
+4000000000
+```
+
+
+**Train D output**
+
+```text
+0000000000
+0000000050
+0000000400
+0000005000
+0000000000
+0000005000
+0005050000
+0000500000
+0000050000
+4000000000
+```
+
+
+**Test input**
+
+```text
+00000000000
+00500000000
+00050000050
+00005000500
+00000005000
+00000050000
+00000005000
+00000000500
+66000000000
+```
+
+
+**Expected test output**
+
+```text
+00000000000
+00500000000
+00040000050
+00005000500
+00000005000
+00000050000
+00000005000
+00000000500
+66000000000
+```
+
+
+**Written solution**
+
+Each magenta(5) diagonal triple is a 3-cell straight line on a diagonal. Recolor only its middle cell to yellow(4), leaving the two end cells magenta.
+
+
+**Program solution**
+
+`def solve(grid): detect each 3-cell diagonal color-5 component and recolor its center cell to 4`
+
+
+
+# Medium (7)
+
+## M113 — Copy the shape by the marker vector
+
+**What it tests:** vector-controlled rigid translation of an object
+
+
+**Train A input**
+
+```text
+3000000000
+0200000000
+0220000000
+0000400000
+0000000000
+0000000000
+0000000000
+0000000007
+```
+
+
+**Train A output**
+
+```text
+3000000000
+0200000000
+0220000000
+0000400000
+0000080000
+0000088000
+0000000000
+0000000007
+```
+
+
+**Train B input**
+
+```text
+00000000000
+00000000300
+00020000000
+00222000000
+00000040000
+00000000000
+00000000000
+00000000000
+55000000000
+```
+
+
+**Train B output**
+
+```text
+00000000000
+00000000300
+00020000000
+00222000000
+00000040000
+08000000000
+88800000000
+00000000000
+55000000000
+```
+
+
+**Train C input**
+
+```text
+0000300000
+0000000000
+0000000400
+0000000000
+0220000000
+0022000000
+0000000000
+0000000000
+0000000000
+0000000006
+```
+
+
+**Train C output**
+
+```text
+0000300000
+0000000000
+0000000400
+0000000000
+0220000000
+0022000000
+0000880000
+0000088000
+0000000000
+0000000006
+```
+
+
+**Train D input**
+
+```text
+000000000008
+000002200000
+000002200000
+000002000000
+000000000000
+000040000000
+000000000000
+030000000000
+000000000000
+```
+
+
+**Train D output**
+
+```text
+000000008808
+000002208000
+000002200000
+000002000000
+000000000000
+000040000000
+000000000000
+030000000000
+000000000000
+```
+
+
+**Test input**
+
+```text
+000000000000
+000000000030
+000200000000
+002200000000
+000220040000
+000000000000
+000000000000
+000000000000
+000000000000
+550000000000
+```
+
+
+**Expected test output**
+
+```text
+000000000000
+000000000030
+000200000000
+002200000000
+000220040000
+800000000000
+800000000000
+880000000000
+000000000000
+550000000000
+```
+
+
+**Written solution**
+
+Use the vector from the green(3) marker to the yellow(4) marker. Copy the red(2) object by that exact offset and draw the copied cells in cyan(8), while keeping the original object and both markers.
+
+
+**Program solution**
+
+`def solve(grid): compute vector = pos(4)-pos(3), translate all color-2 cells by that vector, and paint the translated copy 8`
+
+
+## M114 — Mirror the object across the divider
+
+**What it tests:** reflection across a full colored row or column
+
+
+**Train A input**
+
+```text
+0000900000
+0000900000
+0200900000
+0220900000
+0000900000
+0000900000
+0000900000
+0000900007
+```
+
+
+**Train A output**
+
+```text
+0000900000
+0000900000
+0200900800
+0220908800
+0000900000
+0000900000
+0000900000
+0000900007
+```
+
+
+**Train B input**
+
+```text
+000000000
+000200000
+002220000
+000000000
+999999999
+000000000
+000000000
+000000000
+000000006
+```
+
+
+**Train B output**
+
+```text
+000000000
+000200000
+002220000
+000000000
+999999999
+000000000
+008880000
+000800000
+000000006
+```
+
+
+**Train C input**
+
+```text
+00000900003
+00000900000
+00000900000
+00000900000
+02200900000
+00220900000
+00000900000
+00000900000
+```
+
+
+**Train C output**
+
+```text
+00000900003
+00000900000
+00000900000
+00000900000
+02200900880
+00220908800
+00000900000
+00000900000
+```
+
+
+**Train D input**
+
+```text
+8000000000
+0000000000
+0000000000
+0000000000
+0000000000
+9999999999
+0000220000
+0000220000
+0000200000
+0000000000
+```
+
+
+**Train D output**
+
+```text
+8000000000
+0000000000
+0000800000
+0000880000
+0000880000
+9999999999
+0000220000
+0000220000
+0000200000
+0000000000
+```
+
+
+**Test input**
+
+```text
+00000900000
+00000900000
+00200900000
+02200900000
+00220900000
+00000900000
+00000900000
+00000900000
+00000900007
+```
+
+
+**Expected test output**
+
+```text
+00000900000
+00000900000
+00200900800
+02200900880
+00220908800
+00000900000
+00000900000
+00000900000
+00000900007
+```
+
+
+**Written solution**
+
+The full line of maroon(9) cells is a mirror divider. Reflect the red(2) object across that divider onto the opposite side and draw the reflected copy in cyan(8).
+
+
+**Program solution**
+
+`def solve(grid): detect the full row/col of 9s, reflect each color-2 cell across it, and paint the reflected cells 8`
+
+
+## M115 — Recolor the second-largest component
+
+**What it tests:** component ranking by size
+
+
+**Train A input**
+
+```text
+0000000007
+0220000000
+0220000000
+0200000000
+0000002000
+0000022200
+0200000000
+0220000000
+0000000000
+```
+
+
+**Train A output**
+
+```text
+0000000007
+0220000000
+0220000000
+0200000000
+0000008000
+0000088800
+0200000000
+0220000000
+0000000000
+```
+
+
+**Train B input**
+
+```text
+00000000003
+00200000000
+02200000000
+00220000000
+00000000000
+00000022000
+00000002200
+00200000000
+00200000000
+00000000000
+```
+
+
+**Train B output**
+
+```text
+00000000003
+00200000000
+02200000000
+00220000000
+00000000000
+00000088000
+00000008800
+00200000000
+00200000000
+00000000000
+```
+
+
+**Train C input**
+
+```text
+600000000
+000020200
+000022200
+000000000
+000000000
+002000000
+022200000
+000000000
+000000002
+```
+
+
+**Train C output**
+
+```text
+600000000
+000020200
+000022200
+000000000
+000000000
+008000000
+088800000
+000000000
+000000002
+```
+
+
+**Train D input**
+
+```text
+000000000000
+002000000220
+022200000000
+002000000000
+000000000000
+000000022000
+000000002200
+002000000000
+002200000000
+000000000008
+```
+
+
+**Train D output**
+
+```text
+000000000000
+002000000220
+022200000000
+002000000000
+000000000000
+000000088000
+000000008800
+002000000000
+002200000000
+000000000008
+```
+
+
+**Test input**
+
+```text
+0000000002
+0220000000
+0220000000
+0200000000
+0000000000
+0000022000
+0000002200
+0200000000
+0220000000
+6000000000
+```
+
+
+**Expected test output**
+
+```text
+0000000002
+0220000000
+0220000000
+0200000000
+0000000000
+0000088000
+0000008800
+0200000000
+0220000000
+6000000000
+```
+
+
+**Written solution**
+
+There are several red(2) connected components with different sizes. Sort them by area and recolor the second-largest component to cyan(8), leaving the others red.
+
+
+**Program solution**
+
+`def solve(grid): compute all color-2 components, sort by size descending, and recolor the second largest to 8`
+
+
+## M116 — Flood-fill the seed's chamber
+
+**What it tests:** wall-bounded chamber selection by a seed cell
+
+
+**Train A input**
+
+```text
+55555555555
+50000500005
+50200500305
+50000500005
+50000500005
+50000500005
+50000500005
+50000500005
+55555555555
+```
+
+
+**Train A output**
+
+```text
+55555555555
+58888500005
+58288500305
+58888500005
+58888500005
+58888500005
+58888500005
+58888500005
+55555555555
+```
+
+
+**Train B input**
+
+```text
+5555555555
+5000000005
+5000000405
+5000000005
+5000000005
+5555555555
+5000000005
+5020000005
+5000000005
+5555555555
+```
+
+
+**Train B output**
+
+```text
+5555555555
+5000000005
+5000000405
+5000000005
+5000000005
+5555555555
+5888888885
+5828888885
+5888888885
+5555555555
+```
+
+
+**Train C input**
+
+```text
+555555555555
+500050002005
+500050000005
+500055555555
+500050000005
+500050000005
+500050000005
+500050000065
+555555555555
+```
+
+
+**Train C output**
+
+```text
+555555555555
+500058882885
+500058888885
+500055555555
+500050000005
+500050000005
+500050000005
+500050000065
+555555555555
+```
+
+
+**Train D input**
+
+```text
+55555555555
+50000500005
+50700500005
+50000500005
+50000500005
+55555555555
+50000500005
+50000500005
+50000500205
+50000500005
+55555555555
+```
+
+
+**Train D output**
+
+```text
+55555555555
+50000500005
+50700500005
+50000500005
+50000500005
+55555555555
+50000588885
+50000588885
+50000588285
+50000588885
+55555555555
+```
+
+
+**Test input**
+
+```text
+555555555555
+500000500005
+502000500005
+500000500005
+555555555555
+500000500005
+500000500005
+500000500005
+500000500035
+555555555555
+```
+
+
+**Expected test output**
+
+```text
+555555555555
+588888500005
+582888500005
+588888500005
+555555555555
+500000500005
+500000500005
+500000500005
+500000500035
+555555555555
+```
+
+
+**Written solution**
+
+Gray(5) cells are walls. Starting from the red(2) seed, flood-fill through orthogonally connected black(0) cells that stay within the same sealed chamber, and recolor those reachable cells to cyan(8).
+
+
+**Program solution**
+
+`def solve(grid): BFS from the 2 seed through 0-cells without crossing 5-walls, then paint all reached 0-cells as 8`
+
+
+## M117 — Normalize two shapes and keep only their overlap
+
+**What it tests:** shape normalization plus boolean intersection
+
+
+**Train A input**
+
+```text
+00000000000
+01100000000
+01100000000
+01000000200
+00000002220
+00000000000
+00000000000
+00000000000
+```
+
+
+**Train A output**
+
+```text
+08
+88
+```
+
+
+**Train B input**
+
+```text
+000000000000
+000000000100
+000000001100
+000000000110
+000000000000
+022000000000
+002200000000
+000000000000
+000000000000
+```
+
+
+**Train B output**
+
+```text
+8
+8
+```
+
+
+**Train C input**
+
+```text
+0000000000
+0000000000
+0101000000
+0111000000
+0000002220
+0000002000
+0000002000
+0000000000
+```
+
+
+**Train C output**
+
+```text
+808
+800
+```
+
+
+**Train D input**
+
+```text
+000000000000
+001000000000
+011100000000
+001000000000
+000000000000
+000000000200
+000000002220
+000000000000
+000000000000
+000000000000
+```
+
+
+**Train D output**
+
+```text
+080
+888
+```
+
+
+**Test input**
+
+```text
+00000000000
+00000000000
+00110000000
+00110000000
+00100000200
+00000002200
+00000000220
+00000000000
+00000000000
+```
+
+
+**Expected test output**
+
+```text
+08
+88
+```
+
+
+**Written solution**
+
+Take the blue(1) shape and the red(2) shape, normalize each to its own top-left corner, and compare them cell by cell. Output the normalized cells that belong to both shapes, colored cyan(8), in a cropped grid.
+
+
+**Program solution**
+
+`def solve(grid): normalize the color-1 and color-2 cell sets, intersect them, and crop the result as color 8`
+
+
+## M118 — Draw the rectangle border from opposite corners
+
+**What it tests:** rectangle construction from diagonal corner markers
+
+
+**Train A input**
+
+```text
+000000000
+020000000
+000000000
+000000000
+000002000
+000000000
+000000000
+000000006
+```
+
+
+**Train A output**
+
+```text
+000000000
+028888000
+080008000
+080008000
+088882000
+000000000
+000000000
+000000006
+```
+
+
+**Train B input**
+
+```text
+4000000000
+0000000000
+0000000200
+0000000000
+0000000000
+0000000000
+0002000000
+0000000000
+0000000000
+```
+
+
+**Train B output**
+
+```text
+4000000000
+0000000000
+0008888200
+0008000800
+0008000800
+0008000800
+0002888800
+0000000000
+0000000000
+```
+
+
+**Train C input**
+
+```text
+0000000000
+0000200000
+0000000000
+0000000000
+0000000000
+0000000000
+0000000000
+0000000000
+0000000020
+7000000000
+```
+
+
+**Train C output**
+
+```text
+0000000000
+0000288880
+0000800080
+0000800080
+0000800080
+0000800080
+0000800080
+0000800080
+0000888820
+7000000000
+```
+
+
+**Train D input**
+
+```text
+00000000003
+00000000000
+00200000000
+00000000000
+00000000000
+00000000020
+00000000000
+00000000000
+```
+
+
+**Train D output**
+
+```text
+00000000003
+00000000000
+00288888880
+00800000080
+00800000080
+00888888820
+00000000000
+00000000000
+```
+
+
+**Test input**
+
+```text
+000000000000
+000000002000
+000000000000
+000000000000
+000000000000
+000000000000
+000000000000
+000200000000
+000000000006
+```
+
+
+**Expected test output**
+
+```text
+000000000000
+000888882000
+000800008000
+000800008000
+000800008000
+000800008000
+000800008000
+000288888000
+000000000006
+```
+
+
+**Written solution**
+
+The two red(2) markers are opposite corners of an axis-aligned rectangle. Draw the rectangle border in cyan(8), keeping the two original corner markers red.
+
+
+**Program solution**
+
+`def solve(grid): take the two color-2 corners, form their bounding box, and paint its border cells 8 wherever the input is 0`
+
+
+## M119 — Count components and output an alternating bar
+
+**What it tests:** component counting with symbolic resized output
+
+
+**Train A input**
+
+```text
+00000000
+02000000
+02200000
+00000000
+00000000
+00000000
+00000000
+00000000
+```
+
+
+**Train A output**
+
+```text
+8
+```
+
+
+**Train B input**
+
+```text
+0000000000
+0200000000
+0220000000
+0000000000
+0000000000
+0000000000
+0000000220
+0000000000
+0000000000
+```
+
+
+**Train B output**
+
+```text
+84
+```
+
+
+**Train C input**
+
+```text
+00000000000
+02000000000
+02200000000
+00000000000
+00002000000
+00000000000
+00000002200
+00000000000
+00000000000
+```
+
+
+**Train C output**
+
+```text
+848
+```
+
+
+**Train D input**
+
+```text
+000000000000
+020000000000
+022000002000
+000000002000
+000020000000
+000000000000
+000000000000
+000000000220
+000000000000
+000000000000
+```
+
+
+**Train D output**
+
+```text
+8484
+```
+
+
+**Test input**
+
+```text
+000000000000
+020000000000
+022000002000
+000000002000
+000020000000
+000000000000
+002000000000
+002200000220
+000000000000
+000000000000
+```
+
+
+**Expected test output**
+
+```text
+84848
+```
+
+
+**Written solution**
+
+Count how many red(2) connected components appear in the input. Output a single-row bar of that length, alternating cyan(8), yellow(4), cyan(8), yellow(4), starting with cyan.
+
+
+**Program solution**
+
+`def solve(grid): count the number of color-2 components and return [[8,4,8,4,...]] of that length`
+
+
+
+# Hard (7)
+
+## H113 — Trace the beam through mirrors
+
+**What it tests:** ray tracing with slash and backslash mirrors
+
+
+**Train A input**
+
+```text
+0000050000
+0000005555
+0000000000
+0000000000
+0000000000
+0200030000
+0000000000
+0000000000
+```
+
+
+**Train A output**
+
+```text
+0000050000
+0000085555
+0000080000
+0000080000
+0000080000
+0288830000
+0000000000
+0000000000
+```
+
+
+**Train B input**
+
+```text
+00000000000
+00000000000
+02000400000
+00000000000
+00000000000
+00000000000
+55500300000
+00000000000
+00000000000
+```
+
+
+**Train B output**
+
+```text
+00000000000
+00000000000
+02888400000
+00000800000
+00000800000
+00000800000
+55588300000
+00000000000
+00000000000
+```
+
+
+**Train C input**
+
+```text
+000000000000
+000000000000
+000000000000
+500000400000
+000000000000
+000000000000
+000000000000
+020000300000
+000000000000
+000000000000
+```
+
+
+**Train C output**
+
+```text
+000000000000
+000000000000
+000000000000
+588888400000
+000000800000
+000000800000
+000000800000
+028888300000
+000000000000
+000000000000
+```
+
+
+**Train D input**
+
+```text
+0000000000
+0200400000
+0000000000
+0000000000
+0000000000
+0000000000
+0000500000
+0000500000
+0000500000
+```
+
+
+**Train D output**
+
+```text
+0000000000
+0288400000
+0000800000
+0000800000
+0000800000
+0000800000
+0000500000
+0000500000
+0000500000
+```
+
+
+**Test input**
+
+```text
+000000000000
+000000000000
+000000000000
+000000000000
+000000040005
+000000000000
+000000000000
+000000000000
+020000030000
+000000000000
+```
+
+
+**Expected test output**
+
+```text
+000000000000
+000000000000
+000000000000
+000000000000
+888888840005
+000000080000
+000000080000
+000000080000
+028888830000
+000000000000
+```
+
+
+**Written solution**
+
+A beam starts at the red(2) source and initially travels to the right through empty black(0) cells. Slash mirrors (green(3)) and backslash mirrors (yellow(4)) reflect the beam; gray(5) cells stop it. Mark every traversed empty cell with cyan(8).
+
+
+**Program solution**
+
+`def solve(grid): step a beam rightward from the 2 source, update direction on 3=/ and 4=\ mirrors, stop at 5 or edge, and paint traversed 0-cells as 8`
+
+
+## H114 — Fill cells equidistant from two seeds under walls
+
+**What it tests:** maze distance equality regions
+
+
+**Train A input**
+
+```text
+000000000
+000000000
+000000000
+020000030
+000000000
+000000000
+000000000
+```
+
+
+**Train A output**
+
+```text
+000080000
+000080000
+000080000
+020080030
+000080000
+000080000
+000080000
+```
+
+
+**Train B input**
+
+```text
+00000000000
+02000000000
+00000000000
+00000000000
+05555055550
+00000000000
+00000000000
+00000000030
+00000000000
+```
+
+
+**Train B output**
+
+```text
+00000000080
+02000000080
+00000000800
+00000008000
+05555855550
+00080000000
+00800000000
+08000000030
+08000000000
+```
+
+
+**Train C input**
+
+```text
+000000000
+000020000
+005000500
+005000500
+005000500
+005000500
+005000500
+000030000
+000000000
+```
+
+
+**Train C output**
+
+```text
+000000000
+000020000
+005000500
+005000500
+885888588
+005000500
+005000500
+000030000
+000000000
+```
+
+
+**Train D input**
+
+```text
+000000000000
+000000500000
+002000500300
+000000500000
+000000500000
+055555555550
+000000000000
+000000000000
+000000000000
+000000000000
+```
+
+
+**Train D output**
+
+```text
+000000000000
+000000500000
+002000500300
+000000500000
+000000500000
+055555555550
+000000000000
+000000000000
+000000000000
+000000000000
+```
+
+
+**Test input**
+
+```text
+00000000000
+00200000000
+00000000000
+00000000000
+00555555500
+00000500000
+00000500000
+00000500300
+00000000000
+```
+
+
+**Expected test output**
+
+```text
+00000000088
+00200000088
+00000000800
+00000008000
+00555555500
+00008500000
+00080500000
+00800500300
+88000000000
+```
+
+
+**Written solution**
+
+Treat gray(5) cells as walls. Compute the shortest-path distance from every reachable cell to the red seed(2) and to the green seed(3). Recolor the black cells that are reachable from both and have equal distance to both seeds with cyan(8).
+
+
+**Program solution**
+
+`def solve(grid): BFS from 2 and 3 through non-wall cells, then paint each 0-cell with equal finite distance from both seeds as 8`
+
+
+## H115 — Stamp a transformed copy at the anchor
+
+**What it tests:** control-coded dihedral transform stamping
+
+
+**Train A input**
+
+```text
+100000000000
+060000000000
+066000000000
+000000000000
+000000000000
+000000007000
+000000000000
+000000000000
+000000000000
+```
+
+
+**Train A output**
+
+```text
+100000000000
+060000000000
+066000000000
+000000000000
+000000000000
+000000008000
+000000008800
+000000000000
+000000000000
+```
+
+
+**Train B input**
+
+```text
+000000000002
+000000000000
+000600000000
+006660000000
+000000000000
+000000000000
+000000070000
+000000000000
+000000000000
+000000000000
+```
+
+
+**Train B output**
+
+```text
+000000000002
+000000000000
+000600000000
+006660000000
+000000000000
+000000000000
+000000080000
+000000088000
+000000080000
+000000000000
+```
+
+
+**Train C input**
+
+```text
+00000000000
+07000000000
+00000066000
+00000006600
+00000000000
+00000000000
+00000000000
+00000000000
+00000000003
+```
+
+
+**Train C output**
+
+```text
+00000000000
+08800000000
+00880066000
+00000006600
+00000000000
+00000000000
+00000000000
+00000000000
+00000000003
+```
+
+
+**Train D input**
+
+```text
+0000004000000
+0000000000000
+0000000000000
+0660000000000
+0660000000000
+0600000007000
+0000000000000
+0000000000000
+0000000000000
+0000000000000
+```
+
+
+**Train D output**
+
+```text
+0000004000000
+0000000000000
+0000000000000
+0660000000000
+0660000000000
+0600000008800
+0000000008800
+0000000000800
+0000000000000
+0000000000000
+```
+
+
+**Test input**
+
+```text
+000000000000
+000000000000
+006000000000
+066000000000
+006600070000
+000000000000
+000000000000
+000000000000
+000000000000
+000000000002
+```
+
+
+**Expected test output**
+
+```text
+000000000000
+000000000000
+006000000000
+066000000000
+006600078000
+000000088800
+000000080000
+000000000000
+000000000000
+000000000002
+```
+
+
+**Written solution**
+
+The blue(6) object is a template. The single control cell chooses the transform: 1 = identity, 2 = rotate 90° clockwise, 3 = rotate 180°, 4 = mirror left-right. Apply that transform to the template, normalize it, and stamp the result in cyan(8) starting at the purple anchor(7).
+
+
+**Program solution**
+
+`def solve(grid): read the control code, transform the normalized color-6 shape accordingly, then place that transformed shape with its top-left at the 7 anchor and paint it 8`
+
+
+## H116 — Fill the band selected by the number of dots
+
+**What it tests:** nested-frame band selection by count control
+
+
+**Train A input**
+
+```text
+11111111111
+10000000001
+10111111101
+10100000101
+10101110101
+10101210101
+10101110101
+10100000101
+10111111101
+10000000001
+11111111111
+```
+
+
+**Train A output**
+
+```text
+11111111111
+18888888881
+18111111181
+18100000181
+18101110181
+18101210181
+18101110181
+18100000181
+18111111181
+18888888881
+11111111111
+```
+
+
+**Train B input**
+
+```text
+0111111111110
+0100000000010
+0101111111010
+0101000001010
+0101011101010
+0101012201010
+0101011101010
+0101000001010
+0101111111010
+0100000000010
+0111111111110
+```
+
+
+**Train B output**
+
+```text
+0111111111110
+0100000000010
+0101111111010
+0101888881010
+0101811181010
+0101812281010
+0101811181010
+0101888881010
+0101111111010
+0100000000010
+0111111111110
+```
+
+
+**Train C input**
+
+```text
+1111111111111
+1000000000001
+1011111111101
+1010000000101
+1010111110101
+1010122210101
+1010111110101
+1010000000101
+1011111111101
+1000000000001
+1111111111111
+```
+
+
+**Train C output**
+
+```text
+1111111111111
+1000000000001
+1011111111101
+1010000000101
+1010111110101
+1010122210101
+1010111110101
+1010000000101
+1011111111101
+1000000000001
+1111111111111
+```
+
+
+**Train D input**
+
+```text
+1111111111111
+1000000000001
+1011111111101
+1010000000101
+1010111110101
+1010100010101
+1010122010101
+1010100010101
+1010111110101
+1010000000101
+1011111111101
+1000000000001
+1111111111111
+```
+
+
+**Train D output**
+
+```text
+1111111111111
+1000000000001
+1011111111101
+1018888888101
+1018111118101
+1018100018101
+1018122018101
+1018100018101
+1018111118101
+1018888888101
+1011111111101
+1000000000001
+1111111111111
+```
+
+
+**Test input**
+
+```text
+111111111111111
+100000000000001
+101111111111101
+101000000000101
+101011111110101
+101010000010101
+101010222010101
+101010000010101
+101011111110101
+101000000000101
+101111111111101
+100000000000001
+111111111111111
+```
+
+
+**Expected test output**
+
+```text
+111111111111111
+100000000000001
+101111111111101
+101000000000101
+101011111110101
+101018888810101
+101018222810101
+101018888810101
+101011111110101
+101000000000101
+101111111111101
+100000000000001
+111111111111111
+```
+
+
+**Written solution**
+
+The grid contains nested rectangular frames made of blue(1). Count the red(2) dots. If there are k dots, fill the k-th band from the outside inward with cyan(8): inside frame k, but outside the next inner frame if one exists.
+
+
+**Program solution**
+
+`def solve(grid): sort the nested color-1 frames from outer to inner, let k = number of 2 dots, and fill the region inside frame k but outside frame k+1 with 8`
+
+
+## H117 — Keep cells present in exactly two normalized shapes
+
+**What it tests:** three-way normalized boolean shape reasoning
+
+
+**Train A input**
+
+```text
+0000000000000
+0110000020200
+0110000022200
+0100000000000
+0000000000000
+0000330000000
+0000333000000
+0000000000000
+0000000000000
+```
+
+
+**Train A output**
+
+```text
+80
+08
+```
+
+
+**Train B input**
+
+```text
+000000000000
+001000000000
+011000000000
+001100000000
+000000022000
+000000022000
+033000020000
+003300000000
+003000000000
+000000000000
+```
+
+
+**Train B output**
+
+```text
+80
+80
+08
+```
+
+
+**Train C input**
+
+```text
+00000000000
+01010000000
+01110002220
+00000002000
+00000002000
+00003000000
+00033300000
+00003000000
+00000000000
+```
+
+
+**Train C output**
+
+```text
+888
+088
+```
+
+
+**Train D input**
+
+```text
+0000000000000
+0010000000000
+0111000000000
+0010000000000
+0000000000000
+0003000022000
+0033000022000
+0003300020000
+0000000000000
+0000000000000
+```
+
+
+**Train D output**
+
+```text
+8
+```
+
+
+**Test input**
+
+```text
+000000000000
+011000002000
+011000022000
+010000002200
+000000000000
+000000000000
+000303000000
+000333000000
+000000000000
+000000000000
+```
+
+
+**Expected test output**
+
+```text
+88
+```
+
+
+**Written solution**
+
+Normalize the blue(1), red(2), and green(3) shapes to their own top-left corners. Output the cells that appear in exactly two of those three normalized shapes, colored cyan(8), in a cropped grid.
+
+
+**Program solution**
+
+`def solve(grid): normalize the 1, 2, and 3 shapes, keep cells whose membership count across the three sets is exactly 2, and crop them as color 8`
+
+
+## H118 — Voronoi-color the maze by distance to the seeds
+
+**What it tests:** wall-constrained distance partitioning
+
+
+**Train A input**
+
+```text
+000000000
+000000000
+000000000
+020000030
+000000000
+000000000
+000000000
+```
+
+
+**Train A output**
+
+```text
+888804444
+888804444
+888804444
+828804434
+888804444
+888804444
+888804444
+```
+
+
+**Train B input**
+
+```text
+00000000000
+02000000000
+00000000000
+00000000000
+05555055550
+00000000000
+00000000000
+00000000030
+00000000000
+```
+
+
+**Train B output**
+
+```text
+88888888804
+82888888804
+88888888044
+88888880444
+85555055554
+88804444444
+88044444444
+80444444434
+80444444444
+```
+
+
+**Train C input**
+
+```text
+000000000
+000020000
+005000500
+005000500
+005000500
+005000500
+005000500
+000030000
+000000000
+```
+
+
+**Train C output**
+
+```text
+888888888
+888828888
+885888588
+885888588
+005000500
+445444544
+445444544
+444434444
+444444444
+```
+
+
+**Train D input**
+
+```text
+000000000000
+000000500000
+002000500000
+000000500000
+000000500000
+055555055550
+000000000000
+000000000300
+000000000000
+000000000000
+```
+
+
+**Train D output**
+
+```text
+888888888804
+888888588044
+882888580444
+888888504444
+888888544444
+855555455554
+880444444444
+804444444344
+804444444444
+804444444444
+```
+
+
+**Test input**
+
+```text
+00000000000
+00200000000
+00000000000
+00000000000
+00555555500
+00000500000
+00000000000
+00000500300
+00000000000
+```
+
+
+**Expected test output**
+
+```text
+88888888800
+88288888800
+88888888044
+88888880444
+88555555544
+88804544444
+88044444444
+88044544344
+00444444444
+```
+
+
+**Written solution**
+
+Gray(5) cells are walls. For every reachable black(0) cell, compare its shortest-path distance to the red seed(2) and the green seed(3). Color cells closer to the red seed cyan(8), cells closer to the green seed yellow(4), and leave ties black.
+
+
+**Program solution**
+
+`def solve(grid): BFS from 2 and 3 through non-wall cells and color each reachable 0-cell by whichever seed has the smaller distance`
+
+
+## H119 — Transform the shape, then translate it by the marker vector
+
+**What it tests:** combined transform and vector placement
+
+
+**Train A input**
+
+```text
+100002000000
+000000000000
+006000000000
+006600003000
+000000000000
+000000000000
+000000000000
+000000000000
+000000000000
+000000000000
+```
+
+
+**Train A output**
+
+```text
+100002000000
+000000000000
+006000000000
+006600003000
+000000000000
+000008000000
+000008800000
+000000000000
+000000000000
+000000000000
+```
+
+
+**Train B input**
+
+```text
+000003000004
+020000000000
+000000000000
+000000000000
+000000000000
+006000000000
+066600000000
+000000000000
+000000000000
+000000000000
+```
+
+
+**Train B output**
+
+```text
+000003000004
+020000000000
+000000000000
+000000000000
+000000800000
+006008880000
+066600000000
+000000000000
+000000000000
+000000000000
+```
+
+
+**Train C input**
+
+```text
+0000000000000
+0000000000200
+0000006600000
+0000000660000
+0000000030000
+0000000000000
+0000000000000
+0000000000000
+0000000000000
+0000000000000
+0000000000007
+```
+
+
+**Train C output**
+
+```text
+0000000000000
+0000000000200
+0000006600000
+0000000660000
+0000000030000
+0000880000000
+0000088000000
+0000000000000
+0000000000000
+0000000000000
+0000000000007
+```
+
+
+**Train D input**
+
+```text
+000000002000
+066000000000
+066000000000
+060000000030
+000000000000
+000000000000
+000000000000
+000000000000
+000000000000
+900000000000
+```
+
+
+**Train D output**
+
+```text
+000000002000
+066000000000
+066000000000
+060000000030
+000800000000
+000880000000
+000880000000
+000000000000
+000000000000
+900000000000
+```
+
+
+**Test input**
+
+```text
+0000000000000
+0200000000000
+0006000000000
+0066000000000
+0006630000000
+0000000000000
+0000000000000
+0000000000000
+0000000000000
+0000000000000
+0000000000004
+```
+
+
+**Expected test output**
+
+```text
+0000000000000
+0200000000000
+0006000000000
+0066000000000
+0006630000000
+0000000800000
+0000000880000
+0000008800000
+0000000000000
+0000000000000
+0000000000004
+```
+
+
+**Written solution**
+
+Take the blue(6) object and normalize it. The control color selects the transform: 1 = identity, 4 = mirror left-right, 7 = rotate 180°, 9 = mirror top-bottom. The vector from marker 2 to marker 3 tells where to place the transformed copy relative to the original object's top-left corner. Draw the copy in cyan(8).
+
+
+**Program solution**
+
+`def solve(grid): transform the normalized color-6 shape according to the control code, then place it at original_bbox_top_left + (pos(3)-pos(2)) and paint it 8`
+

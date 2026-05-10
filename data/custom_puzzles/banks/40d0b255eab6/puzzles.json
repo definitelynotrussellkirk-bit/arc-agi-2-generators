@@ -1,0 +1,401 @@
+[
+  {
+    "id": "easy_29_shoot_rays_to_walls",
+    "title": "Shoot Rays Until the Walls",
+    "difficulty": "easy",
+    "skills": [
+      "invented primitive: ray_until_block",
+      "same-size fill",
+      "wall-bounded propagation"
+    ],
+    "written_solution": "Treat every red(2) seed as a source. Using the new primitive `ray_until_block`, send rays up, down, left, and right until the next gray(5) wall cell or the grid edge. Recolor the seed and every traversed cell to cyan(8), and leave the gray(5) walls alone.",
+    "solver_name": "solve_easy_29_shoot_rays_to_walls",
+    "scaffold": [
+      "Treat each red seed as a source cell.",
+      "Extend in the four cardinal directions through empty cells.",
+      "Stop before the first gray wall cell or the grid edge."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define dirs4 (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (define (e5b-ray grid r c dr dc blockers include-start bounds) (let ((start-cells (if include-start (if (or (not bounds) (and (<= (first bounds) r) (<= r (third bounds)) (<= (second bounds) c) (<= c (fourth bounds)))) (list (list r c)) (list)) (list)))) (let loop ((rr (+ r dr)) (cc (+ c dc)) (acc start-cells)) (cond ((not (in-bounds? rr cc (rows grid) (cols grid))) acc) ((and bounds (not (and (<= (first bounds) rr) (<= rr (third bounds)) (<= (second bounds) cc) (<= cc (fourth bounds))))) acc) ((member? (at grid rr cc) blockers) acc) (else (loop (+ rr dr) (+ cc dc) (append acc (list (list rr cc))))))))) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range (cols g)))) (if (= (at g r c) 2) (for/fold ((acc out)) ((d (in-list dirs4))) (paint-cells acc (filter (lambda (p) (not (= (at g (first p) (second p)) 5))) (e5b-ray g r c (first d) (second d) (list 5) #t #f)) 8)) out))))"
+  },
+  {
+    "id": "easy_30_crop_nonzero_bbox",
+    "title": "Crop the Nonzero Bounding Box",
+    "difficulty": "easy",
+    "skills": [
+      "size-changing crop",
+      "bounding box",
+      "preserve colors"
+    ],
+    "written_solution": "Crop the grid to the tight bbox of all non-background cells.",
+    "solver_name": "solve_easy_30_crop_nonzero_bbox",
+    "scaffold": [
+      "Ignore the large black border.",
+      "Find the smallest rectangle containing every nonzero cell.",
+      "Return exactly that crop."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (nonzero-cells grid) (filter (lambda (p) (not (= (at grid (first p) (second p)) 0))) (grid-positions grid))) (define (crop-nonzero grid) (let ((cells (nonzero-cells grid))) (if (empty? cells) (list (list 0)) (let* ((bb (bbox-of-cells cells))) (subgrid grid (first bb) (second bb) (third bb) (fourth bb)))))) (crop-nonzero g)))"
+  },
+  {
+    "id": "easy_31_complete_main_diagonal_symmetry",
+    "title": "Complete the Main-Diagonal Symmetry",
+    "difficulty": "easy",
+    "skills": [
+      "same-size symmetry",
+      "transpose",
+      "color preservation"
+    ],
+    "written_solution": "Reflect every nonzero cell across the main diagonal: a cell at row r, column c also appears at row c, column r. Keep the original cells.",
+    "solver_name": "solve_easy_31_complete_main_diagonal_symmetry",
+    "scaffold": [
+      "Read the main diagonal as the mirror axis.",
+      "For every colored cell at (r,c), also color (c,r) the same way.",
+      "Keep cells already on the diagonal unchanged."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range (cols g)))) (let ((v (at g r c))) (if (= v 0) out (set-cell out c r v))))))"
+  },
+  {
+    "id": "easy_32_fill_between_row_endpoints",
+    "title": "Fill Between Matching Row Endpoints",
+    "difficulty": "easy",
+    "skills": [
+      "row-wise reasoning",
+      "segment filling",
+      "ignore distractors"
+    ],
+    "written_solution": "Inspect each row independently. If a row contains exactly two colored cells and they have the same color, fill every cell between them with that color. Rows with mismatched colors or extra colored cells stay unchanged.",
+    "solver_name": "solve_easy_32_fill_between_row_endpoints",
+    "scaffold": [
+      "Work one row at a time.",
+      "Only rows with exactly two nonzero cells of the same color should change.",
+      "Fill the whole inclusive span between those two endpoints."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (for/fold ((out g)) ((r (in-range (rows g)))) (let ((nz (filter (lambda (c) (not (= (at g r c) 0))) (range (cols g))))) (if (and (= (length nz) 2) (= (at g r (first nz)) (at g r (second nz)))) (paint-cells out (map (lambda (c) (list r c)) (range (first nz) (+ (second nz) 1))) (at g r (first nz))) out)))))"
+  },
+  {
+    "id": "easy_33_stamp_template_at_marker",
+    "title": "Stamp the Template at the Marker",
+    "difficulty": "easy",
+    "skills": [
+      "template extraction",
+      "translation",
+      "same-size stamping"
+    ],
+    "written_solution": "Take the unique non-marker object as the template, crop it tightly, and paste a copy of that crop at the marker location. The original template stays in place; the marker is replaced by the copied template.",
+    "solver_name": "solve_easy_33_stamp_template_at_marker",
+    "scaffold": [
+      "There is one real template object and one marker cell.",
+      "Crop the template tightly.",
+      "Paste a copy with its top-left corner aligned to the marker."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define dirs4 (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (define (e8b-paste grid pat top left) (for*/fold ((out grid)) ((r (in-range (rows pat))) (c (in-range (cols pat)))) (let ((v (at pat r c)) (rr (+ top r)) (cc (+ left c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows out) (cols out))) (set-cell out rr cc v) out)))) (define (e5b-nz-components grid) (let loop-pos ((positions (grid-positions grid)) (seen (list)) (acc (list))) (cond ((empty? positions) (reverse acc)) ((or (member? (first positions) seen) (= (at grid (first (first positions)) (second (first positions))) 0)) (loop-pos (rest positions) seen acc)) (else (let bfs ((queue (list (first positions))) (seen2 (cons (first positions) seen)) (cells (list))) (if (empty? queue) (loop-pos (rest positions) seen2 (cons (reverse cells) acc)) (let* ((cur (first queue)) (nbrs (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (not (member? p seen2)) (not (= (at grid (first p) (second p)) 0)))) (map (lambda (d) (list (+ (first cur) (first d)) (+ (second cur) (second d)))) dirs4)))) (bfs (append (rest queue) nbrs) (append seen2 nbrs) (cons cur cells))))))))) (define (e5b-crop-cells grid cells) (let ((bb (bbox-of-cells cells))) (subgrid grid (first bb) (second bb) (third bb) (fourth bb)))) (let* ((work (grid-from-fn (rows g) (cols g) (lambda (r c) (if (= (at g r c) 8) 0 (at g r c))))) (template (first (sort (e5b-nz-components work) (lambda (a b) (> (length a) (length b)))))) (crop (e5b-crop-cells g template)) (marker (first (find-color g 8)))) (e8b-paste (set-cell g (first marker) (second marker) 0) crop (first marker) (second marker)))))"
+  },
+  {
+    "id": "easy_34_keep_rarest_color",
+    "title": "Keep Only the Rarest Color",
+    "difficulty": "easy",
+    "skills": [
+      "global counting",
+      "color selection",
+      "same-size filtering"
+    ],
+    "written_solution": "Count the number of cells of each non-background color. Identify the unique rarest color, keep only those cells, and turn every other nonzero cell to black(0).",
+    "solver_name": "solve_easy_34_keep_rarest_color",
+    "scaffold": [
+      "Count how many cells each nonzero color occupies.",
+      "Find the unique smallest count.",
+      "Erase every other color."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-colors-reading grid) (remove-duplicates (filter (lambda (v) (not (= v 0))) (map (lambda (p) (at grid (first p) (second p))) (grid-positions grid))))) (let* ((colors (e8b-colors-reading g)) (rare (first (sort colors (lambda (a b) (let ((ca (length (find-color g a))) (cb (length (find-color g b)))) (or (< ca cb) (and (= ca cb) (< a b))))))))) (paint-cells (empty-grid (rows g) (cols g) 0) (find-color g rare) rare))))"
+  },
+  {
+    "id": "easy_35_hollow_solid_rectangles",
+    "title": "Hollow the Solid Rectangles",
+    "difficulty": "easy",
+    "skills": [
+      "object detection",
+      "rectangle logic",
+      "interior clearing"
+    ],
+    "written_solution": "Find each connected magenta(6) region that forms a completely solid rectangle. Replace that solid rectangle by its border only, turning the interior cells black(0). Other colors are left alone.",
+    "solver_name": "solve_easy_35_hollow_solid_rectangles",
+    "scaffold": [
+      "Only the solid color-6 rectangles are transformed.",
+      "Preserve each rectangle border.",
+      "Turn the interior cells black."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (for/fold ((out g)) ((obj (in-list (objects g 0)))) (if (= (obj-color obj) 6) (let* ((bb (obj-bbox obj)) (r1 (first bb)) (c1 (second bb)) (r2 (third bb)) (c2 (fourth bb)) (area (* (+ 1 (- r2 r1)) (+ 1 (- c2 c1))))) (if (= (obj-size obj) area) (paint-cells out (positions-in-rect (+ r1 1) (+ c1 1) (- r2 1) (- c2 1)) 0) out)) out))))"
+  },
+  {
+    "id": "medium_29_directional_rays_by_seed_color",
+    "title": "Shoot Horizontal or Vertical Rays by Seed Color",
+    "difficulty": "medium",
+    "skills": [
+      "invented primitive: ray_until_block",
+      "orientation by color",
+      "overlap handling"
+    ],
+    "written_solution": "Use `ray_until_block` with gray(5) cells as blockers. Every red(2) seed emits a horizontal beam left and right; every blue(1) seed emits a vertical beam up and down. Color horizontal-only beam cells orange(7), vertical-only beam cells cyan(8), and overlaps magenta(6); keep the gray(5) walls unchanged.",
+    "solver_name": "solve_medium_29_directional_rays_by_seed_color",
+    "scaffold": [
+      "Red seeds and blue seeds behave differently.",
+      "Red(2) seeds emit horizontal beams; blue(1) seeds emit vertical beams.",
+      "Use a special overlap color where the two beam systems cross."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e5b-ray grid r c dr dc blockers include-start bounds) (let ((start-cells (if include-start (if (or (not bounds) (and (<= (first bounds) r) (<= r (third bounds)) (<= (second bounds) c) (<= c (fourth bounds)))) (list (list r c)) (list)) (list)))) (let loop ((rr (+ r dr)) (cc (+ c dc)) (acc start-cells)) (cond ((not (in-bounds? rr cc (rows grid) (cols grid))) acc) ((and bounds (not (and (<= (first bounds) rr) (<= rr (third bounds)) (<= (second bounds) cc) (<= cc (fourth bounds))))) acc) ((member? (at grid rr cc) blockers) acc) (else (loop (+ rr dr) (+ cc dc) (append acc (list (list rr cc))))))))) (let* ((hpaint (remove-duplicates (apply append (for*/list ((r (in-range (rows g))) (c (in-range (cols g))) #:when (= (at g r c) 2)) (append (e5b-ray g r c 0 1 (list 5) #t #f) (e5b-ray g r c 0 -1 (list 5) #f #f)))))) (vpaint (remove-duplicates (apply append (for*/list ((r (in-range (rows g))) (c (in-range (cols g))) #:when (= (at g r c) 1)) (append (e5b-ray g r c 1 0 (list 5) #t #f) (e5b-ray g r c -1 0 (list 5) #f #f))))))) (grid-from-fn (rows g) (cols g) (lambda (r c) (let ((p (list r c))) (cond ((= (at g r c) 5) 5) ((and (member? p hpaint) (member? p vpaint)) 6) ((member? p hpaint) 7) ((member? p vpaint) 8) (else 0))))))))"
+  },
+  {
+    "id": "medium_30_crop_components_and_pack_left_to_right",
+    "title": "Crop Components and Pack Them Left to Right",
+    "difficulty": "medium",
+    "skills": [
+      "component extraction",
+      "size-changing packing",
+      "ordering by position"
+    ],
+    "written_solution": "Split the input into connected components, crop each one tightly, sort them by the left edge of their original position, and place the crops next to each other with a one-column black(0) separator.",
+    "solver_name": "solve_medium_30_crop_components_and_pack_left_to_right",
+    "scaffold": [
+      "Separate the disconnected objects.",
+      "Crop each object to its own bounding box.",
+      "Repack them in their original left-to-right order with one blank column between."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define dirs4 (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (define (e8b-list< a b) (cond ((empty? a) #f) ((< (first a) (first b)) #t) ((> (first a) (first b)) #f) (else (e8b-list< (rest a) (rest b))))) (define (e8b-paste grid pat top left) (for*/fold ((out grid)) ((r (in-range (rows pat))) (c (in-range (cols pat)))) (let ((v (at pat r c)) (rr (+ top r)) (cc (+ left c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows out) (cols out))) (set-cell out rr cc v) out)))) (define (e5b-nz-components grid) (let loop-pos ((positions (grid-positions grid)) (seen (list)) (acc (list))) (cond ((empty? positions) (reverse acc)) ((or (member? (first positions) seen) (= (at grid (first (first positions)) (second (first positions))) 0)) (loop-pos (rest positions) seen acc)) (else (let bfs ((queue (list (first positions))) (seen2 (cons (first positions) seen)) (cells (list))) (if (empty? queue) (loop-pos (rest positions) seen2 (cons (reverse cells) acc)) (let* ((cur (first queue)) (nbrs (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (not (member? p seen2)) (not (= (at grid (first p) (second p)) 0)))) (map (lambda (d) (list (+ (first cur) (first d)) (+ (second cur) (second d)))) dirs4)))) (bfs (append (rest queue) nbrs) (append seen2 nbrs) (cons cur cells))))))))) (define (e5b-crop-cells grid cells) (let ((bb (bbox-of-cells cells))) (subgrid grid (first bb) (second bb) (third bb) (fourth bb)))) (define (e5b-pack-h-top grids) (if (empty? grids) (list (list 0)) (let* ((h (apply max (map rows grids))) (w (+ (apply + (map cols grids)) (- (length grids) 1)))) (let loop ((xs grids) (left 0) (out (empty-grid h w 0))) (if (empty? xs) out (let ((p (first xs))) (loop (rest xs) (+ left (cols p) 1) (e8b-paste out p 0 left)))))))) (let* ((comps (sort (e5b-nz-components g) (lambda (a b) (let ((ba (bbox-of-cells a)) (bb (bbox-of-cells b))) (e8b-list< (list (second ba) (first ba)) (list (second bb) (first bb))))))) (crops (map (lambda (cells) (e5b-crop-cells g cells)) comps))) (e5b-pack-h-top crops))))"
+  },
+  {
+    "id": "medium_31_scale_key_adjacent_component",
+    "title": "Scale the Key-Adjacent Component by 2",
+    "difficulty": "medium",
+    "skills": [
+      "component selection",
+      "adjacency to marker",
+      "scaling"
+    ],
+    "written_solution": "Find the component that is adjacent to the marker cell. Crop that target component tightly and enlarge it by a factor of 2 in both directions, replacing each original cell by a 2x2 block of the same color.",
+    "solver_name": "solve_medium_31_scale_key_adjacent_component",
+    "scaffold": [
+      "The marker identifies which object matters.",
+      "Choose the component touching the marker in the local neighborhood.",
+      "Crop it tightly and scale every cell to a 2x2 block."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define dirs4 (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (define (e5b-nz-components grid) (let loop-pos ((positions (grid-positions grid)) (seen (list)) (acc (list))) (cond ((empty? positions) (reverse acc)) ((or (member? (first positions) seen) (= (at grid (first (first positions)) (second (first positions))) 0)) (loop-pos (rest positions) seen acc)) (else (let bfs ((queue (list (first positions))) (seen2 (cons (first positions) seen)) (cells (list))) (if (empty? queue) (loop-pos (rest positions) seen2 (cons (reverse cells) acc)) (let* ((cur (first queue)) (nbrs (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (not (member? p seen2)) (not (= (at grid (first p) (second p)) 0)))) (map (lambda (d) (list (+ (first cur) (first d)) (+ (second cur) (second d)))) dirs4)))) (bfs (append (rest queue) nbrs) (append seen2 nbrs) (cons cur cells))))))))) (define (e5b-crop-cells grid cells) (let ((bb (bbox-of-cells cells))) (subgrid grid (first bb) (second bb) (third bb) (fourth bb)))) (let* ((marker (first (find-color g 8))) (work (grid-from-fn (rows g) (cols g) (lambda (r c) (if (= (at g r c) 8) 0 (at g r c))))) (hit (first (filter (lambda (cells) (any? (lambda (p) (<= (max (abs (- (first p) (first marker))) (abs (- (second p) (second marker)))) 1)) cells)) (e5b-nz-components work))))) (upscale (e5b-crop-cells g hit) 2))))"
+  },
+  {
+    "id": "medium_32_fill_frame_intersections",
+    "title": "Fill the Marked Intersections Inside the Frame",
+    "difficulty": "medium",
+    "skills": [
+      "frame reasoning",
+      "row/column selection",
+      "same-size intersection fill"
+    ],
+    "written_solution": "Read the framed rectangle as the working area. The red(2) cells on the left border mark rows, and the green(3) cells on the top border mark columns. Fill every interior crossing of a marked row and a marked column with orange(7).",
+    "solver_name": "solve_medium_32_fill_frame_intersections",
+    "scaffold": [
+      "Use the border markers to select rows and columns.",
+      "Row markers sit on the left border; column markers sit on the top border.",
+      "Paint their intersections inside the frame."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (let* ((cells (filter (lambda (p) (not (= (at g (first p) (second p)) 0))) (grid-positions g))) (bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb)) (marked-rows (filter (lambda (r) (= (at g r c0) 2)) (range (+ r0 1) r1))) (marked-cols (filter (lambda (c) (= (at g r0 c) 3)) (range (+ c0 1) c1)))) (for/fold ((out g)) ((r (in-list marked-rows))) (paint-cells out (map (lambda (c) (list r c)) marked-cols) 7)))))"
+  },
+  {
+    "id": "medium_33_extract_bisymmetric_component",
+    "title": "Extract the Only Bi-Symmetric Component",
+    "difficulty": "medium",
+    "skills": [
+      "shape analysis",
+      "horizontal and vertical symmetry",
+      "size-changing selection"
+    ],
+    "written_solution": "Among the disconnected objects, find the unique one whose shape is symmetric both horizontally and vertically. Return that component as a tight crop, preserving its original color.",
+    "solver_name": "solve_medium_33_extract_bisymmetric_component",
+    "scaffold": [
+      "Compare the disconnected shapes, not their positions.",
+      "One component is symmetric both left-right and top-bottom.",
+      "Crop and return only that component."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define dirs4 (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (define (e8-cell<? a b) (or (< (first a) (first b)) (and (= (first a) (first b)) (< (second a) (second b))))) (define (e8-norm cells) (sort (normalize-cells cells) e8-cell<?)) (define (e5b-nz-components grid) (let loop-pos ((positions (grid-positions grid)) (seen (list)) (acc (list))) (cond ((empty? positions) (reverse acc)) ((or (member? (first positions) seen) (= (at grid (first (first positions)) (second (first positions))) 0)) (loop-pos (rest positions) seen acc)) (else (let bfs ((queue (list (first positions))) (seen2 (cons (first positions) seen)) (cells (list))) (if (empty? queue) (loop-pos (rest positions) seen2 (cons (reverse cells) acc)) (let* ((cur (first queue)) (nbrs (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (not (member? p seen2)) (not (= (at grid (first p) (second p)) 0)))) (map (lambda (d) (list (+ (first cur) (first d)) (+ (second cur) (second d)))) dirs4)))) (bfs (append (rest queue) nbrs) (append seen2 nbrs) (cons cur cells))))))))) (define (e5b-crop-cells grid cells) (let ((bb (bbox-of-cells cells))) (subgrid grid (first bb) (second bb) (third bb) (fourth bb)))) (define (e5b-symmetric-h? cells) (let* ((norm (e8-norm cells)) (maxr (apply max (map first norm)))) (and (not (empty? norm)) (all? (lambda (p) (member? (list (- maxr (first p)) (second p)) norm)) norm)))) (define (e5b-symmetric-v? cells) (let* ((norm (e8-norm cells)) (maxc (apply max (map second norm)))) (and (not (empty? norm)) (all? (lambda (p) (member? (list (first p) (- maxc (second p))) norm)) norm)))) (let ((hit (first (filter (lambda (cells) (and (e5b-symmetric-h? cells) (e5b-symmetric-v? cells))) (e5b-nz-components g))))) (e5b-crop-cells g hit))))"
+  },
+  {
+    "id": "medium_34_component_count_columns",
+    "title": "Build a Component-Count Bar Chart",
+    "difficulty": "medium",
+    "skills": [
+      "count connected components",
+      "size-changing summary output",
+      "bottom-aligned bars"
+    ],
+    "written_solution": "For each non-background color, count how many connected components of that color appear in the input. Build a vertical bar chart with one bar per color in ascending color order, bottom-align the bars, and use the original color for each bar. Put one background separator column between neighboring bars.",
+    "solver_name": "solve_medium_34_component_count_columns",
+    "scaffold": [
+      "Count components separately for each nonzero color.",
+      "Make one column per color, ordered by color value.",
+      "The height of each bar is the number of components of that color."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-colors-reading grid) (remove-duplicates (filter (lambda (v) (not (= v 0))) (map (lambda (p) (at grid (first p) (second p))) (grid-positions grid))))) (let* ((colors (sort (e8b-colors-reading g) <)) (counts (map (lambda (color) (length (objects (grid-from-fn (rows g) (cols g) (lambda (r c) (if (= (at g r c) color) color 0))) 0))) colors)) (h (apply max counts)) (w (- (* 2 (length colors)) 1))) (for/fold ((out (empty-grid h w 0))) ((color (in-list colors)) (count (in-list counts)) (i (in-naturals))) (paint-cells out (map (lambda (k) (list (- h 1 k) (* 2 i))) (range count)) color)))))"
+  },
+  {
+    "id": "medium_35_mirror_component_across_pivot",
+    "title": "Mirror the Component Across the Pivot",
+    "difficulty": "medium",
+    "skills": [
+      "relative coordinates",
+      "two-axis mirroring",
+      "same-size replication"
+    ],
+    "written_solution": "Use the marker cell as the center of a four-way mirror. Keep the original component, then create its reflections across the vertical axis through the anchor, the horizontal axis through the anchor, and both axes together. Preserve the cell colors and keep the anchor marker unchanged.",
+    "solver_name": "solve_medium_35_mirror_component_across_pivot",
+    "scaffold": [
+      "Treat the marker as a pivot point.",
+      "The visible component is only one quadrant of the final arrangement.",
+      "Reflect it across the pivot horizontally, vertically, and both at once."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define dirs4 (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (define (e5b-nz-components grid) (let loop-pos ((positions (grid-positions grid)) (seen (list)) (acc (list))) (cond ((empty? positions) (reverse acc)) ((or (member? (first positions) seen) (= (at grid (first (first positions)) (second (first positions))) 0)) (loop-pos (rest positions) seen acc)) (else (let bfs ((queue (list (first positions))) (seen2 (cons (first positions) seen)) (cells (list))) (if (empty? queue) (loop-pos (rest positions) seen2 (cons (reverse cells) acc)) (let* ((cur (first queue)) (nbrs (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (not (member? p seen2)) (not (= (at grid (first p) (second p)) 0)))) (map (lambda (d) (list (+ (first cur) (first d)) (+ (second cur) (second d)))) dirs4)))) (bfs (append (rest queue) nbrs) (append seen2 nbrs) (cons cur cells))))))))) (let* ((pivot (first (find-color g 8))) (work (grid-from-fn (rows g) (cols g) (lambda (r c) (if (= (at g r c) 8) 0 (at g r c))))) (comp (first (sort (e5b-nz-components work) (lambda (a b) (> (length a) (length b)))))) (pr (first pivot)) (pc (second pivot))) (for/fold ((out (set-cell (empty-grid (rows g) (cols g) 0) pr pc 8))) ((p (in-list comp))) (let ((v (at g (first p) (second p)))) (paint-cells out (filter (lambda (q) (in-bounds? (first q) (second q) (rows g) (cols g))) (list p (list (first p) (- (* 2 pc) (second p))) (list (- (* 2 pr) (first p)) (second p)) (list (- (* 2 pr) (first p)) (- (* 2 pc) (second p))))) v))))))"
+  },
+  {
+    "id": "hard_29_local_rays_in_chambers",
+    "title": "Solve Rays Separately Inside Each Chamber",
+    "difficulty": "hard",
+    "skills": [
+      "invented primitive: ray_until_block",
+      "local frame decomposition",
+      "internal blockers"
+    ],
+    "written_solution": "Process each gray(5) frame independently. Within one chamber, a red(2) seed emits a horizontal beam and a blue(1) seed emits a vertical beam. Use `ray_until_block` inside the chamber only, with both yellow(4) blockers and the frame border as stopping conditions, and recolor the traversed cells to orange(7).",
+    "solver_name": "solve_hard_29_local_rays_in_chambers",
+    "scaffold": [
+      "Treat each framed chamber as its own subproblem.",
+      "Inside a chamber, a red seed means horizontal and a blue seed means vertical.",
+      "The ray stops at local blockers and at the chamber border."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8-cell<? a b) (or (< (first a) (first b)) (and (= (first a) (first b)) (< (second a) (second b))))) (define (e8-rect-border? obj) (let* ((bb (obj-bbox obj)) (r1 (first bb)) (c1 (second bb)) (r2 (third bb)) (c2 (fourth bb)) (border (filter (lambda (p) (or (= (first p) r1) (= (first p) r2) (= (second p) c1) (= (second p) c2))) (positions-in-rect r1 c1 r2 c2)))) (equal? (sort (obj-cells obj) e8-cell<?) (sort border e8-cell<?)))) (define (e5b-ray grid r c dr dc blockers include-start bounds) (let ((start-cells (if include-start (if (or (not bounds) (and (<= (first bounds) r) (<= r (third bounds)) (<= (second bounds) c) (<= c (fourth bounds)))) (list (list r c)) (list)) (list)))) (let loop ((rr (+ r dr)) (cc (+ c dc)) (acc start-cells)) (cond ((not (in-bounds? rr cc (rows grid) (cols grid))) acc) ((and bounds (not (and (<= (first bounds) rr) (<= rr (third bounds)) (<= (second bounds) cc) (<= cc (fourth bounds))))) acc) ((member? (at grid rr cc) blockers) acc) (else (loop (+ rr dr) (+ cc dc) (append acc (list (list rr cc))))))))) (for/fold ((out g)) ((frame (in-list (filter e8-rect-border? (filter (lambda (obj) (= (obj-color obj) 5)) (objects g 0)))))) (let* ((bb (obj-bbox frame)) (bounds (list (+ (first bb) 1) (+ (second bb) 1) (- (third bb) 1) (- (fourth bb) 1))) (inside (positions-in-rect (first bounds) (second bounds) (third bounds) (fourth bounds))) (seeds (filter (lambda (p) (member? (at g (first p) (second p)) (list 1 2))) inside))) (for/fold ((acc out)) ((seed (in-list seeds))) (let* ((v (at g (first seed) (second seed))) (cells (if (= v 2) (append (e5b-ray g (first seed) (second seed) 0 1 (list 4 5) #t bounds) (e5b-ray g (first seed) (second seed) 0 -1 (list 4 5) #f bounds)) (append (e5b-ray g (first seed) (second seed) 1 0 (list 4 5) #t bounds) (e5b-ray g (first seed) (second seed) -1 0 (list 4 5) #f bounds))))) (paint-cells acc (remove-duplicates cells) 7)))))))"
+  },
+  {
+    "id": "hard_30_assemble_transform_panel",
+    "title": "Assemble a 2x2 Transform Panel",
+    "difficulty": "hard",
+    "skills": [
+      "template extraction",
+      "keyed transformations",
+      "panel assembly"
+    ],
+    "written_solution": "Take the main object as the template and read the four key colors on the bottom row from left to right. Each key selects a transform (identity, clockwise rotation, 180-degree rotation, or flip horizontal). Apply those four transforms and place the results into a 2x2 panel, top-left aligning each transformed crop inside an equal-sized quadrant cell.",
+    "solver_name": "solve_hard_30_assemble_transform_panel",
+    "scaffold": [
+      "Extract the single template object.",
+      "Read the four key cells in order from left to right.",
+      "Transform the template four times and place the results in a 2x2 panel."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define dirs4 (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (define (e8b-paste grid pat top left) (for*/fold ((out grid)) ((r (in-range (rows pat))) (c (in-range (cols pat)))) (let ((v (at pat r c)) (rr (+ top r)) (cc (+ left c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows out) (cols out))) (set-cell out rr cc v) out)))) (define (e5b-nz-components grid) (let loop-pos ((positions (grid-positions grid)) (seen (list)) (acc (list))) (cond ((empty? positions) (reverse acc)) ((or (member? (first positions) seen) (= (at grid (first (first positions)) (second (first positions))) 0)) (loop-pos (rest positions) seen acc)) (else (let bfs ((queue (list (first positions))) (seen2 (cons (first positions) seen)) (cells (list))) (if (empty? queue) (loop-pos (rest positions) seen2 (cons (reverse cells) acc)) (let* ((cur (first queue)) (nbrs (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (not (member? p seen2)) (not (= (at grid (first p) (second p)) 0)))) (map (lambda (d) (list (+ (first cur) (first d)) (+ (second cur) (second d)))) dirs4)))) (bfs (append (rest queue) nbrs) (append seen2 nbrs) (cons cur cells))))))))) (define (e5b-crop-cells grid cells) (let ((bb (bbox-of-cells cells))) (subgrid grid (first bb) (second bb) (third bb) (fourth bb)))) (define (e5b-transform-key grid key) (cond ((= key 1) grid) ((= key 2) (rotate-cw grid)) ((= key 3) (rotate-180 grid)) ((= key 4) (flip-lr grid)) (else grid))) (let* ((keys (filter (lambda (v) (member? v (list 1 2 3 4))) (last g))) (work (grid-from-fn (rows g) (cols g) (lambda (r c) (if (and (= r (- (rows g) 1)) (member? (at g r c) (list 1 2 3 4))) 0 (at g r c))))) (template (e5b-crop-cells work (first (sort (e5b-nz-components work) (lambda (a b) (> (length a) (length b))))))) (trans (map (lambda (k) (e5b-transform-key template k)) keys)) (cell-h (apply max (map rows trans))) (cell-w (apply max (map cols trans))) (positions (list (list 0 0) (list 0 (+ cell-w 1)) (list (+ cell-h 1) 0) (list (+ cell-h 1) (+ cell-w 1))))) (let loop ((xs trans) (ps positions) (out (empty-grid (+ (* 2 cell-h) 1) (+ (* 2 cell-w) 1) 0))) (if (or (empty? xs) (empty? ps)) out (loop (rest xs) (rest ps) (e8b-paste out (first xs) (first (first ps)) (second (first ps)))))))))"
+  },
+  {
+    "id": "hard_31_boolean_template_combine_by_key",
+    "title": "Combine Two Templates by a Boolean Key",
+    "difficulty": "hard",
+    "skills": [
+      "template normalization",
+      "boolean mask operations",
+      "key-controlled logic"
+    ],
+    "written_solution": "Normalize the red(2) shape and the green(3) shape by cropping them to their own bounding boxes and aligning those crops at the top-left. Then combine the two masks according to the key cell: 4 → union, 6 → intersection, and 8 → exclusive-or. Color the resulting mask with orange(7).",
+    "solver_name": "solve_hard_31_boolean_template_combine_by_key",
+    "scaffold": [
+      "Normalize the two colored shapes to their own bounding boxes.",
+      "Interpret the key color as OR, AND, or XOR.",
+      "Return the combined mask in a single output color."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (nonzero-cells grid) (filter (lambda (p) (not (= (at grid (first p) (second p)) 0))) (grid-positions grid))) (define (crop-nonzero grid) (let ((cells (nonzero-cells grid))) (if (empty? cells) (list (list 0)) (let* ((bb (bbox-of-cells cells))) (subgrid grid (first bb) (second bb) (third bb) (fourth bb)))))) (define (recolor-grid grid color) (grid-from-fn (rows grid) (cols grid) (lambda (r c) (if (= (at grid r c) 0) 0 color)))) (define (e11b-binary grid) (grid-from-fn (rows grid) (cols grid) (lambda (r c) (if (= (at grid r c) 0) 0 1)))) (define (e11b-normal-binary grid) (e11b-binary (crop-nonzero grid))) (define (e5b-crop-cells grid cells) (let ((bb (bbox-of-cells cells))) (subgrid grid (first bb) (second bb) (third bb) (fourth bb)))) (let* ((key (first (filter (lambda (v) (member? v (list 4 6 8))) (map (lambda (p) (at g (first p) (second p))) (grid-positions g))))) (a (e11b-normal-binary (recolor-grid (e5b-crop-cells g (find-color g 2)) 1))) (b (e11b-normal-binary (recolor-grid (e5b-crop-cells g (find-color g 3)) 1))) (h (max (rows a) (rows b))) (w (max (cols a) (cols b)))) (grid-from-fn h w (lambda (r c) (let ((aa (and (< r (rows a)) (< c (cols a)) (not (= (at a r c) 0)))) (bb (and (< r (rows b)) (< c (cols b)) (not (= (at b r c) 0))))) (if (cond ((= key 4) (or aa bb)) ((= key 6) (and aa bb)) (else (not (equal? aa bb)))) 7 0)))))))"
+  },
+  {
+    "id": "hard_32_shape_match_matrix",
+    "title": "Build the Shape-Match Matrix",
+    "difficulty": "hard",
+    "skills": [
+      "meta-reasoning about shapes",
+      "pairwise comparison",
+      "matrix output"
+    ],
+    "written_solution": "Sort the disconnected components from left to right. Compare every pair of components by normalized shape, ignoring color and absolute position. Output a matrix with cyan(8) where the two compared components have the same shape and 0 otherwise.",
+    "solver_name": "solve_hard_32_shape_match_matrix",
+    "scaffold": [
+      "Order the components from left to right.",
+      "Compare shapes up to translation only; ignore their colors.",
+      "Write an 8 wherever two components have the same normalized shape."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define dirs4 (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (define (nonzero-cells grid) (filter (lambda (p) (not (= (at grid (first p) (second p)) 0))) (grid-positions grid))) (define (crop-nonzero grid) (let ((cells (nonzero-cells grid))) (if (empty? cells) (list (list 0)) (let* ((bb (bbox-of-cells cells))) (subgrid grid (first bb) (second bb) (third bb) (fourth bb)))))) (define (e8b-list< a b) (cond ((empty? a) #f) ((< (first a) (first b)) #t) ((> (first a) (first b)) #f) (else (e8b-list< (rest a) (rest b))))) (define (e11b-binary grid) (grid-from-fn (rows grid) (cols grid) (lambda (r c) (if (= (at grid r c) 0) 0 1)))) (define (e11b-normal-binary grid) (e11b-binary (crop-nonzero grid))) (define (e5b-nz-components grid) (let loop-pos ((positions (grid-positions grid)) (seen (list)) (acc (list))) (cond ((empty? positions) (reverse acc)) ((or (member? (first positions) seen) (= (at grid (first (first positions)) (second (first positions))) 0)) (loop-pos (rest positions) seen acc)) (else (let bfs ((queue (list (first positions))) (seen2 (cons (first positions) seen)) (cells (list))) (if (empty? queue) (loop-pos (rest positions) seen2 (cons (reverse cells) acc)) (let* ((cur (first queue)) (nbrs (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (not (member? p seen2)) (not (= (at grid (first p) (second p)) 0)))) (map (lambda (d) (list (+ (first cur) (first d)) (+ (second cur) (second d)))) dirs4)))) (bfs (append (rest queue) nbrs) (append seen2 nbrs) (cons cur cells))))))))) (define (e5b-crop-cells grid cells) (let ((bb (bbox-of-cells cells))) (subgrid grid (first bb) (second bb) (third bb) (fourth bb)))) (define (e5b-normal-binary-from-cells grid cells) (e11b-normal-binary (e5b-crop-cells grid cells))) (let* ((comps (sort (e5b-nz-components g) (lambda (a b) (let ((ba (bbox-of-cells a)) (bb (bbox-of-cells b))) (e8b-list< (list (second ba) (first ba)) (list (second bb) (first bb))))))) (crops (map (lambda (cells) (e5b-normal-binary-from-cells g cells)) comps)) (n (length crops))) (grid-from-fn n n (lambda (r c) (if (equal? (list-ref crops r) (list-ref crops c)) 8 0))))))"
+  },
+  {
+    "id": "hard_33_local_transform_gallery_sorted_by_width",
+    "title": "Make a Local Transform Gallery Sorted by Width",
+    "difficulty": "hard",
+    "skills": [
+      "local key-object binding",
+      "transform then sort",
+      "size-changing gallery layout"
+    ],
+    "written_solution": "Bind each key cell to the component whose bbox begins directly beneath it. Transform that local component according to the key, crop the transformed result tightly, sort all transformed crops by descending width, and then pack them left to right with one background column between them.",
+    "solver_name": "solve_hard_33_local_transform_gallery_sorted_by_width",
+    "scaffold": [
+      "Each key belongs to the component directly below it.",
+      "Transform each local component according to its own key.",
+      "After transforming, sort the crops by descending width and pack them left to right."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define dirs4 (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (define (e8b-list< a b) (cond ((empty? a) #f) ((< (first a) (first b)) #t) ((> (first a) (first b)) #f) (else (e8b-list< (rest a) (rest b))))) (define (e8b-list> a b) (e8b-list< b a)) (define (e8b-paste grid pat top left) (for*/fold ((out grid)) ((r (in-range (rows pat))) (c (in-range (cols pat)))) (let ((v (at pat r c)) (rr (+ top r)) (cc (+ left c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows out) (cols out))) (set-cell out rr cc v) out)))) (define (e5b-nz-components grid) (let loop-pos ((positions (grid-positions grid)) (seen (list)) (acc (list))) (cond ((empty? positions) (reverse acc)) ((or (member? (first positions) seen) (= (at grid (first (first positions)) (second (first positions))) 0)) (loop-pos (rest positions) seen acc)) (else (let bfs ((queue (list (first positions))) (seen2 (cons (first positions) seen)) (cells (list))) (if (empty? queue) (loop-pos (rest positions) seen2 (cons (reverse cells) acc)) (let* ((cur (first queue)) (nbrs (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (not (member? p seen2)) (not (= (at grid (first p) (second p)) 0)))) (map (lambda (d) (list (+ (first cur) (first d)) (+ (second cur) (second d)))) dirs4)))) (bfs (append (rest queue) nbrs) (append seen2 nbrs) (cons cur cells))))))))) (define (e5b-crop-cells grid cells) (let ((bb (bbox-of-cells cells))) (subgrid grid (first bb) (second bb) (third bb) (fourth bb)))) (define (e5b-transform-key grid key) (cond ((= key 1) grid) ((= key 2) (rotate-cw grid)) ((= key 3) (rotate-180 grid)) ((= key 4) (flip-lr grid)) (else grid))) (define (e5b-pack-h-top grids) (if (empty? grids) (list (list 0)) (let* ((h (apply max (map rows grids))) (w (+ (apply + (map cols grids)) (- (length grids) 1)))) (let loop ((xs grids) (left 0) (out (empty-grid h w 0))) (if (empty? xs) out (let ((p (first xs))) (loop (rest xs) (+ left (cols p) 1) (e8b-paste out p 0 left)))))))) (let* ((key-positions (filter (lambda (p) (member? (at g (first p) (second p)) (list 1 2 3 4))) (grid-positions g))) (work (for/fold ((out g)) ((p (in-list key-positions))) (set-cell out (first p) (second p) 0))) (comps (e5b-nz-components work)) (items (for/list ((kp (in-list key-positions))) (let* ((key (at g (first kp) (second kp))) (target (first (filter (lambda (cells) (let ((bb (bbox-of-cells cells))) (and (= (first kp) (- (first bb) 1)) (= (second kp) (second bb))))) comps)))) (e5b-transform-key (e5b-crop-cells g target) key))))) (e5b-pack-h-top (sort items (lambda (a b) (e8b-list> (list (cols a) (rows a)) (list (cols b) (rows b)))))))))"
+  },
+  {
+    "id": "hard_34_overlay_count_map_from_components",
+    "title": "Build the Overlay Count Map from Normalized Components",
+    "difficulty": "hard",
+    "skills": [
+      "shape normalization",
+      "cellwise aggregation",
+      "count-to-color mapping"
+    ],
+    "written_solution": "Crop every component tightly and normalize it to the top-left. Overlay those normalized masks into a common canvas and count, cell by cell, how many components cover each position. Convert coverage counts to colors with the palette 1→red(2), 2→green(3), 3→yellow(4), and 4→magenta(6).",
+    "solver_name": "solve_hard_34_overlay_count_map_from_components",
+    "scaffold": [
+      "Normalize every component to the top-left corner of its own bounding box.",
+      "Overlay the normalized masks on top of each other.",
+      "Encode how many shapes cover each cell with a fixed count-to-color palette."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define dirs4 (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (define (nonzero-cells grid) (filter (lambda (p) (not (= (at grid (first p) (second p)) 0))) (grid-positions grid))) (define (crop-nonzero grid) (let ((cells (nonzero-cells grid))) (if (empty? cells) (list (list 0)) (let* ((bb (bbox-of-cells cells))) (subgrid grid (first bb) (second bb) (third bb) (fourth bb)))))) (define (e11b-binary grid) (grid-from-fn (rows grid) (cols grid) (lambda (r c) (if (= (at grid r c) 0) 0 1)))) (define (e11b-normal-binary grid) (e11b-binary (crop-nonzero grid))) (define (e5b-nz-components grid) (let loop-pos ((positions (grid-positions grid)) (seen (list)) (acc (list))) (cond ((empty? positions) (reverse acc)) ((or (member? (first positions) seen) (= (at grid (first (first positions)) (second (first positions))) 0)) (loop-pos (rest positions) seen acc)) (else (let bfs ((queue (list (first positions))) (seen2 (cons (first positions) seen)) (cells (list))) (if (empty? queue) (loop-pos (rest positions) seen2 (cons (reverse cells) acc)) (let* ((cur (first queue)) (nbrs (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (not (member? p seen2)) (not (= (at grid (first p) (second p)) 0)))) (map (lambda (d) (list (+ (first cur) (first d)) (+ (second cur) (second d)))) dirs4)))) (bfs (append (rest queue) nbrs) (append seen2 nbrs) (cons cur cells))))))))) (define (e5b-crop-cells grid cells) (let ((bb (bbox-of-cells cells))) (subgrid grid (first bb) (second bb) (third bb) (fourth bb)))) (define (e5b-normal-binary-from-cells grid cells) (e11b-normal-binary (e5b-crop-cells grid cells))) (define (e5b-overlay-counts crops) (let* ((h (apply max (map rows crops))) (w (apply max (map cols crops))) (counts (for/fold ((out (empty-grid h w 0))) ((crop (in-list crops))) (for*/fold ((acc out)) ((r (in-range (rows crop))) (c (in-range (cols crop)))) (if (= (at crop r c) 0) acc (set-cell acc r c (+ 1 (at acc r c)))))))) (grid-from-fn h w (lambda (r c) (let ((n (at counts r c))) (cond ((= n 0) 0) ((= n 1) 2) ((= n 2) 3) ((= n 3) 4) (else 6))))))) (e5b-overlay-counts (map (lambda (cells) (e5b-normal-binary-from-cells g cells)) (e5b-nz-components g)))))"
+  },
+  {
+    "id": "hard_35_fill_holed_component_with_key_color",
+    "title": "Fill the Holed Component with the Key Color",
+    "difficulty": "hard",
+    "skills": [
+      "hole detection",
+      "component selection",
+      "size-changing fill"
+    ],
+    "written_solution": "Find the unique component that contains an enclosed hole. Crop that component tightly, identify the interior zero region that is not connected to the crop border, and fill that hole with the special key color while keeping the original outer border.",
+    "solver_name": "solve_hard_35_fill_holed_component_with_key_color",
+    "scaffold": [
+      "Only one component contains a true enclosed hole.",
+      "Use the special key color to fill the hole, not the border color.",
+      "Return a tight crop of the repaired component."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define dirs4 (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (define (e11b-binary grid) (grid-from-fn (rows grid) (cols grid) (lambda (r c) (if (= (at grid r c) 0) 0 1)))) (define (e5b-nz-components grid) (let loop-pos ((positions (grid-positions grid)) (seen (list)) (acc (list))) (cond ((empty? positions) (reverse acc)) ((or (member? (first positions) seen) (= (at grid (first (first positions)) (second (first positions))) 0)) (loop-pos (rest positions) seen acc)) (else (let bfs ((queue (list (first positions))) (seen2 (cons (first positions) seen)) (cells (list))) (if (empty? queue) (loop-pos (rest positions) seen2 (cons (reverse cells) acc)) (let* ((cur (first queue)) (nbrs (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (not (member? p seen2)) (not (= (at grid (first p) (second p)) 0)))) (map (lambda (d) (list (+ (first cur) (first d)) (+ (second cur) (second d)))) dirs4)))) (bfs (append (rest queue) nbrs) (append seen2 nbrs) (cons cur cells))))))))) (define (e5b-crop-cells grid cells) (let ((bb (bbox-of-cells cells))) (subgrid grid (first bb) (second bb) (third bb) (fourth bb)))) (define (e5b-fill-holes-key crop key) (let* ((mask (e11b-binary crop)) (holes (filter (lambda (region) (not (any? (lambda (p) (or (= (first p) 0) (= (first p) (- (rows mask) 1)) (= (second p) 0) (= (second p) (- (cols mask) 1)))) region))) (find-0-regions mask 0)))) (for/fold ((out crop)) ((hole (in-list holes))) (paint-cells out hole key)))) (let* ((key (first (filter (lambda (v) (member? v (list 8 9))) (map (lambda (p) (at g (first p) (second p))) (grid-positions g))))) (work (grid-from-fn (rows g) (cols g) (lambda (r c) (if (member? (at g r c) (list 8 9)) 0 (at g r c)))))) (let loop ((comps (e5b-nz-components work))) (let* ((crop (e5b-crop-cells g (first comps))) (filled (e5b-fill-holes-key crop key))) (if (not (equal? filled crop)) filled (loop (rest comps))))))))"
+  }
+]

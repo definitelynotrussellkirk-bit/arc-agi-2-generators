@@ -1,0 +1,11106 @@
+# ARC-style Puzzle Bank: 21 More Tasks (Sixth Batch)
+
+This sixth batch aims for more diversity in *how* a solver has to think:
+not just local recolors, but 1D layout operators, topology-aware object
+descriptors, nested containment, relation graphs, assignment, and keyed
+transform composition.
+
+## New helper primitives highlighted in this batch
+
+- `center_pack(seq, span)` — strip zeros from a 1D sequence, preserve order, and place the compact sequence centered in a fixed span.
+- `frame_depth(objects, frames)` — count how many nested rectangular outline frames enclose an object.
+- `normalize_pair(a, b)` — align two cropped shapes to the same top-left origin inside a common bounding box before combining them.
+- `contact_degree(objects)` — compute each object's degree in the graph formed by one-step orthogonal dilation overlaps.
+
+## Index
+
+- `easy_f01` — **Center-pack every row** (easy; same_size, rows, centering, compression)
+- `easy_f02` — **Keep only the corners of each filled rectangle** (easy; same_size, geometry, rectangles, selection)
+- `easy_f03` — **Each seed creates a knight halo** (easy; same_size_local, expansion, chess, knight_moves)
+- `easy_f04` — **Top-row marker deletes its color** (easy; same_size, marker_control, color_filter)
+- `easy_f05` — **Keep only diagonal-paired cells** (easy; same_size_local, diagonal_relation, selection)
+- `easy_f06` — **Drop every column to the bottom** (easy; same_size, columns, gravity, physics)
+- `easy_f07` — **Extract the palette row by first appearance** (easy; extraction, palette, row_major_order)
+- `medium_f01` — **Recolor objects by how many holes they contain** (medium; object_reasoning, topology, hole_count, recolor)
+- `medium_f02` — **Corner marker selects the nearest object to crop** (medium; extraction, marker_control, distance, objects)
+- `medium_f03` — **Build a 2x2 symmetry mosaic from the object** (medium; relayout, symmetry, tiling, output_resize)
+- `medium_f04` — **Replace every object by its orthogonal halo** (medium; same_size, objects, morphology, halo)
+- `medium_f05` — **Keep only the innermost frame** (medium; containment, frames, nesting, selection)
+- `medium_f06` — **Stack cropped objects vertically by x-position** (medium; extraction, gallery, sorting, objects)
+- `medium_f07` — **Bottom key row recolors the objects from left to right** (medium; same_size, keys, recolor, ordering)
+- `hard_f01` — **Recolor enclosed objects by frame depth** (hard; containment, depth, objects, recolor)
+- `hard_f02` — **Move each object onto its nearest marker and adopt the marker color** (hard; same_size, assignment, translation, marker_control)
+- `hard_f03` — **Top key row builds a strip of transformed template copies** (hard; output_resize, template, transforms, key_row)
+- `hard_f04` — **Subtract the second normalized shape from the first** (hard; output_resize, boolean_shape, normalization, difference)
+- `hard_f05` — **Recolor objects by contact degree after one-step dilation** (hard; objects, relations, topology, recolor)
+- `hard_f06` — **A corner key chooses how every color pair gets its L-path** (hard; same_size, paths, control_signal, pairs)
+- `hard_f07` — **Interleave the rows of the two cropped objects** (hard; output_resize, composition, normalization, objects)
+
+## easy_f01 — Center-pack every row
+
+**Difficulty:** easy
+
+**Tags:** same_size, rows, centering, compression
+
+**Uses new primitive(s):** center_pack
+
+**Written solution:**
+
+For each row independently, remove the zeros, keep the nonzero colors in their original left-to-right order, and place that compact sequence centered in the row. Fill the rest with black(0).
+
+**Program solution:**
+
+```python
+def solve_f_f01_center_pack_rows(g):
+    h,w=dims(g)
+    out=blank(h,w)
+    for r,row in enumerate(g):
+        seq=[v for v in row if v!=0]
+        packed=center_pack(seq,w)
+        out[r]=packed
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    4,
+    0,
+    0,
+    0,
+    5,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    6,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    4,
+    5,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    6,
+    7,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    1,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    4,
+    0,
+    5,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    1,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    4,
+    5,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    0,
+    0,
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    0,
+    0,
+    0,
+    0,
+    6
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    4,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    5,
+    6,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+## easy_f02 — Keep only the corners of each filled rectangle
+
+**Difficulty:** easy
+
+**Tags:** same_size, geometry, rectangles, selection
+
+**Written solution:**
+
+Each colored object is a solid axis-aligned rectangle. Keep only its four corner cells in the same color and turn all the other cells to black(0).
+
+**Program solution:**
+
+```python
+def solve_f_f02_keep_rectangle_corners(g):
+    h,w=dims(g)
+    out=blank(h,w)
+    for obj in objects4(g):
+        color=obj['color']
+        r0,c0,r1,c1=object_bbox(obj)
+        # assume filled rectangle
+        for r,c in [(r0,c0),(r0,c1),(r1,c0),(r1,c1)]:
+            out[r][c]=color
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    2,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    2,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    3,
+    3,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    3,
+    3,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    5,
+    5,
+    5,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    5,
+    5,
+    5,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    5,
+    5,
+    5,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    5,
+    0,
+    5,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    5,
+    0,
+    5,
+    0
+  ]
+]
+```
+
+**Test 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    2,
+    2,
+    2,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    2,
+    2,
+    2,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    2,
+    2,
+    2,
+    0,
+    0
+  ],
+  [
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    2,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    2,
+    0,
+    0
+  ],
+  [
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+## easy_f03 — Each seed creates a knight halo
+
+**Difficulty:** easy
+
+**Tags:** same_size_local, expansion, chess, knight_moves
+
+**Written solution:**
+
+Every nonzero seed keeps its own cell and also paints all in-bounds chess-knight destinations (two steps in one direction and one in the other) in the same color.
+
+**Program solution:**
+
+```python
+def solve_f_f03_knight_halo(g):
+    h,w=dims(g)
+    out=blank(h,w)
+    for r,row in enumerate(g):
+        for c,v in enumerate(row):
+            if v!=0:
+                out[r][c]=v
+                for dr,dc in KNIGHT:
+                    nr,nc=r+dr,c+dc
+                    if 0<=nr<h and 0<=nc<w:
+                        out[nr][nc]=v
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    0,
+    2,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    0,
+    0,
+    4,
+    0,
+    4,
+    0
+  ],
+  [
+    2,
+    0,
+    0,
+    0,
+    4,
+    0,
+    0,
+    0,
+    4
+  ],
+  [
+    0,
+    2,
+    0,
+    2,
+    0,
+    0,
+    4,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    4,
+    0,
+    0,
+    0,
+    4
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    0,
+    4,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    5,
+    0,
+    0,
+    0,
+    5,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    0,
+    0,
+    0,
+    5,
+    7,
+    0,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    5,
+    0,
+    5,
+    7,
+    0,
+    0,
+    0,
+    7
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0,
+    0,
+    7
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    3,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    0,
+    0,
+    3,
+    0,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    3,
+    0,
+    3,
+    0,
+    6,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0
+  ]
+]
+```
+
+## easy_f04 — Top-row marker deletes its color
+
+**Difficulty:** easy
+
+**Tags:** same_size, marker_control, color_filter
+
+**Written solution:**
+
+There is exactly one nonzero marker in the top row. Its color stays where it is, but every other cell of that same color elsewhere in the grid is erased to black(0).
+
+**Program solution:**
+
+```python
+def solve_f_f04_top_marker_deletes_color(g):
+    h,w=dims(g)
+    marker_positions=[(0,c) for c,v in enumerate(g[0]) if v!=0]
+    assert len(marker_positions)==1
+    mr,mc=marker_positions[0]
+    color=g[mr][mc]
+    out=copy_grid(g)
+    for r in range(h):
+        for c in range(w):
+            if out[r][c]==color and (r,c)!=(mr,mc):
+                out[r][c]=0
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    4,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    4,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    4,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    4,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    4,
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    5,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    4,
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    5,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    8,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0
+  ]
+]
+```
+
+**Test 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    8,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0
+  ]
+]
+```
+
+## easy_f05 — Keep only diagonal-paired cells
+
+**Difficulty:** easy
+
+**Tags:** same_size_local, diagonal_relation, selection
+
+**Written solution:**
+
+Keep a colored cell only if it has a same-colored diagonal neighbor (NW, NE, SW, or SE). Any nonzero cell without a same-colored diagonal partner disappears.
+
+**Program solution:**
+
+```python
+def solve_f_f05_keep_diagonal_pairs(g):
+    h,w=dims(g)
+    out=blank(h,w)
+    for r in range(h):
+        for c in range(w):
+            v=g[r][c]
+            if v==0: continue
+            keep=False
+            for dr,dc in [(-1,-1),(-1,1),(1,-1),(1,1)]:
+                nr,nc=r+dr,c+dc
+                if 0<=nr<h and 0<=nc<w and g[nr][nc]==v:
+                    keep=True
+                    break
+            if keep:
+                out[r][c]=v
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    0,
+    3,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    7,
+    0,
+    0,
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    4,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    0,
+    3,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    4,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    5,
+    0,
+    0,
+    0,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    5,
+    0,
+    0,
+    0,
+    6
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    7,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    5,
+    0,
+    0,
+    0,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    5,
+    0,
+    0,
+    0,
+    6
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    7,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    4,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    3,
+    0,
+    4,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    9,
+    0,
+    0,
+    0,
+    0,
+    5,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    5,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    4,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    3,
+    0,
+    4,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    5,
+    0,
+    0
+  ]
+]
+```
+
+## easy_f06 — Drop every column to the bottom
+
+**Difficulty:** easy
+
+**Tags:** same_size, columns, gravity, physics
+
+**Written solution:**
+
+Within each column independently, let all nonzero cells fall straight down to the bottom, preserving their top-to-bottom order. Fill the emptied cells above with black(0).
+
+**Program solution:**
+
+```python
+def solve_f_f06_bottom_pack_columns(g):
+    h,w=dims(g)
+    out=blank(h,w)
+    for c in range(w):
+        col=[g[r][c] for r in range(h)]
+        vals=[v for v in col if v!=0]
+        for i,v in enumerate(vals):
+            out[h-len(vals)+i][c]=v
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    0,
+    4
+  ],
+  [
+    5,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    6,
+    0,
+    7,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    8
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    3,
+    0,
+    4
+  ],
+  [
+    5,
+    6,
+    0,
+    7,
+    0,
+    8
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    1,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    4
+  ],
+  [
+    0,
+    0,
+    0,
+    5,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    6,
+    0,
+    3,
+    5,
+    2,
+    0,
+    4
+  ]
+]
+```
+
+**Test 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    0,
+    4,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    5,
+    0
+  ],
+  [
+    0,
+    6,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    7,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    6,
+    4,
+    7,
+    5,
+    0
+  ]
+]
+```
+
+## easy_f07 — Extract the palette row by first appearance
+
+**Difficulty:** easy
+
+**Tags:** extraction, palette, row_major_order
+
+**Written solution:**
+
+Scan the input from top-left to bottom-right. Whenever a nonzero color appears for the first time, append it to the output. The result is a single output row containing the first-appearance palette order.
+
+**Program solution:**
+
+```python
+def solve_f_f07_palette_row(g):
+    pal=first_appearance_palette(g)
+    return [pal] if pal else [[0]]
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    3,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    2,
+    3,
+    4,
+    5
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    6,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    7,
+    7,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    6,
+    7,
+    3
+  ]
+]
+```
+
+**Test 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    4,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    2,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    3
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Output**
+
+```json
+[
+  [
+    4,
+    2,
+    3
+  ]
+]
+```
+
+## medium_f01 — Recolor objects by how many holes they contain
+
+**Difficulty:** medium
+
+**Tags:** object_reasoning, topology, hole_count, recolor
+
+**Written solution:**
+
+Treat each connected nonzero object separately. Recolor every hole-free object red(2), every object with exactly one enclosed hole cyan(8), every object with two holes orange(6), and so on. Shapes stay in the same place.
+
+**Program solution:**
+
+```python
+def solve_f_m01_recolor_by_holes(g):
+    h,w=dims(g)
+    out=blank(h,w)
+    mapping={0:2,1:8,2:6,3:9}
+    for obj in objects4(g):
+        holes=hole_count_for_object(g,obj)
+        newc=mapping.get(holes,9)
+        for r,c in obj['cells']:
+            out[r][c]=newc
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    2,
+    0,
+    0,
+    4,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    2,
+    0,
+    0,
+    4,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    6,
+    6,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    6,
+    6,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    8,
+    8,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    8,
+    0,
+    8,
+    0,
+    0,
+    2,
+    0,
+    0
+  ],
+  [
+    0,
+    8,
+    8,
+    8,
+    0,
+    0,
+    2,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    3,
+    3,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    3,
+    3,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0
+  ],
+  [
+    0,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0
+  ],
+  [
+    0,
+    5,
+    5,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    8,
+    8,
+    8,
+    8,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    8,
+    0,
+    0,
+    8,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    8,
+    8,
+    8,
+    8,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    4,
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    4,
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    4,
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    8,
+    8,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    8,
+    0,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    8,
+    8,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+## medium_f02 — Corner marker selects the nearest object to crop
+
+**Difficulty:** medium
+
+**Tags:** extraction, marker_control, distance, objects
+
+**Written solution:**
+
+Exactly one corner cell is a marker. Ignore the marker itself, find the nonzero object with the smallest Manhattan distance to that marked corner, and output that object cropped to its tight bounding box.
+
+**Program solution:**
+
+```python
+def solve_f_m02_corner_marker_selects_nearest_object(g):
+    h,w=dims(g)
+    corners=[(0,0),(0,w-1),(h-1,0),(h-1,w-1)]
+    marker=None
+    for r,c in corners:
+        if g[r][c]!=0:
+            marker=(r,c); break
+    assert marker is not None
+    marker_set={marker}
+    objs=[obj for obj in objects4(g) if marker not in obj['cells']]
+    # min distance from marker to any cell
+    best=min(objs, key=lambda obj:min(manhattan(marker,cell) for cell in obj['cells']))
+    return crop_object_grid(g,best)
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    2,
+    2
+  ],
+  [
+    2,
+    2
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    3,
+    3
+  ],
+  [
+    3,
+    0
+  ]
+]
+```
+
+**Test 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    6,
+    6,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4
+  ],
+  [
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Output**
+
+```json
+[
+  [
+    6,
+    6
+  ],
+  [
+    0,
+    6
+  ]
+]
+```
+
+## medium_f03 — Build a 2x2 symmetry mosaic from the object
+
+**Difficulty:** medium
+
+**Tags:** relayout, symmetry, tiling, output_resize
+
+**Written solution:**
+
+Crop the unique nonzero object. Make a 2x2 mosaic: top-left is the original crop, top-right is its horizontal mirror, bottom-left is its vertical mirror, and bottom-right is its 180-degree rotation.
+
+**Program solution:**
+
+```python
+def solve_f_m03_symmetry_mosaic(g):
+    objs=objects4(g)
+    assert len(objs)==1
+    objg=crop_object_grid(g,objs[0])
+    tl=objg
+    tr=flip_h(objg)
+    bl=flip_v(objg)
+    br=rotate_180(objg)
+    h,w=dims(objg)
+    out=blank(h*2,w*2)
+    place_grid_at(out, tl, 0, 0)
+    place_grid_at(out, tr, 0, w)
+    place_grid_at(out, bl, h, 0)
+    place_grid_at(out, br, h, w)
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    2,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    2,
+    2,
+    2,
+    2
+  ],
+  [
+    2,
+    0,
+    0,
+    2
+  ],
+  [
+    2,
+    0,
+    0,
+    2
+  ],
+  [
+    2,
+    0,
+    0,
+    2
+  ],
+  [
+    2,
+    0,
+    0,
+    2
+  ],
+  [
+    2,
+    2,
+    2,
+    2
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    3,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    3,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    3,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    3,
+    3,
+    3,
+    3
+  ],
+  [
+    0,
+    3,
+    3,
+    0
+  ],
+  [
+    0,
+    3,
+    3,
+    0
+  ],
+  [
+    0,
+    3,
+    3,
+    0
+  ],
+  [
+    0,
+    3,
+    3,
+    0
+  ],
+  [
+    3,
+    3,
+    3,
+    3
+  ]
+]
+```
+
+**Test 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    4,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Output**
+
+```json
+[
+  [
+    0,
+    4,
+    4,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    4,
+    4,
+    0,
+    0
+  ],
+  [
+    4,
+    4,
+    4,
+    4,
+    4,
+    4
+  ],
+  [
+    4,
+    4,
+    4,
+    4,
+    4,
+    4
+  ],
+  [
+    0,
+    0,
+    4,
+    4,
+    0,
+    0
+  ],
+  [
+    0,
+    4,
+    4,
+    4,
+    4,
+    0
+  ]
+]
+```
+
+## medium_f04 — Replace every object by its orthogonal halo
+
+**Difficulty:** medium
+
+**Tags:** same_size, objects, morphology, halo
+
+**Written solution:**
+
+For each connected object, erase the object itself and paint only the orthogonally adjacent one-cell halo around it, using that object’s color. Do not paint over cells that were already part of an object.
+
+**Program solution:**
+
+```python
+def solve_f_m04_object_halos(g):
+    h,w=dims(g)
+    out=blank(h,w)
+    for obj in objects4(g):
+        cells=set(obj['cells']); color=obj['color']
+        halo=set()
+        for r,c in cells:
+            for dr,dc in DIR4:
+                nr,nc=r+dr,c+dc
+                if 0<=nr<h and 0<=nc<w and (nr,nc) not in cells:
+                    halo.add((nr,nc))
+        for r,c in halo:
+            # only fill if background in original to avoid overwriting other objects
+            if g[r][c]==0:
+                out[r][c]=color
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    0,
+    0,
+    2,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    2,
+    0,
+    2,
+    0,
+    0,
+    4,
+    0,
+    0,
+    4
+  ],
+  [
+    2,
+    0,
+    0,
+    2,
+    0,
+    0,
+    4,
+    0,
+    4
+  ],
+  [
+    0,
+    2,
+    2,
+    0,
+    0,
+    4,
+    0,
+    0,
+    4
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    5,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    5,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    3,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    3,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    5,
+    5,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    0,
+    0,
+    5
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    0,
+    5,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    0,
+    0,
+    5
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    5,
+    0
+  ]
+]
+```
+
+**Test 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Output**
+
+```json
+[
+  [
+    0,
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    0,
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    0,
+    6
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    6
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    0,
+    6
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    0
+  ]
+]
+```
+
+## medium_f05 — Keep only the innermost frame
+
+**Difficulty:** medium
+
+**Tags:** containment, frames, nesting, selection
+
+**Written solution:**
+
+Every nonzero object is a rectangular outline frame. Keep only the frame that sits deepest inside the others (the one enclosed by the most other frames) and erase all the rest.
+
+**Program solution:**
+
+```python
+def solve_f_m05_keep_innermost_frame(g):
+    h,w=dims(g)
+    frames=[obj for obj in objects4(g) if is_frame_object(obj)]
+    depths=[]
+    for obj in frames:
+        b=object_bbox(obj)
+        depth=sum(contains_bbox(object_bbox(other), b) for other in frames if other is not obj)
+        depths.append((depth, obj))
+    _,best=max(depths, key=lambda t:t[0])
+    out=blank(h,w)
+    for r,c in best['cells']:
+        out[r][c]=best['color']
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    3,
+    3,
+    3,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    3,
+    0,
+    3,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    3,
+    3,
+    3,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    3,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    0,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    3,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4
+  ],
+  [
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4
+  ],
+  [
+    4,
+    0,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    0,
+    4
+  ],
+  [
+    4,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    4
+  ],
+  [
+    4,
+    0,
+    2,
+    0,
+    5,
+    5,
+    0,
+    2,
+    0,
+    4
+  ],
+  [
+    4,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    4
+  ],
+  [
+    4,
+    0,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    0,
+    4
+  ],
+  [
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4
+  ],
+  [
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    2,
+    2,
+    2,
+    2,
+    2,
+    0,
+    3,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    2,
+    0,
+    0,
+    0,
+    2,
+    0,
+    3,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    2,
+    0,
+    4,
+    0,
+    2,
+    0,
+    3,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    2,
+    0,
+    0,
+    0,
+    2,
+    0,
+    3,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    2,
+    2,
+    2,
+    2,
+    2,
+    0,
+    3,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    0
+  ],
+  [
+    0,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    2,
+    2,
+    2,
+    2,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    2,
+    2,
+    2,
+    2,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+## medium_f06 — Stack cropped objects vertically by x-position
+
+**Difficulty:** medium
+
+**Tags:** extraction, gallery, sorting, objects
+
+**Written solution:**
+
+Crop each connected object to its own bounding box. Sort the crops by their leftmost x-position in the input, then stack them from top to bottom with one blank separator row between consecutive crops.
+
+**Program solution:**
+
+```python
+def solve_f_m06_stack_objects_by_x(g):
+    objs=objects4(g)
+    objs=sorted(objs, key=lambda obj:(object_bbox(obj)[1], object_bbox(obj)[0]))
+    crops=[crop_object_grid(g,obj) for obj in objs]
+    maxw=max(dims(c)[1] for c in crops)
+    totalh=sum(dims(c)[0] for c in crops)+max(0,len(crops)-1)
+    out=blank(totalh,maxw)
+    r0=0
+    for i,crop in enumerate(crops):
+        place_grid_at(out,crop,r0,0)
+        r0 += dims(crop)[0]
+        if i != len(crops)-1:
+            r0 += 1
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    6,
+    6,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    2,
+    2
+  ],
+  [
+    2,
+    0
+  ],
+  [
+    0,
+    0
+  ],
+  [
+    6,
+    6
+  ],
+  [
+    6,
+    0
+  ],
+  [
+    0,
+    0
+  ],
+  [
+    0,
+    4
+  ],
+  [
+    4,
+    4
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    5,
+    5,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    3,
+    3
+  ],
+  [
+    0,
+    3
+  ],
+  [
+    0,
+    0
+  ],
+  [
+    5,
+    5
+  ],
+  [
+    5,
+    0
+  ],
+  [
+    0,
+    0
+  ],
+  [
+    7,
+    7
+  ],
+  [
+    0,
+    7
+  ]
+]
+```
+
+**Test 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    2,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    6,
+    6,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Output**
+
+```json
+[
+  [
+    4,
+    4
+  ],
+  [
+    0,
+    4
+  ],
+  [
+    0,
+    0
+  ],
+  [
+    6,
+    6
+  ],
+  [
+    0,
+    6
+  ],
+  [
+    0,
+    0
+  ],
+  [
+    2,
+    2
+  ],
+  [
+    0,
+    2
+  ]
+]
+```
+
+## medium_f07 — Bottom key row recolors the objects from left to right
+
+**Difficulty:** medium
+
+**Tags:** same_size, keys, recolor, ordering
+
+**Written solution:**
+
+Ignore the bottom key row except for its nonzero colors. Sort the other objects from left to right; recolor the leftmost object with the first key color, the next object with the second key color, and so on. The bottom key row itself disappears.
+
+**Program solution:**
+
+```python
+def solve_f_m07_bottom_key_recolors_objects(g):
+    h,w=dims(g)
+    key=[v for v in g[h-1] if v!=0]
+    out=blank(h,w)
+    objs=[obj for obj in objects4(g) if all(r != h-1 for r,c in obj['cells'])]
+    objs=sorted(objs, key=lambda obj:(object_bbox(obj)[1], object_bbox(obj)[0]))
+    for i,obj in enumerate(objs):
+        newc=key[i]
+        for r,c in obj['cells']:
+            out[r][c]=newc
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    3,
+    0,
+    8,
+    0,
+    7,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    8,
+    8,
+    0,
+    0,
+    0,
+    7,
+    7,
+    0
+  ],
+  [
+    0,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    5,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0
+  ],
+  [
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    6,
+    0,
+    4,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    0
+  ],
+  [
+    6,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    6,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    7,
+    0,
+    6,
+    0,
+    5,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    7,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    5,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    6,
+    6,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+## hard_f01 — Recolor enclosed objects by frame depth
+
+**Difficulty:** hard
+
+**Tags:** containment, depth, objects, recolor
+
+**Uses new primitive(s):** frame_depth
+
+**Written solution:**
+
+Rectangular outline frames act as containers. Ignore the frames in the output. For every non-frame object, count how many frames enclose it: depth 1 becomes red(2), depth 2 becomes green(3), depth 3 becomes cyan(8), and so on.
+
+**Program solution:**
+
+```python
+def solve_f_h01_recolor_by_frame_depth(g):
+    h,w=dims(g)
+    frames=[obj for obj in objects4(g) if is_frame_object(obj)]
+    others=[obj for obj in objects4(g) if not is_frame_object(obj)]
+    out=blank(h,w)
+    mapping={1:2,2:3,3:8,4:6}
+    frame_bboxes=[object_bbox(f) for f in frames]
+    for obj in others:
+        b=object_bbox(obj)
+        center=((b[0]+b[2])/2.0,(b[1]+b[3])/2.0)
+        depth=0
+        for fb in frame_bboxes:
+            r0,c0,r1,c1=fb
+            # use bbox center containment
+            if r0 < center[0] < r1 and c0 < center[1] < c1:
+                depth += 1
+        newc=mapping.get(depth,1)
+        for r,c in obj['cells']:
+            out[r][c]=newc
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    4,
+    4,
+    4,
+    4,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    4,
+    0,
+    8,
+    4,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    4,
+    4,
+    4,
+    4,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    6,
+    6,
+    0,
+    0,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3
+  ],
+  [
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3
+  ],
+  [
+    3,
+    0,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    0,
+    3
+  ],
+  [
+    3,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    3
+  ],
+  [
+    3,
+    0,
+    2,
+    0,
+    4,
+    4,
+    4,
+    4,
+    0,
+    2,
+    0,
+    3
+  ],
+  [
+    3,
+    0,
+    2,
+    0,
+    4,
+    0,
+    6,
+    4,
+    0,
+    2,
+    0,
+    3
+  ],
+  [
+    3,
+    0,
+    2,
+    0,
+    4,
+    4,
+    4,
+    4,
+    0,
+    2,
+    0,
+    3
+  ],
+  [
+    3,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    3
+  ],
+  [
+    3,
+    0,
+    2,
+    0,
+    0,
+    0,
+    7,
+    7,
+    0,
+    2,
+    0,
+    3
+  ],
+  [
+    3,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0,
+    2,
+    0,
+    3
+  ],
+  [
+    3,
+    0,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    0,
+    3
+  ],
+  [
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    4,
+    0,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    4,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    4,
+    0,
+    2,
+    0,
+    5,
+    0,
+    0,
+    2,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    4,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    4,
+    0,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    4,
+    0,
+    0,
+    0,
+    6,
+    6,
+    0,
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    4,
+    0,
+    0,
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    0
+  ]
+]
+```
+
+**Test 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+## hard_f02 — Move each object onto its nearest marker and adopt the marker color
+
+**Difficulty:** hard
+
+**Tags:** same_size, assignment, translation, marker_control
+
+**Written solution:**
+
+Single-cell markers are targets. For each larger object, find the nearest marker, translate the object so its bounding-box center lands on that marker, and recolor the whole moved object to the marker’s color. Markers disappear.
+
+**Program solution:**
+
+```python
+def solve_f_h02_move_objects_to_nearest_markers(g):
+    h,w=dims(g)
+    # markers are singleton cells on empty background and colors 1..9; objects are larger components
+    objs=[]
+    markers=[]
+    for obj in objects4(g):
+        if len(obj['cells'])==1:
+            markers.append(obj)
+        else:
+            objs.append(obj)
+    assigned={}
+    remaining_markers=markers[:]
+    # greedy by object size descending to reduce weirdness
+    for obj in sorted(objs, key=lambda o:-len(o['cells'])):
+        b=object_bbox(obj)
+        cr,cc=center_of_bbox(b)
+        marker=min(remaining_markers, key=lambda m: manhattan((cr,cc), m['cells'][0]))
+        remaining_markers.remove(marker)
+        assigned[id(obj)]=marker
+    out=blank(h,w)
+    for obj in objs:
+        marker=assigned[id(obj)]
+        mr,mc=marker['cells'][0]
+        norm,(hh,ww)=normalize_object_cells(obj['cells'])
+        top=mr - hh//2
+        left=mc - ww//2
+        for r,c in norm:
+            rr,cc=top+r,left+c
+            if 0<=rr<h and 0<=cc<w:
+                out[rr][cc]=marker['color']
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    6,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    3,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+## hard_f03 — Top key row builds a strip of transformed template copies
+
+**Difficulty:** hard
+
+**Tags:** output_resize, template, transforms, key_row
+
+**Written solution:**
+
+The top row is a key strip. Read its nonzero colors left to right: 1 means original, 2 means rotate 90° clockwise, 3 means rotate 180°, and 4 means horizontal flip. Crop the template object below and output the corresponding transformed copies in a left-to-right strip separated by one blank column.
+
+**Program solution:**
+
+```python
+def solve_f_h03_keyrow_transform_strip(g):
+    h,w=dims(g)
+    keys=[v for v in g[0] if v!=0]
+    # unique template object below first row
+    sub=g[1:]
+    # shift object coords not needed if cropping
+    objs=objects4(sub)
+    assert len(objs)==1
+    template=crop_object_grid(sub,objs[0])
+    variants=[TRANSFORM_MAP[k](template) for k in keys]
+    heights=[dims(v)[0] for v in variants]
+    widths=[dims(v)[1] for v in variants]
+    out=blank(max(heights), sum(widths)+max(0,len(variants)-1))
+    c0=0
+    for i,var in enumerate(variants):
+        place_grid_at(out,var,0,c0)
+        c0 += dims(var)[1]
+        if i != len(variants)-1:
+            c0 += 1
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    1,
+    0,
+    2,
+    0,
+    3,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    2,
+    2,
+    0,
+    2,
+    2,
+    2,
+    0,
+    0,
+    2,
+    0,
+    2,
+    2
+  ],
+  [
+    2,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    2,
+    0,
+    0,
+    2
+  ],
+  [
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    2
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    4,
+    0,
+    3,
+    0,
+    2,
+    0,
+    1,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    3,
+    3,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    3,
+    3,
+    0,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    3,
+    0,
+    3,
+    3,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    3,
+    3,
+    3,
+    0,
+    0,
+    3,
+    0
+  ],
+  [
+    3,
+    3,
+    0,
+    0,
+    0,
+    3,
+    3,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    3,
+    3
+  ]
+]
+```
+
+**Test 1 — Input**
+
+```json
+[
+  [
+    1,
+    2,
+    0,
+    4,
+    0,
+    1,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    4,
+    4,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    4,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    4,
+    4,
+    4,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Output**
+
+```json
+[
+  [
+    0,
+    4,
+    4,
+    0,
+    4,
+    0,
+    0,
+    0,
+    4,
+    4,
+    0,
+    0,
+    0,
+    4,
+    4
+  ],
+  [
+    0,
+    0,
+    4,
+    0,
+    4,
+    0,
+    4,
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4
+  ],
+  [
+    4,
+    4,
+    4,
+    0,
+    4,
+    4,
+    4,
+    0,
+    4,
+    4,
+    4,
+    0,
+    4,
+    4,
+    4
+  ]
+]
+```
+
+## hard_f04 — Subtract the second normalized shape from the first
+
+**Difficulty:** hard
+
+**Tags:** output_resize, boolean_shape, normalization, difference
+
+**Uses new primitive(s):** normalize_pair
+
+**Written solution:**
+
+Take the left object and the right object, crop them separately, and align both to the top-left of a common bounding box big enough for either one. Output only the cells occupied by the first object but not by the second, using the first object’s color.
+
+**Program solution:**
+
+```python
+def solve_f_h04_normalized_difference(g):
+    objs=sorted(objects4(g), key=lambda o: object_bbox(o)[1])
+    assert len(objs)==2
+    a,b=objs
+    acells, (ah,aw)=normalize_object_cells(a['cells'])
+    bcells, (bh,bw)=normalize_object_cells(b['cells'])
+    h=max(ah,bh); w=max(aw,bw)
+    out=blank(h,w)
+    for r,c in acells:
+        if (r,c) not in bcells:
+            out[r][c]=a['color']
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    2
+  ],
+  [
+    2,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    3
+  ],
+  [
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    3
+  ]
+]
+```
+
+**Test 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    4,
+    4,
+    4,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    4,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    4,
+    4,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    2,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    2,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    4
+  ],
+  [
+    0,
+    0,
+    4
+  ],
+  [
+    0,
+    0,
+    4
+  ]
+]
+```
+
+## hard_f05 — Recolor objects by contact degree after one-step dilation
+
+**Difficulty:** hard
+
+**Tags:** objects, relations, topology, recolor
+
+**Uses new primitive(s):** contact_degree
+
+**Written solution:**
+
+Expand every object by one orthogonal step to get its contact halo. Two objects are neighbors if those expanded halos overlap. Recolor each original object by how many neighbors it has: degree 0 → red(2), degree 1 → green(3), degree 2 → cyan(8), higher degrees follow the same lookup.
+
+**Program solution:**
+
+```python
+def solve_f_h05_recolor_by_contact_degree(g):
+    h,w=dims(g)
+    objs=objects4(g)
+    dilations=[]
+    for obj in objs:
+        dilations.append(dilate_cells(set(obj['cells']), h, w))
+    out=blank(h,w)
+    mapping={0:2,1:3,2:8,3:6,4:9}
+    for i,obj in enumerate(objs):
+        degree=0
+        for j,other in enumerate(objs):
+            if i==j: continue
+            if dilations[i] & dilations[j]:
+                degree += 1
+        newc=mapping.get(degree,9)
+        for r,c in obj['cells']:
+            out[r][c]=newc
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    4,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    8,
+    0,
+    8,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    8,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    4,
+    0,
+    6,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    8,
+    0,
+    3,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    4,
+    0,
+    6,
+    0,
+    8,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Output**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    3,
+    0,
+    8,
+    0,
+    8,
+    0,
+    3,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+## hard_f06 — A corner key chooses how every color pair gets its L-path
+
+**Difficulty:** hard
+
+**Tags:** same_size, paths, control_signal, pairs
+
+**Written solution:**
+
+The top-left key chooses the path order for every same-colored pair of single-cell markers. If the key is 1, connect each pair by going horizontally first and then vertically. If the key is 2, go vertically first and then horizontally. Keep the markers themselves.
+
+**Program solution:**
+
+```python
+def solve_f_h06_multi_pair_paths(g):
+    h,w=dims(g)
+    order = g[0][0]  # 1 horizontal-then-vertical, 2 vertical-then-horizontal
+    positions=collections.defaultdict(list)
+    for r in range(h):
+        for c in range(w):
+            v=g[r][c]
+            if v!=0 and not (r==0 and c==0):
+                positions[v].append((r,c))
+    out=copy_grid(g)
+    for color,cells in positions.items():
+        if len(cells)!=2:
+            continue
+        (r1,c1),(r2,c2)=cells
+        if order==1:
+            # horizontal then vertical
+            step=1 if c2>=c1 else -1
+            for c in range(c1,c2+step,step):
+                out[r1][c]=color
+            step=1 if r2>=r1 else -1
+            for r in range(r1,r2+step,step):
+                out[r][c2]=color
+        else:
+            step=1 if r2>=r1 else -1
+            for r in range(r1,r2+step,step):
+                out[r][c1]=color
+            step=1 if c2>=c1 else -1
+            for c in range(c1,c2+step,step):
+                out[r2][c]=color
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    7,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7
+  ],
+  [
+    0,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    7
+  ],
+  [
+    7,
+    7,
+    7,
+    7,
+    7,
+    7,
+    7,
+    7,
+    7
+  ],
+  [
+    0,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Input**
+
+```json
+[
+  [
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Output**
+
+```json
+[
+  [
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3
+  ],
+  [
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    4,
+    4,
+    4
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+## hard_f07 — Interleave the rows of the two cropped objects
+
+**Difficulty:** hard
+
+**Tags:** output_resize, composition, normalization, objects
+
+**Uses new primitive(s):** normalize_pair
+
+**Written solution:**
+
+Crop the left object and the right object separately. Pad both crops to the same width and height. Then build a new output whose rows alternate: first row from the left crop, first row from the right crop, second row from the left crop, second row from the right crop, and so on.
+
+**Program solution:**
+
+```python
+def solve_f_h07_interleave_rows_of_two_objects(g):
+    objs=sorted(objects4(g), key=lambda o: object_bbox(o)[1])
+    assert len(objs)==2
+    ga=crop_object_grid(g,objs[0])
+    gb=crop_object_grid(g,objs[1])
+    ha,wa=dims(ga); hb,wb=dims(gb)
+    h=max(ha,hb); w=max(wa,wb)
+    pa=blank(h,w); pb=blank(h,w)
+    place_grid_at(pa,ga,0,0); place_grid_at(pb,gb,0,0)
+    out=blank(h*2,w)
+    for r in range(h):
+        out[2*r]=pa[r][:]
+        out[2*r+1]=pb[r][:]
+    return out
+```
+
+**Train 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 1 — Output**
+
+```json
+[
+  [
+    2,
+    2,
+    2
+  ],
+  [
+    4,
+    4,
+    0
+  ],
+  [
+    2,
+    0,
+    0
+  ],
+  [
+    0,
+    4,
+    0
+  ],
+  [
+    0,
+    0,
+    0
+  ],
+  [
+    4,
+    4,
+    0
+  ]
+]
+```
+
+**Train 2 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Train 2 — Output**
+
+```json
+[
+  [
+    3,
+    3
+  ],
+  [
+    6,
+    6
+  ],
+  [
+    0,
+    3
+  ],
+  [
+    0,
+    6
+  ]
+]
+```
+
+**Test 1 — Input**
+
+```json
+[
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    4,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    2,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    2,
+    0
+  ],
+  [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+]
+```
+
+**Test 1 — Output**
+
+```json
+[
+  [
+    4,
+    4
+  ],
+  [
+    2,
+    2
+  ],
+  [
+    0,
+    4
+  ],
+  [
+    0,
+    2
+  ],
+  [
+    0,
+    0
+  ],
+  [
+    2,
+    2
+  ]
+]
+```

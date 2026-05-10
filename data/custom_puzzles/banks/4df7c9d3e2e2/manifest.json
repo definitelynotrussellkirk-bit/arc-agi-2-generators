@@ -1,0 +1,51 @@
+{
+  "bank": "4df7c9d3e2e2",
+  "title": "arc_additional_puzzles_21_set10_bundle",
+  "description": "(no description — add to BANK_DESCRIPTIONS in scripts/regen_bank_manifests.py)",
+  "schema_shape": "unknown",
+  "source": "unknown",
+  "solution_language": "unknown",
+  "files": {
+    "puzzles_json": "puzzles.json",
+    "solutions_py": "solutions.py",
+    "reference_md": "REFERENCE.md"
+  },
+  "stats": {
+    "n_puzzles": 21,
+    "n_train_pairs": 84,
+    "n_test_pairs": 42,
+    "difficulties": {
+      "easy": 7,
+      "medium": 7,
+      "hard": 7
+    },
+    "top_tags": [
+      "anchored copying",
+      "selection",
+      "ranking",
+      "same-size transform",
+      "cropping",
+      "dynamic output",
+      "pairwise relations",
+      "offset transfer",
+      "sparse motif",
+      "endpoint pairing"
+    ],
+    "common_fields": [
+      "difficulty",
+      "id",
+      "program_name",
+      "program_solution",
+      "program_source",
+      "skills",
+      "staged_hint",
+      "test",
+      "title",
+      "train",
+      "uses_new_primitive",
+      "written_solution"
+    ]
+  },
+  "generated_at": "2026-05-10 11:31:43 -0400",
+  "legacy_bank": "cc07013acae1"
+}

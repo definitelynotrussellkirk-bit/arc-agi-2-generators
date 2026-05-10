@@ -1,0 +1,407 @@
+[
+  {
+    "id": "easy_22_recolor_exact_pluses",
+    "title": "Recolor the Exact Pluses",
+    "difficulty": "easy",
+    "skills": [
+      "motif detection",
+      "same-size recolor",
+      "cardinal neighborhood"
+    ],
+    "written_solution": "Find every exact plus made of green(3) cells: a center with green(3) cells directly above, below, left, and right. Recolor the center and its four arms to orange(7). Leave other green(3) cells unchanged.",
+    "solver_name": "solve_easy_22_recolor_exact_pluses",
+    "scaffold": [
+      "Look for cells that have four cardinal neighbors of the same source color.",
+      "Once you find a plus center, recolor the center and its four arms.",
+      "Ignore isolated green cells and short lines that do not make a full plus."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range 1 (- (rows g) 1))) (c (in-range 1 (- (cols g) 1)))) (if (and (= (at g r c) 3) (= (at g (- r 1) c) 3) (= (at g (+ r 1) c) 3) (= (at g r (- c 1)) 3) (= (at g r (+ c 1)) 3)) (paint-cells out (list (list r c) (list (- r 1) c) (list (+ r 1) c) (list r (- c 1)) (list r (+ c 1))) 7) out))))"
+  },
+  {
+    "id": "easy_23_fill_hollow_ring_centers",
+    "title": "Fill the Centers of Hollow 3x3 Rings",
+    "difficulty": "easy",
+    "skills": [
+      "pattern windows",
+      "3x3 ring detection",
+      "center fill"
+    ],
+    "written_solution": "Whenever you see an exact 3x3 hollow ring of blue(1) cells, paint its center red(2). Leave all other cells unchanged.",
+    "solver_name": "solve_easy_23_fill_hollow_ring_centers",
+    "scaffold": [
+      "Scan every 3x3 window.",
+      "The eight perimeter cells must all be blue(1).",
+      "Only the center cell changes, and only when the center is the hole of a full ring."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (- (rows g) 2))) (c (in-range (- (cols g) 2)))) (if (all? (lambda (p) (let ((dr (first p)) (dc (second p))) (if (and (= dr 1) (= dc 1)) (= (at g (+ r dr) (+ c dc)) 0) (= (at g (+ r dr) (+ c dc)) 1)))) (positions-in-rect 0 0 2 2)) (set-cell out (+ r 1) (+ c 1) 2) out))))"
+  },
+  {
+    "id": "easy_24_bridge_single_horizontal_gaps",
+    "title": "Bridge Single Horizontal Gaps",
+    "difficulty": "easy",
+    "skills": [
+      "row pattern detection",
+      "single-gap completion",
+      "same-size edit"
+    ],
+    "written_solution": "Whenever two magenta(6) cells sit in the same row with exactly one background cell between them, fill that single gap with cyan(8). Do not extend longer runs.",
+    "solver_name": "solve_easy_24_bridge_single_horizontal_gaps",
+    "scaffold": [
+      "Look for the local pattern 6,0,6 in a row.",
+      "Only fill the middle cell.",
+      "Do not trigger on patterns that are really part of longer magenta runs."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range 1 (- (cols g) 1)))) (if (and (= (at g r c) 0) (= (at g r (- c 1)) 6) (= (at g r (+ c 1)) 6) (or (< (- c 2) 0) (not (= (at g r (- c 2)) 6))) (or (>= (+ c 2) (cols g)) (not (= (at g r (+ c 2)) 6)))) (set-cell out r c 8) out))))"
+  },
+  {
+    "id": "easy_25_complete_descending_diagonal_gaps",
+    "title": "Complete Descending Diagonal Gaps",
+    "difficulty": "easy",
+    "skills": [
+      "diagonal pattern detection",
+      "single-gap completion",
+      "same-color fill"
+    ],
+    "written_solution": "If two yellow(4) cells lie on the same down-right diagonal with exactly one background cell between them, fill the middle diagonal cell with yellow(4). Leave other yellow(4) cells alone.",
+    "solver_name": "solve_easy_25_complete_descending_diagonal_gaps",
+    "scaffold": [
+      "Work only along down-right diagonals.",
+      "The pattern is 4,0,4 with one missing center cell.",
+      "Ignore longer diagonal runs; this rule only fills a single missing middle cell."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (- (rows g) 2))) (c (in-range (- (cols g) 2)))) (if (and (= (at g r c) 4) (= (at g (+ r 1) (+ c 1)) 0) (= (at g (+ r 2) (+ c 2)) 4) (or (< (- r 1) 0) (< (- c 1) 0) (not (= (at g (- r 1) (- c 1)) 4))) (or (>= (+ r 3) (rows g)) (>= (+ c 3) (cols g)) (not (= (at g (+ r 3) (+ c 3)) 4)))) (set-cell out (+ r 1) (+ c 1) 4) out))))"
+  },
+  {
+    "id": "easy_26_complete_2x2_from_l",
+    "title": "Complete 2x2 Blocks from L Shapes",
+    "difficulty": "easy",
+    "skills": [
+      "2x2 window logic",
+      "missing-corner completion",
+      "same-color fill"
+    ],
+    "written_solution": "Whenever a 2x2 window contains exactly three gray(5) cells in an L shape, fill the missing corner with gray(5) to complete the 2x2 block.",
+    "solver_name": "solve_easy_26_complete_2x2_from_l",
+    "scaffold": [
+      "Inspect each 2x2 window independently.",
+      "You only act when there are exactly three source-colored cells and one blank.",
+      "Fill the blank corner with the same source color."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (- (rows g) 1))) (c (in-range (- (cols g) 1)))) (let* ((cells (positions-in-rect r c (+ r 1) (+ c 1))) (vals (map (lambda (p) (at g (first p) (second p))) cells))) (if (and (= (count-where (lambda (v) (= v 5)) vals) 3) (= (count-where (lambda (v) (= v 0)) vals) 1)) (let ((miss (first (filter (lambda (p) (= (at g (first p) (second p)) 0)) cells)))) (set-cell out (first miss) (second miss) 5)) out)))))"
+  },
+  {
+    "id": "easy_27_recolor_exact_2x3_rectangles",
+    "title": "Recolor Exact 2x3 Rectangles",
+    "difficulty": "easy",
+    "skills": [
+      "component detection",
+      "bounding-box test",
+      "same-size recolor"
+    ],
+    "written_solution": "Find every connected red(2) component that is a fully filled 2x3 or 3x2 rectangle. Recolor those rectangle cells to cyan(8) and leave all other red(2) cells unchanged.",
+    "solver_name": "solve_easy_27_recolor_exact_2x3_rectangles",
+    "scaffold": [
+      "Extract each connected red component.",
+      "Check that its area is 6 and its bounding box is 2x3 or 3x2.",
+      "Only fully filled rectangles are recolored."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (for/fold ((out g)) ((obj (in-list (objects g 0)))) (let* ((bb (obj-bbox obj)) (h (+ 1 (- (third bb) (first bb)))) (w (+ 1 (- (fourth bb) (second bb)))) (area (* h w))) (if (and (= (obj-color obj) 2) (= (obj-size obj) 6) (= area 6) (or (and (= h 2) (= w 3)) (and (= h 3) (= w 2)))) (paint-cells out (obj-cells obj) 8) out)))))"
+  },
+  {
+    "id": "easy_28_mirror_singletons_across_horizontal_midline",
+    "title": "Mirror Singletons Across the Horizontal Midline",
+    "difficulty": "easy",
+    "skills": [
+      "global symmetry",
+      "coordinate transform",
+      "same-size copy"
+    ],
+    "written_solution": "For every orange(7) singleton in the grid, add its mirror image across the horizontal midline. Keep the original singleton too.",
+    "solver_name": "solve_easy_28_mirror_singletons_across_horizontal_midline",
+    "scaffold": [
+      "The mirror changes the row but keeps the column.",
+      "Use row `h-1-r` as the reflected row.",
+      "The output contains both the original singletons and their reflected copies."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (for/fold ((out g)) ((p (in-list (find-color g 7)))) (set-cell out (- (rows g) 1 (first p)) (second p) 7))))"
+  },
+  {
+    "id": "medium_22_gravity_down_each_column",
+    "title": "Apply Gravity Down Each Column",
+    "difficulty": "medium",
+    "skills": [
+      "column-wise compression",
+      "order preservation",
+      "same-size transform"
+    ],
+    "written_solution": "In each column independently, let the nonzero cells fall straight down until they are packed against the bottom. Preserve their top-to-bottom order within the column.",
+    "solver_name": "solve_medium_22_gravity_down_each_column",
+    "scaffold": [
+      "Treat each column separately.",
+      "Ignore zeros when collecting the falling cells.",
+      "Write the collected nonzero values back at the bottom of the same column in the same order."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((c (in-range (cols g)))) (let ((vals (filter (lambda (v) (not (= v 0))) (map (lambda (r) (at g r c)) (range (rows g)))))) (for/fold ((acc out)) ((v (in-list vals)) (i (in-naturals))) (set-cell acc (+ (- (rows g) (length vals)) i) c v))))))"
+  },
+  {
+    "id": "medium_23_connect_aligned_pairs",
+    "title": "Connect Aligned Pairs",
+    "difficulty": "medium",
+    "skills": [
+      "pair detection",
+      "row and column lines",
+      "color preservation"
+    ],
+    "written_solution": "For each color that appears exactly twice, if the two cells are aligned in one row or one column, fill the entire straight segment between them in that same color.",
+    "solver_name": "solve_medium_23_connect_aligned_pairs",
+    "scaffold": [
+      "Group cells by color.",
+      "Only colors with exactly two cells are candidates.",
+      "If the pair shares a row or a column, fill the inclusive segment between them."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-colors-reading grid) (remove-duplicates (filter (lambda (v) (not (= v 0))) (map (lambda (p) (at grid (first p) (second p))) (grid-positions grid))))) (for/fold ((out g)) ((color (in-list (sort (e8b-colors-reading g) <)))) (let ((cells (find-color g color))) (if (= (length cells) 2) (let ((a (first cells)) (b (second cells))) (cond ((= (first a) (first b)) (paint-cells out (map (lambda (c) (list (first a) c)) (range (min (second a) (second b)) (+ (max (second a) (second b)) 1))) color)) ((= (second a) (second b)) (paint-cells out (map (lambda (r) (list r (second a))) (range (min (first a) (first b)) (+ (max (first a) (first b)) 1))) color)) (else out))) out)))))"
+  },
+  {
+    "id": "medium_24_keep_only_even_area_components",
+    "title": "Keep Only the Even-Area Components",
+    "difficulty": "medium",
+    "skills": [
+      "connected components",
+      "counting cells",
+      "selection by parity"
+    ],
+    "written_solution": "Extract the connected components and keep only those whose area is even. Erase every odd-area component.",
+    "solver_name": "solve_medium_24_keep_only_even_area_components",
+    "scaffold": [
+      "Find each nonzero connected component.",
+      "Count its cells.",
+      "Copy only the components with an even number of cells into the output."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define dirs4 (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (define (e5b-nz-components grid) (let loop-pos ((positions (grid-positions grid)) (seen (list)) (acc (list))) (cond ((empty? positions) (reverse acc)) ((or (member? (first positions) seen) (= (at grid (first (first positions)) (second (first positions))) 0)) (loop-pos (rest positions) seen acc)) (else (let bfs ((queue (list (first positions))) (seen2 (cons (first positions) seen)) (cells (list))) (if (empty? queue) (loop-pos (rest positions) seen2 (cons (reverse cells) acc)) (let* ((cur (first queue)) (nbrs (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (not (member? p seen2)) (not (= (at grid (first p) (second p)) 0)))) (map (lambda (d) (list (+ (first cur) (first d)) (+ (second cur) (second d)))) dirs4)))) (bfs (append (rest queue) nbrs) (append seen2 nbrs) (cons cur cells))))))))) (define (f4b-paint-original out grid cells) (for/fold ((acc out)) ((p (in-list cells))) (set-cell acc (first p) (second p) (at grid (first p) (second p))))) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((cells (in-list (e5b-nz-components g)))) (if (even? (length cells)) (f4b-paint-original out g cells) out))))"
+  },
+  {
+    "id": "medium_25_rotate_template_by_key_and_center",
+    "title": "Rotate the Template by the Key and Center It",
+    "difficulty": "medium",
+    "skills": [
+      "template extraction",
+      "rotation by key",
+      "centering"
+    ],
+    "written_solution": "Take the blue(1) template, rotate it according to the singleton key color (2→0°, 3→90° clockwise, 4→180°, 5→270° clockwise), then place the rotated template centered in a background output grid of the same size.",
+    "solver_name": "solve_medium_25_rotate_template_by_key_and_center",
+    "scaffold": [
+      "Ignore the key after decoding the rotation.",
+      "Crop the template tightly before rotating it.",
+      "After rotation, center the result in an otherwise blank canvas of the original size."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-paste grid pat top left) (for*/fold ((out grid)) ((r (in-range (rows pat))) (c (in-range (cols pat)))) (let ((v (at pat r c)) (rr (+ top r)) (cc (+ left c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows out) (cols out))) (set-cell out rr cc v) out)))) (define (f4b-center-top-left canvas-h canvas-w obj-h obj-w) (list (quotient (- canvas-h obj-h) 2) (quotient (- canvas-w obj-w) 2))) (define (f4b-rot-key grid key) (cond ((= key 2) grid) ((= key 3) (rotate-cw grid)) ((= key 4) (rotate-180 grid)) ((= key 5) (rotate-ccw grid)) (else grid))) (define (f4b-template-1 grid) (let* ((cells (find-color grid 1)) (bb (bbox-of-cells cells))) (grid-from-fn (+ 1 (- (third bb) (first bb))) (+ 1 (- (fourth bb) (second bb))) (lambda (r c) (if (= (at grid (+ (first bb) r) (+ (second bb) c)) 1) 1 0))))) (let* ((templ (f4b-template-1 g)) (key (first (filter (lambda (v) (member? v (list 2 3 4 5))) (map (lambda (p) (at g (first p) (second p))) (grid-positions g))))) (tg (f4b-rot-key templ key)) (pos (f4b-center-top-left (rows g) (cols g) (rows tg) (cols tg)))) (e8b-paste (empty-grid (rows g) (cols g) 0) tg (first pos) (second pos)))))"
+  },
+  {
+    "id": "medium_26_crop_and_stack_components_vertically_by_area",
+    "title": "Crop and Stack Components Vertically by Area",
+    "difficulty": "medium",
+    "skills": [
+      "component extraction",
+      "size-changing output",
+      "sorting by area"
+    ],
+    "written_solution": "Crop each component to its tight bbox. Sort the cropped pieces by increasing area and stack them from top to bottom with one background row between consecutive pieces.",
+    "solver_name": "solve_medium_26_crop_and_stack_components_vertically_by_area",
+    "scaffold": [
+      "First isolate each connected component.",
+      "Turn each one into its tight crop.",
+      "Sort by area before stacking, not by reading order."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define dirs4 (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (define (e8b-list< a b) (cond ((empty? a) #f) ((< (first a) (first b)) #t) ((> (first a) (first b)) #f) (else (e8b-list< (rest a) (rest b))))) (define (e8b-paste grid pat top left) (for*/fold ((out grid)) ((r (in-range (rows pat))) (c (in-range (cols pat)))) (let ((v (at pat r c)) (rr (+ top r)) (cc (+ left c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows out) (cols out))) (set-cell out rr cc v) out)))) (define (e5b-nz-components grid) (let loop-pos ((positions (grid-positions grid)) (seen (list)) (acc (list))) (cond ((empty? positions) (reverse acc)) ((or (member? (first positions) seen) (= (at grid (first (first positions)) (second (first positions))) 0)) (loop-pos (rest positions) seen acc)) (else (let bfs ((queue (list (first positions))) (seen2 (cons (first positions) seen)) (cells (list))) (if (empty? queue) (loop-pos (rest positions) seen2 (cons (reverse cells) acc)) (let* ((cur (first queue)) (nbrs (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (not (member? p seen2)) (not (= (at grid (first p) (second p)) 0)))) (map (lambda (d) (list (+ (first cur) (first d)) (+ (second cur) (second d)))) dirs4)))) (bfs (append (rest queue) nbrs) (append seen2 nbrs) (cons cur cells))))))))) (define (f14-crop-cells grid cells) (let ((bb (bbox-of-cells cells))) (subgrid grid (first bb) (second bb) (third bb) (fourth bb)))) (define (f4b-vstack-left grids) (if (empty? grids) (list (list 0)) (let* ((w (apply max (map cols grids))) (h (+ (apply + (map rows grids)) (- (length grids) 1)))) (let loop ((xs grids) (top 0) (out (empty-grid h w 0))) (if (empty? xs) out (loop (rest xs) (+ top (rows (first xs)) 1) (e8b-paste out (first xs) top 0))))))) (let* ((comps (sort (e5b-nz-components g) (lambda (a b) (let ((ba (bbox-of-cells a)) (bb (bbox-of-cells b))) (e8b-list< (list (length a) (first ba) (second ba)) (list (length b) (first bb) (second bb))))))) (crops (map (lambda (cells) (f14-crop-cells g cells)) comps))) (f4b-vstack-left crops))))"
+  },
+  {
+    "id": "medium_27_place_cross_at_bbox_center",
+    "title": "Place a Cross at Each Bounding-Box Center",
+    "difficulty": "medium",
+    "skills": [
+      "component bounding boxes",
+      "center detection",
+      "symbol replacement"
+    ],
+    "written_solution": "For each component, find the center of its bbox and place a 5-cell cross of the component’s color there in an otherwise background output grid. Every input component has an odd-by-odd bbox, so the center is a single cell.",
+    "solver_name": "solve_medium_27_place_cross_at_bbox_center",
+    "scaffold": [
+      "Compute the bounding box of each component.",
+      "Use the geometric center of that box, not the component’s centroid.",
+      "Draw a plus of length 1 in each cardinal direction around the center."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define dirs4 (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (define (e5b-nz-components grid) (let loop-pos ((positions (grid-positions grid)) (seen (list)) (acc (list))) (cond ((empty? positions) (reverse acc)) ((or (member? (first positions) seen) (= (at grid (first (first positions)) (second (first positions))) 0)) (loop-pos (rest positions) seen acc)) (else (let bfs ((queue (list (first positions))) (seen2 (cons (first positions) seen)) (cells (list))) (if (empty? queue) (loop-pos (rest positions) seen2 (cons (reverse cells) acc)) (let* ((cur (first queue)) (nbrs (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (not (member? p seen2)) (not (= (at grid (first p) (second p)) 0)))) (map (lambda (d) (list (+ (first cur) (first d)) (+ (second cur) (second d)))) dirs4)))) (bfs (append (rest queue) nbrs) (append seen2 nbrs) (cons cur cells))))))))) (define (f4b-mode-color grid cells) (let ((colors (remove-duplicates (map (lambda (p) (at grid (first p) (second p))) cells)))) (first (sort colors (lambda (a b) (> (length (filter (lambda (p) (= (at grid (first p) (second p)) a)) cells)) (length (filter (lambda (p) (= (at grid (first p) (second p)) b)) cells)))))))) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((cells (in-list (e5b-nz-components g)))) (let* ((bb (bbox-of-cells cells)) (color (f4b-mode-color g cells)) (cr (quotient (+ (first bb) (third bb)) 2)) (cc (quotient (+ (second bb) (fourth bb)) 2))) (paint-cells out (list (list cr cc) (list (- cr 1) cc) (list (+ cr 1) cc) (list cr (- cc 1)) (list cr (+ cc 1))) color)))))"
+  },
+  {
+    "id": "medium_28_fill_component_bboxes_with_key_color",
+    "title": "Fill Component Bounding Boxes with the Key Color",
+    "difficulty": "medium",
+    "skills": [
+      "component bounding boxes",
+      "global key color",
+      "same-size replacement"
+    ],
+    "written_solution": "The singleton key color tells you the output color. For every magenta(6) component, fill its entire bbox solid using that key color, on an otherwise background output grid.",
+    "solver_name": "solve_medium_28_fill_component_bboxes_with_key_color",
+    "scaffold": [
+      "Read the unique non-magenta singleton to get the fill color.",
+      "Ignore the original component shapes after finding their bounding boxes.",
+      "Each output rectangle is the solid bounding box of one magenta component."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-colors-reading grid) (remove-duplicates (filter (lambda (v) (not (= v 0))) (map (lambda (p) (at grid (first p) (second p))) (grid-positions grid))))) (let* ((colors (filter (lambda (color) (not (= color 6))) (e8b-colors-reading g))) (key (first (filter (lambda (color) (= (length (find-color g color)) 1)) colors)))) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((obj (in-list (filter (lambda (o) (= (obj-color o) 6)) (objects g 0))))) (let ((bb (obj-bbox obj))) (paint-cells out (positions-in-rect (first bb) (second bb) (third bb) (fourth bb)) key))))))"
+  },
+  {
+    "id": "hard_22_local_key_rotate_template_inside_frames",
+    "title": "Rotate the Template Inside Each Frame Using the Local Key",
+    "difficulty": "hard",
+    "skills": [
+      "template extraction",
+      "local rotation keys",
+      "per-frame centering",
+      "recolor by key"
+    ],
+    "written_solution": "Extract the blue(1) template. For each hollow frame, read its local key color: red(2) → identity, green(3) → 90° clockwise, yellow(4) → 180°, gray(5) → 90° counter-clockwise. Center that transformed copy inside the frame and recolor it to the key color. Preserve the frames and keys.",
+    "solver_name": "solve_hard_22_local_key_rotate_template_inside_frames",
+    "scaffold": [
+      "The template is shared globally, but each frame has its own local key.",
+      "Treat each frame interior separately and center the transformed copy inside it.",
+      "The output keeps the frame border and the key cell."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-paste grid pat top left) (for*/fold ((out grid)) ((r (in-range (rows pat))) (c (in-range (cols pat)))) (let ((v (at pat r c)) (rr (+ top r)) (cc (+ left c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows out) (cols out))) (set-cell out rr cc v) out)))) (define (f14-same-cells? a b) (and (= (length a) (length b)) (all? (lambda (p) (member? p b)) a))) (define (f14-border-cells r0 c0 r1 c1) (for*/list ((r (in-range r0 (+ r1 1))) (c (in-range c0 (+ c1 1))) #:when (or (= r r0) (= r r1) (= c c0) (= c c1))) (list r c))) (define (f4-norm cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb))) (map (lambda (p) (list (- (first p) r0) (- (second p) c0))) cells))) (define (f4-norm-info cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb))) (list (f4-norm cells) (+ 1 (- r1 r0)) (+ 1 (- c1 c0))))) (define (f4-rect-frame? cells) (let* ((info (f4-norm-info cells)) (norm (first info)) (h (second info)) (w (third info)) (border (f14-border-cells 0 0 (- h 1) (- w 1)))) (and (>= h 3) (>= w 3) (f14-same-cells? norm border)))) (define (f4b-recolor-nonzero grid color) (grid-from-fn (rows grid) (cols grid) (lambda (r c) (if (= (at grid r c) 0) 0 color)))) (define (f4b-rot-key grid key) (cond ((= key 2) grid) ((= key 3) (rotate-cw grid)) ((= key 4) (rotate-180 grid)) ((= key 5) (rotate-ccw grid)) (else grid))) (define (f4b-template-1 grid) (let* ((cells (find-color grid 1)) (bb (bbox-of-cells cells))) (grid-from-fn (+ 1 (- (third bb) (first bb))) (+ 1 (- (fourth bb) (second bb))) (lambda (r c) (if (= (at grid (+ (first bb) r) (+ (second bb) c)) 1) 1 0))))) (define (f4b-center-paste-box out shape box color) (let* ((r0 (first box)) (c0 (second box)) (r1 (third box)) (c1 (fourth box)) (piece (if color (f4b-recolor-nonzero shape color) shape)) (top (+ r0 (quotient (- (+ 1 (- r1 r0)) (rows piece)) 2))) (left (+ c0 (quotient (- (+ 1 (- c1 c0)) (cols piece)) 2)))) (e8b-paste out piece top left))) (let* ((templ (f4b-template-1 g)) (preserved (for*/fold ((out (empty-grid (rows g) (cols g) 0))) ((r (in-range (rows g))) (c (in-range (cols g)))) (if (member? (at g r c) (list 7 2 3 4 5)) (set-cell out r c (at g r c)) out)))) (for/fold ((out preserved)) ((frame (in-list (filter (lambda (obj) (and (= (obj-color obj) 7) (f4-rect-frame? (obj-cells obj)))) (objects g 0))))) (let* ((bb (obj-bbox frame)) (keys (filter (lambda (p) (member? (at g (first p) (second p)) (list 2 3 4 5))) (positions-in-rect (+ (first bb) 1) (+ (second bb) 1) (- (third bb) 1) (- (fourth bb) 1)))) (key (at g (first (first keys)) (second (first keys)))) (tg (f4b-rot-key templ key))) (f4b-center-paste-box out tg (list (+ (first bb) 1) (+ (second bb) 1) (- (third bb) 1) (- (fourth bb) 1)) key))))))"
+  },
+  {
+    "id": "hard_23_make_transform_strip_from_template_and_keys",
+    "title": "Make a Transform Strip from the Template and the Keys",
+    "difficulty": "hard",
+    "skills": [
+      "template extraction",
+      "mixed transforms",
+      "size-changing packing",
+      "left-to-right key order"
+    ],
+    "written_solution": "Crop the template, then read the three key cells from left to right. Each key chooses a transform: red(2) → identity, green(3) → 90° clockwise, yellow(4) → 180°, gray(5) → flip vertical. Recolor each transformed copy to the key color and pack the three copies into one horizontal strip with a single background column between neighbors.",
+    "solver_name": "solve_hard_23_make_transform_strip_from_template_and_three_keys",
+    "scaffold": [
+      "The output is a new strip, not the original canvas.",
+      "The keys are ordered by position from left to right.",
+      "Each transformed copy is recolored to match its own key."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-paste grid pat top left) (for*/fold ((out grid)) ((r (in-range (rows pat))) (c (in-range (cols pat)))) (let ((v (at pat r c)) (rr (+ top r)) (cc (+ left c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows out) (cols out))) (set-cell out rr cc v) out)))) (define (f14-pack-h-top grids) (if (empty? grids) (list (list 0)) (let* ((h (apply max (map rows grids))) (w (+ (apply + (map cols grids)) (- (length grids) 1)))) (let loop ((pieces grids) (left 0) (out (empty-grid h w 0))) (if (empty? pieces) out (loop (rest pieces) (+ left (cols (first pieces)) 1) (e8b-paste out (first pieces) 0 left))))))) (define (f4b-recolor-nonzero grid color) (grid-from-fn (rows grid) (cols grid) (lambda (r c) (if (= (at grid r c) 0) 0 color)))) (define (f4b-strip-key grid key) (cond ((= key 2) grid) ((= key 3) (rotate-cw grid)) ((= key 4) (rotate-180 grid)) ((= key 5) (flip-lr grid)) (else grid))) (define (f4b-template-1 grid) (let* ((cells (find-color grid 1)) (bb (bbox-of-cells cells))) (grid-from-fn (+ 1 (- (third bb) (first bb))) (+ 1 (- (fourth bb) (second bb))) (lambda (r c) (if (= (at grid (+ (first bb) r) (+ (second bb) c)) 1) 1 0))))) (let* ((templ (f4b-template-1 g)) (keys (sort (filter values (for*/list ((r (in-range (rows g))) (c (in-range (cols g)))) (let ((v (at g r c))) (if (member? v (list 2 3 4 5)) (list c v) #f)))) (lambda (a b) (< (first a) (first b))))) (pieces (map (lambda (kv) (f4b-recolor-nonzero (f4b-strip-key templ (second kv)) (second kv))) keys))) (f14-pack-h-top pieces))))"
+  },
+  {
+    "id": "hard_24_stamp_template_at_every_mask_cell",
+    "title": "Stamp the Template at Every Mask Cell",
+    "difficulty": "hard",
+    "skills": [
+      "template extraction",
+      "mask-driven stamping",
+      "union of copies",
+      "same-size synthesis"
+    ],
+    "written_solution": "Take the red(2) template and crop it tightly. Every green(3) mask cell becomes the top-left anchor of a copy of that template. Stamp all of those copies onto a background output grid and union the results using cyan(8).",
+    "solver_name": "solve_hard_24_stamp_template_at_every_mask_cell",
+    "scaffold": [
+      "The mask tells you where to place copies of the template.",
+      "Use the same template every time.",
+      "The copies are unioned on a blank canvas; the original input objects do not remain."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-paste grid pat top left) (for*/fold ((out grid)) ((r (in-range (rows pat))) (c (in-range (cols pat)))) (let ((v (at pat r c)) (rr (+ top r)) (cc (+ left c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows out) (cols out))) (set-cell out rr cc v) out)))) (let* ((templ-cells (find-color g 2)) (bb (bbox-of-cells templ-cells)) (templ (grid-from-fn (+ 1 (- (third bb) (first bb))) (+ 1 (- (fourth bb) (second bb))) (lambda (r c) (if (= (at g (+ (first bb) r) (+ (second bb) c)) 2) 8 0))))) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((p (in-list (find-color g 3)))) (e8b-paste out templ (first p) (second p))))))"
+  },
+  {
+    "id": "hard_25_bar_chart_component_areas_by_color",
+    "title": "Make a Bar Chart of Component Areas by Color",
+    "difficulty": "hard",
+    "skills": [
+      "connected components",
+      "counting areas",
+      "size-changing abstraction"
+    ],
+    "written_solution": "Each color contributes one component. Count the area of each component. Build a new output grid whose rows are ordered by increasing color value, and in each row draw a horizontal bar of that row’s color whose length equals the component’s area.",
+    "solver_name": "solve_hard_25_bar_chart_component_areas_by_color",
+    "scaffold": [
+      "Count cells, not bounding-box area.",
+      "Sort rows by color value.",
+      "The output is a new compact chart, one row per color."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define dirs4 (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (define (e5b-nz-components grid) (let loop-pos ((positions (grid-positions grid)) (seen (list)) (acc (list))) (cond ((empty? positions) (reverse acc)) ((or (member? (first positions) seen) (= (at grid (first (first positions)) (second (first positions))) 0)) (loop-pos (rest positions) seen acc)) (else (let bfs ((queue (list (first positions))) (seen2 (cons (first positions) seen)) (cells (list))) (if (empty? queue) (loop-pos (rest positions) seen2 (cons (reverse cells) acc)) (let* ((cur (first queue)) (nbrs (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (not (member? p seen2)) (not (= (at grid (first p) (second p)) 0)))) (map (lambda (d) (list (+ (first cur) (first d)) (+ (second cur) (second d)))) dirs4)))) (bfs (append (rest queue) nbrs) (append seen2 nbrs) (cons cur cells))))))))) (define (f4b-mode-color grid cells) (let ((colors (remove-duplicates (map (lambda (p) (at grid (first p) (second p))) cells)))) (first (sort colors (lambda (a b) (> (length (filter (lambda (p) (= (at grid (first p) (second p)) a)) cells)) (length (filter (lambda (p) (= (at grid (first p) (second p)) b)) cells)))))))) (let* ((pairs (for/list ((cells (in-list (e5b-nz-components g)))) (list (f4b-mode-color g cells) (length cells)))) (colors (sort (remove-duplicates (map first pairs)) <)) (width (apply max (map second pairs)))) (grid-from-fn (length colors) width (lambda (r c) (let* ((color (list-ref colors r)) (area (second (last (filter (lambda (p) (= (first p) color)) pairs))))) (if (< c area) color 0)))))))"
+  },
+  {
+    "id": "hard_26_stamp_unique_bisymmetric_component_at_markers",
+    "title": "Stamp the Unique Bi-Symmetric Component at the Markers",
+    "difficulty": "hard",
+    "skills": [
+      "shape symmetry",
+      "component selection",
+      "marker-based stamping",
+      "recolor by marker"
+    ],
+    "written_solution": "Among the blue(1) components, find the unique one that is symmetric both horizontally and vertically. Crop that component, then stamp copies of it centered on every marker cell. Recolor each stamped copy to the marker’s color and draw the result on a background canvas.",
+    "solver_name": "solve_hard_26_stamp_unique_bisymmetric_component_at_markers",
+    "scaffold": [
+      "Only one of the color-1 components has both horizontal and vertical symmetry.",
+      "That symmetric component becomes the shared template.",
+      "Each marker colors its own copy."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8-cell<? a b) (or (< (first a) (first b)) (and (= (first a) (first b)) (< (second a) (second b))))) (define (e8-norm cells) (sort (normalize-cells cells) e8-cell<?)) (define (e8b-paste grid pat top left) (for*/fold ((out grid)) ((r (in-range (rows pat))) (c (in-range (cols pat)))) (let ((v (at pat r c)) (rr (+ top r)) (cc (+ left c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows out) (cols out))) (set-cell out rr cc v) out)))) (define (e5b-symmetric-v? cells) (let* ((norm (e8-norm cells)) (maxc (apply max (map second norm)))) (and (not (empty? norm)) (all? (lambda (p) (member? (list (first p) (- maxc (second p))) norm)) norm)))) (define (f14-crop-cells grid cells) (let ((bb (bbox-of-cells cells))) (subgrid grid (first bb) (second bb) (third bb) (fourth bb)))) (define (f4-norm cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb))) (map (lambda (p) (list (- (first p) r0) (- (second p) c0))) cells))) (define (f4-norm-info cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb))) (list (f4-norm cells) (+ 1 (- r1 r0)) (+ 1 (- c1 c0))))) (define (f4-hsym? cells) (let* ((info (f4-norm-info cells)) (norm (first info)) (h (second info))) (all? (lambda (p) (member? (list (- h 1 (first p)) (second p)) norm)) norm))) (define (f4b-recolor-nonzero grid color) (grid-from-fn (rows grid) (cols grid) (lambda (r c) (if (= (at grid r c) 0) 0 color)))) (let* ((sym (first (filter (lambda (obj) (and (f4-hsym? (obj-cells obj)) (e5b-symmetric-v? (obj-cells obj)))) (filter (lambda (obj) (= (obj-color obj) 1)) (objects g 0))))) (base (f14-crop-cells g (obj-cells sym))) (bh (rows base)) (bw (cols base)) (markers (filter (lambda (p) (member? (at g (first p) (second p)) (list 2 3 4 5))) (grid-positions g)))) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((marker (in-list markers))) (let* ((color (at g (first marker) (second marker))) (piece (f4b-recolor-nonzero base color))) (e8b-paste out piece (- (first marker) (quotient bh 2)) (- (second marker) (quotient bw 2))))))))"
+  },
+  {
+    "id": "hard_27_frame_local_intersections_with_fill_key",
+    "title": "Mark Local Row–Column Intersections Inside Each Frame",
+    "difficulty": "hard",
+    "skills": [
+      "multiple local workspaces",
+      "row/column gating",
+      "frame reasoning",
+      "local key color"
+    ],
+    "written_solution": "Each hollow frame is its own little workspace. Row markers live on the left inner border, column markers live on the top inner border, and the local fill key sits inside the frame. Mark every intersection of a chosen row and a chosen column using that frame’s local fill color, while preserving the frame and the markers.",
+    "solver_name": "solve_hard_27_frame_local_intersections_with_fill_key",
+    "scaffold": [
+      "Process each frame separately.",
+      "Read rows from the left inner border and columns from the top inner border.",
+      "Use the local fill key from the same frame for the new intersection cells."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (f14-same-cells? a b) (and (= (length a) (length b)) (all? (lambda (p) (member? p b)) a))) (define (f14-border-cells r0 c0 r1 c1) (for*/list ((r (in-range r0 (+ r1 1))) (c (in-range c0 (+ c1 1))) #:when (or (= r r0) (= r r1) (= c c0) (= c c1))) (list r c))) (define (f4-norm cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb))) (map (lambda (p) (list (- (first p) r0) (- (second p) c0))) cells))) (define (f4-norm-info cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb))) (list (f4-norm cells) (+ 1 (- r1 r0)) (+ 1 (- c1 c0))))) (define (f4-rect-frame? cells) (let* ((info (f4-norm-info cells)) (norm (first info)) (h (second info)) (w (third info)) (border (f14-border-cells 0 0 (- h 1) (- w 1)))) (and (>= h 3) (>= w 3) (f14-same-cells? norm border)))) (let ((preserved (for*/fold ((out (empty-grid (rows g) (cols g) 0))) ((r (in-range (rows g))) (c (in-range (cols g)))) (if (= (at g r c) 0) out (set-cell out r c (at g r c)))))) (for/fold ((out preserved)) ((frame (in-list (filter (lambda (obj) (and (= (obj-color obj) 7) (f4-rect-frame? (obj-cells obj)))) (objects g 0))))) (let* ((bb (obj-bbox frame)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb)) (row-marks (filter (lambda (r) (= (at g r (+ c0 1)) 2)) (range (+ r0 1) r1))) (col-marks (filter (lambda (c) (= (at g (+ r0 1) c) 3)) (range (+ c0 1) c1))) (key-colors (filter (lambda (v) (not (member? v (list 0 2 3)))) (for*/list ((r (in-range (+ r0 1) r1)) (c (in-range (+ c0 1) c1))) (at g r c)))) (fill (first (sort (remove-duplicates key-colors) (lambda (a b) (> (count-where (lambda (v) (= v a)) key-colors) (count-where (lambda (v) (= v b)) key-colors))))))) (for*/fold ((acc out)) ((r (in-list row-marks)) (c (in-list col-marks))) (set-cell acc r c fill)))))))"
+  },
+  {
+    "id": "hard_28_select_by_marker_count_scale_and_center",
+    "title": "Select by Marker Count, Then Scale",
+    "difficulty": "hard",
+    "skills": [
+      "counting markers",
+      "ranking components by area",
+      "scaling",
+      "size-changing output"
+    ],
+    "written_solution": "Count the maroon(9) singleton markers. Sort the blue(1) components by increasing area. Select the component whose rank matches the number of markers (1 → smallest, 2 → second-smallest, 3 → third-smallest), then crop it tightly, scale it by 2×, recolor it cyan(8), and output only that scaled crop.",
+    "solver_name": "solve_hard_28_select_by_marker_count_scale_and_center",
+    "scaffold": [
+      "The markers tell you which area rank to select.",
+      "Rank by cell count, not by reading order.",
+      "After selection, the output is just the scaled crop of that one component."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-list< a b) (cond ((empty? a) #f) ((< (first a) (first b)) #t) ((> (first a) (first b)) #f) (else (e8b-list< (rest a) (rest b))))) (define (f14-crop-cells grid cells) (let ((bb (bbox-of-cells cells))) (subgrid grid (first bb) (second bb) (third bb) (fourth bb)))) (define (f4b-recolor-nonzero grid color) (grid-from-fn (rows grid) (cols grid) (lambda (r c) (if (= (at grid r c) 0) 0 color)))) (let* ((comps (sort (filter (lambda (obj) (= (obj-color obj) 1)) (objects g 0)) (lambda (a b) (let ((ba (obj-bbox a)) (bb (obj-bbox b))) (e8b-list< (list (obj-size a) (first ba) (second ba)) (list (obj-size b) (first bb) (second bb))))))) (idx (- (length (find-color g 9)) 1)) (crop (f14-crop-cells g (obj-cells (list-ref comps idx))))) (f4b-recolor-nonzero (upscale crop 2) 8))))"
+  }
+]

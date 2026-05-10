@@ -1,0 +1,264 @@
+[
+  {
+    "id": "easy_c01",
+    "difficulty": "easy",
+    "name": "Seed expands to a 3x3 square",
+    "tags": [
+      "same_size_local",
+      "expansion"
+    ],
+    "written_rule": "Each nonzero seed becomes a solid 3x3 block of the same color, clipped by the grid border.",
+    "program_function": "solve_c_e1_seed_to_3x3",
+    "program_solution": "(rule!\n  (for/fold ([out g]) ([cell (in-list (filter (lambda (x) (not (= (third x) 0))) (grid-cells g)))])\n    (paint-cells out\n      (filter (lambda (p) (in-bounds? (first p) (second p) (rows g) (cols g)))\n              (for*/list ([dr (in-list (list -1 0 1))]\n                           [dc (in-list (list -1 0 1))])\n                (list (+ (first cell) dr) (+ (second cell) dc))))\n      (third cell))))"
+  },
+  {
+    "id": "easy_c02",
+    "difficulty": "easy",
+    "name": "Keep only the bottommost cell in each column",
+    "tags": [
+      "column_logic",
+      "extraction"
+    ],
+    "written_rule": "In every column, erase all nonzero cells except the lowest one. Keep that cell's color and position.",
+    "program_function": "solve_c_e2_keep_bottommost_per_column",
+    "program_solution": "(rule!\n  (for/fold ([out (empty-grid (rows g) (cols g) 0)]) ([c (in-range (cols g))])\n    (let ((hits (filter (lambda (r) (not (= (at g r c) 0))) (reverse (range 0 (rows g))))))\n      (if (empty? hits)\n          out\n          (set-cell out (first hits) c (at g (first hits) c))))))"
+  },
+  {
+    "id": "easy_c03",
+    "difficulty": "easy",
+    "name": "Right-pack every row",
+    "tags": [
+      "row_logic",
+      "compression"
+    ],
+    "written_rule": "Within each row, keep the nonzero cells in their left-to-right order but slide them all the way to the right.",
+    "program_function": "solve_c_e3_right_pack_rows",
+    "program_solution": "(rule!\n  (grid-from-fn (rows g) (cols g)\n    (lambda (r c)\n      (let* ((vals (filter (lambda (v) (not (= v 0))) (row-at g r)))\n             (start (- (cols g) (length vals))))\n        (if (< c start) 0 (list-ref vals (- c start)))))))"
+  },
+  {
+    "id": "easy_c04",
+    "difficulty": "easy",
+    "name": "Complete 2x2 blocks from L-shapes",
+    "tags": [
+      "same_size_local",
+      "pattern_completion"
+    ],
+    "written_rule": "Whenever a 2x2 window has exactly three cells of the same non-background color and one 0, fill the missing corner with that color.",
+    "program_function": "solve_c_e4_complete_2x2_L",
+    "program_solution": "(rule!\n  (for*/fold ([out g])\n             ([r (in-range (- (rows g) 1))]\n              [c (in-range (- (cols g) 1))])\n    (let* ((cells (list (list r c) (list r (+ c 1)) (list (+ r 1) c) (list (+ r 1) (+ c 1))))\n           (vals (map (lambda (p) (at g (first p) (second p))) cells))\n           (nz (filter (lambda (v) (not (= v 0))) vals)))\n      (if (and (= (length nz) 3)\n               (= (length (remove-duplicates nz)) 1))\n          (for/fold ([acc out]) ([p (in-list cells)])\n            (if (= (at g (first p) (second p)) 0)\n                (set-cell acc (first p) (second p) (first nz))\n                acc))\n          out))))"
+  },
+  {
+    "id": "easy_c05",
+    "difficulty": "easy",
+    "name": "Seed paints its whole row and column",
+    "tags": [
+      "same_size_transform",
+      "cross_logic"
+    ],
+    "written_rule": "Each nonzero seed fills its entire row and its entire column with the same color.",
+    "program_function": "solve_c_e5_full_cross_from_seed",
+    "program_solution": "(rule!\n  (for/fold ([out (empty-grid (rows g) (cols g) 0)])\n            ([cell (in-list (filter (lambda (x) (not (= (third x) 0))) (grid-cells g)))])\n    (let ((r (first cell)) (c (second cell)) (v (third cell)))\n      (paint-cells\n        (paint-cells out (for/list ([rr (in-range (rows g))]) (list rr c)) v)\n        (for/list ([cc (in-range (cols g))]) (list r cc))\n        v))))"
+  },
+  {
+    "id": "easy_c06",
+    "difficulty": "easy",
+    "name": "Fill vertical segments between matching endpoints",
+    "tags": [
+      "line_drawing",
+      "column_logic"
+    ],
+    "written_rule": "If a column has two endpoints of the same non-background color with only 0s between them, fill the vertical segment between the endpoints.",
+    "program_function": "solve_c_e6_fill_vertical_segments",
+    "program_solution": "(rule!\n  (for/fold ([out g]) ([c (in-range (cols g))])\n    (for/fold ([acc out]) ([color (in-list (grid-colors g 0))])\n      (let ((rs (filter (lambda (r) (= (at g r c) color)) (range 0 (rows g)))))\n        (if (and (= (length rs) 2)\n                 (all? (lambda (r) (= (at g r c) 0)) (range (+ (first rs) 1) (second rs))))\n            (paint-cells acc (for/list ([r (in-range (first rs) (+ (second rs) 1))]) (list r c)) color)\n            acc)))))"
+  },
+  {
+    "id": "easy_c07",
+    "difficulty": "easy",
+    "name": "Rotate the square grid by 180 degrees",
+    "tags": [
+      "global_layout",
+      "rotation"
+    ],
+    "written_rule": "Turn the whole square grid upside down: the output is the 180-degree rotation of the input.",
+    "program_function": "solve_c_e7_rotate_180",
+    "program_solution": "(rule!\n  (rotate-180 g))"
+  },
+  {
+    "id": "medium_c01",
+    "difficulty": "medium",
+    "name": "Recolor each object by aspect ratio",
+    "tags": [
+      "object_reasoning",
+      "classification"
+    ],
+    "written_rule": "Treat each component as an object. Recolor tall objects to red(2), wide objects to green(3), and square-bbox objects to yellow(4), preserving each shape and position.",
+    "program_function": "solve_c_m1_recolor_by_aspect",
+    "program_solution": "(rule!\n  (for/fold ([out (empty-grid (rows g) (cols g) 0)]) ([obj (in-list (objects g 0))])\n    (let ((color (if (> (obj-h obj) (obj-w obj)) 2 (if (> (obj-w obj) (obj-h obj)) 3 4))))\n      (paint-cells out (obj-cells obj) color))))"
+  },
+  {
+    "id": "medium_c02",
+    "difficulty": "medium",
+    "name": "Keep only frame objects",
+    "tags": [
+      "object_reasoning",
+      "frame_detection"
+    ],
+    "written_rule": "Preserve only objects that are hollow rectangular frames. Erase all filled or irregular objects.",
+    "program_function": "solve_c_m2_keep_frames_only",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (frame? obj)\n      (let* ((h (obj-h obj)) (w (obj-w obj))\n             (border-size (- (* h w) (* (max 0 (- h 2)) (max 0 (- w 2))))))\n        (and (>= h 3) (>= w 3) (= (obj-size obj) border-size)\n             (all? (lambda (p)\n                     (or (= (first p) (obj-r1 obj)) (= (first p) (obj-r2 obj))\n                         (= (second p) (obj-c1 obj)) (= (second p) (obj-c2 obj))))\n                   (obj-cells obj)))))\n    (for/fold ([out (empty-grid (rows g) (cols g) 0)]) ([obj (in-list (filter frame? (objects g 0)))])\n      (paint-cells out (obj-cells obj) (obj-color obj)))))"
+  },
+  {
+    "id": "medium_c03",
+    "difficulty": "medium",
+    "name": "Output the object and its horizontal mirror",
+    "tags": [
+      "extraction",
+      "symmetry",
+      "relayout"
+    ],
+    "written_rule": "Crop the unique object tightly. Output the crop, then a background separator column, then its left-right mirror.",
+    "program_function": "solve_c_m3_object_and_hmirror_strip",
+    "program_solution": "(rule!\n  (let* ((obj (crop-to-content g))\n         (mir (flip-lr obj))\n         (h (max (rows obj) (rows mir)))\n         (w (+ (cols obj) 1 (cols mir))))\n    (for*/fold ([out (empty-grid h w 0)])\n               ([r (in-range h)]\n                [c (in-range w)])\n      (let ((v (if (and (< r (rows obj)) (< c (cols obj)))\n                   (at obj r c)\n                   (if (and (< r (rows mir)) (>= c (+ (cols obj) 1)))\n                       (at mir r (- c (+ (cols obj) 1)))\n                       0))))\n        (if (not (= v 0)) (set-cell out r c v) out)))))"
+  },
+  {
+    "id": "medium_c04",
+    "difficulty": "medium",
+    "name": "Keep only even-area objects",
+    "tags": [
+      "object_reasoning",
+      "selection"
+    ],
+    "written_rule": "Treat each component as an object and keep only those with an even number of cells.",
+    "program_function": "solve_c_m4_keep_even_area_objects",
+    "program_solution": "(rule!\n  (for/fold ([out (empty-grid (rows g) (cols g) 0)]) ([obj (in-list (objects g 0))])\n    (if (= (modulo (obj-size obj) 2) 0)\n        (paint-cells out (obj-cells obj) (obj-color obj))\n        out)))"
+  },
+  {
+    "id": "medium_c05",
+    "difficulty": "medium",
+    "name": "Keep the largest object of each color",
+    "tags": [
+      "object_reasoning",
+      "selection"
+    ],
+    "written_rule": "For each color independently, keep only the largest component of that color and erase the smaller ones.",
+    "program_function": "solve_c_m5_keep_largest_per_color",
+    "program_solution": "(rule!\n  (for/fold ([out (empty-grid (rows g) (cols g) 0)]) ([color (in-list (grid-colors g 0))])\n    (let* ((objs (sort (filter (lambda (obj) (= (obj-color obj) color)) (objects g 0))\n                       (lambda (a b)\n                         (if (= (obj-size a) (obj-size b))\n                             (if (= (obj-r1 a) (obj-r1 b))\n                                 (< (obj-c1 a) (obj-c1 b))\n                                 (< (obj-r1 a) (obj-r1 b)))\n                             (> (obj-size a) (obj-size b))))))\n           (best (first objs)))\n      (paint-cells out (obj-cells best) color))))"
+  },
+  {
+    "id": "medium_c06",
+    "difficulty": "medium",
+    "name": "Column-majority color row",
+    "tags": [
+      "global_counting",
+      "column_logic",
+      "extraction"
+    ],
+    "written_rule": "Build a 1-row output. In each column, write the non-background color that appears most often in that input column; write 0 if the column is empty.",
+    "program_function": "solve_c_m6_column_majority_row",
+    "program_solution": "(rule!\n  (list\n    (for/list ([c (in-range (cols g))])\n      (let* ((colors (grid-colors (for/list ([r (in-range (rows g))]) (list (at g r c))) 0))\n             (ranked (sort (map (lambda (color)\n                                  (list color (count-where (lambda (r) (= (at g r c) color)) (range 0 (rows g)))))\n                                colors)\n                           (lambda (a b)\n                             (if (= (second a) (second b))\n                                 (< (first a) (first b))\n                                 (> (second a) (second b)))))))\n        (if (empty? ranked) 0 (first (first ranked)))))))",
+    "written_solution": "Build a 1-row output. In each column, write the non-background color that appears most often in that input column; write black(0) if the column is empty."
+  },
+  {
+    "id": "medium_c07",
+    "difficulty": "medium",
+    "name": "Rotate each object inside its own square box",
+    "tags": [
+      "object_reasoning",
+      "rotation"
+    ],
+    "written_rule": "Each object occupies a square bbox. Rotate each object 90° clockwise within its own box, keeping the boxes in place.",
+    "program_function": "solve_c_m7_rotate_objects_in_square_boxes",
+    "program_solution": "(rule!\n  (for/fold ([out (empty-grid (rows g) (cols g) 0)]) ([obj (in-list (objects g 0))])\n    (let ((rot (rotate-cw (subgrid g (obj-r1 obj) (obj-c1 obj) (obj-r2 obj) (obj-c2 obj)))))\n      (for*/fold ([acc out])\n                 ([r (in-range (rows rot))]\n                  [c (in-range (cols rot))])\n        (let ((v (at rot r c)))\n          (if (not (= v 0)) (set-cell acc (+ (obj-r1 obj) r) (+ (obj-c1 obj) c) v) acc))))))"
+  },
+  {
+    "id": "hard_c01",
+    "difficulty": "hard",
+    "name": "Stamp rotated copies of a template at marker cells",
+    "tags": [
+      "template_transfer",
+      "rotation",
+      "marker_control"
+    ],
+    "written_rule": "The non-marker pattern is a template. For each singleton marker: blue(1) stamps the template as-is, 2 stamps a 90-degree clockwise rotation, 3 stamps 180°, and 4 stamps 270 degrees. Place each copy with its top-left corner at the marker cell.",
+    "program_function": "solve_c_h1_stamp_rotated_template",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define markers\n      (filter (lambda (cell)\n                (let ((r (first cell)) (c (second cell)) (v (third cell)))\n                  (and (member v (list 1 2 3 4))\n                       (empty? (filter (lambda (d)\n                                         (let ((nr (+ r (first d))) (nc (+ c (second d))))\n                                           (and (in-bounds? nr nc (rows g) (cols g))\n                                                (= (at g nr nc) v))))\n                                       cardinal-deltas)))))\n              (grid-cells g)))\n    (define cleaned\n      (for/fold ([out g]) ([m (in-list markers)])\n        (set-cell out (first m) (second m) 0)))\n    (define template (crop-to-content cleaned))\n    (define (rot v)\n      (if (= v 1) template\n          (if (= v 2) (rotate-cw template)\n              (if (= v 3) (rotate-180 template) (rotate-ccw template)))))\n    (for/fold ([out (empty-grid (rows g) (cols g) 0)]) ([m (in-list markers)])\n      (let ((stamp (rot (third m))))\n        (for*/fold ([acc out])\n                   ([r (in-range (rows stamp))]\n                    [c (in-range (cols stamp))])\n          (let ((v (at stamp r c)))\n            (if (not (= v 0)) (set-cell acc (+ (first m) r) (+ (second m) c) v) acc)))))))"
+  },
+  {
+    "id": "hard_c02",
+    "difficulty": "hard",
+    "name": "Concatenate frame interiors from left to right",
+    "tags": [
+      "containment",
+      "extraction",
+      "relayout"
+    ],
+    "written_rule": "Find all rectangular frames. Take the full interior rectangle of each frame (without the border) and concatenate those interior grids from left to right, separated by one background column.",
+    "program_function": "solve_c_h2_concat_frame_interiors",
+    "program_solution": "(rule!\n  (let* ((frames (sort (filter (lambda (obj)\n                                  (let* ((h (obj-h obj)) (w (obj-w obj))\n                                         (border-size (- (* h w) (* (max 0 (- h 2)) (max 0 (- w 2))))))\n                                    (and (>= h 3) (>= w 3) (= (obj-size obj) border-size)\n                                         (all? (lambda (p)\n                                                 (or (= (first p) (obj-r1 obj)) (= (first p) (obj-r2 obj))\n                                                     (= (second p) (obj-c1 obj)) (= (second p) (obj-c2 obj))))\n                                               (obj-cells obj)))))\n                                (objects g 0))\n                         (lambda (a b) (< (obj-c1 a) (obj-c1 b)))))\n         (interiors (map (lambda (obj) (subgrid g (+ (obj-r1 obj) 1) (+ (obj-c1 obj) 1) (- (obj-r2 obj) 1) (- (obj-c2 obj) 1))) frames)))\n    (if (empty? interiors)\n        (list (list 0))\n        (let ((out-h (apply max (map rows interiors)))\n              (out-w (+ (apply + (map cols interiors)) (max 0 (- (length interiors) 1)))))\n          (let pack ([remaining interiors] [left 0] [out (empty-grid out-h out-w 0)])\n            (if (empty? remaining)\n                out\n                (let* ((sub (first remaining))\n                       (next (for*/fold ([acc out])\n                                         ([r (in-range (rows sub))]\n                                          [c (in-range (cols sub))])\n                               (let ((v (at sub r c)))\n                                 (if (not (= v 0)) (set-cell acc r (+ left c) v) acc)))))\n                  (pack (rest remaining) (+ left (cols sub) 1) next))))))))"
+  },
+  {
+    "id": "hard_c03",
+    "difficulty": "hard",
+    "name": "Recolor objects by marker order after sorting by area",
+    "tags": [
+      "object_reasoning",
+      "sorting",
+      "marker_control"
+    ],
+    "written_rule": "Read the top-row marker colors from left to right. Sort the non-marker objects by area from smallest to largest. Recolor the smallest object to the first marker color, the next object to the second marker color, and so on.",
+    "program_function": "solve_c_h3_recolor_objects_by_marker_rank",
+    "program_solution": "(rule!\n  (let* ((markers (sort (filter (lambda (cell) (and (= (first cell) 0) (not (= (third cell) 0)))) (grid-cells g))\n                        (lambda (a b) (< (second a) (second b)))))\n         (body (for/list ([r (in-range (rows g))])\n                 (for/list ([c (in-range (cols g))])\n                   (if (= r 0) 0 (at g r c)))))\n         (objs (sort (objects body 0)\n                     (lambda (a b)\n                       (if (= (obj-size a) (obj-size b))\n                           (if (= (obj-r1 a) (obj-r1 b))\n                               (< (obj-c1 a) (obj-c1 b))\n                               (< (obj-r1 a) (obj-r1 b)))\n                           (< (obj-size a) (obj-size b)))))))\n    (for/fold ([out (empty-grid (rows g) (cols g) 0)])\n              ([obj (in-list objs)] [marker (in-list markers)])\n      (paint-cells out (obj-cells obj) (third marker)))))"
+  },
+  {
+    "id": "hard_c04",
+    "difficulty": "hard",
+    "name": "Make a quadrant mosaic of normalized objects",
+    "tags": [
+      "normalization",
+      "relayout",
+      "quadrant_logic"
+    ],
+    "written_rule": "Assign each object to top-left, top-right, bottom-left, or bottom-right based on the quadrant of its center in the original grid. Crop each object tightly, then build a 2×2 mosaic with one background row and one background column separating the quadrants.",
+    "program_function": "solve_c_h4_quadrant_mosaic",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define mid-r (- (rows g) 1))\n    (define mid-c (- (cols g) 1))\n    (define (top? obj) (< (* 2 (apply + (obj-rs obj))) (* (obj-size obj) mid-r)))\n    (define (left? obj) (< (* 2 (apply + (obj-cs obj))) (* (obj-size obj) mid-c)))\n    (define (shape obj) (subgrid g (obj-r1 obj) (obj-c1 obj) (obj-r2 obj) (obj-c2 obj)))\n    (define objs (objects g 0))\n    (define tl (map shape (filter (lambda (obj) (and (top? obj) (left? obj))) objs)))\n    (define tr (map shape (filter (lambda (obj) (and (top? obj) (not (left? obj)))) objs)))\n    (define bl (map shape (filter (lambda (obj) (and (not (top? obj)) (left? obj))) objs)))\n    (define br (map shape (filter (lambda (obj) (and (not (top? obj)) (not (left? obj)))) objs)))\n    (define s-tl (if (empty? tl) #f (first tl)))\n    (define s-tr (if (empty? tr) #f (first tr)))\n    (define s-bl (if (empty? bl) #f (first bl)))\n    (define s-br (if (empty? br) #f (first br)))\n    (define top-h (max (if s-tl (rows s-tl) 1) (if s-tr (rows s-tr) 1)))\n    (define bot-h (max (if s-bl (rows s-bl) 1) (if s-br (rows s-br) 1)))\n    (define left-w (max (if s-tl (cols s-tl) 1) (if s-bl (cols s-bl) 1)))\n    (define right-w (max (if s-tr (cols s-tr) 1) (if s-br (cols s-br) 1)))\n    (define (paste-shape out shape top left)\n      (if (not shape)\n          out\n          (for*/fold ([acc out])\n                     ([r (in-range (rows shape))]\n                      [c (in-range (cols shape))])\n            (let ((v (at shape r c)))\n              (if (not (= v 0)) (set-cell acc (+ top r) (+ left c) v) acc)))))\n    (paste-shape\n      (paste-shape\n        (paste-shape\n          (paste-shape (empty-grid (+ top-h 1 bot-h) (+ left-w 1 right-w) 0) s-tl 0 0)\n          s-tr 0 (+ left-w 1))\n        s-bl (+ top-h 1) 0)\n      s-br (+ top-h 1) (+ left-w 1))))"
+  },
+  {
+    "id": "hard_c05",
+    "difficulty": "hard",
+    "name": "Flip each frame's contents according to the frame color",
+    "tags": [
+      "containment",
+      "conditional_transform"
+    ],
+    "written_rule": "Inside every rectangular frame, transform the entire interior rectangle. If the frame color is odd, flip the interior left-right; if the frame color is even, flip it top-bottom. Keep the frames themselves unchanged.",
+    "program_function": "solve_c_h5_flip_contents_by_frame_parity",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (frame? obj)\n      (let* ((h (obj-h obj)) (w (obj-w obj))\n             (border-size (- (* h w) (* (max 0 (- h 2)) (max 0 (- w 2))))))\n        (and (>= h 3) (>= w 3) (= (obj-size obj) border-size)\n             (all? (lambda (p)\n                     (or (= (first p) (obj-r1 obj)) (= (first p) (obj-r2 obj))\n                         (= (second p) (obj-c1 obj)) (= (second p) (obj-c2 obj))))\n                   (obj-cells obj)))))\n    (for/fold ([out g]) ([frame (in-list (filter frame? (objects g 0)))])\n      (let* ((interior (subgrid g (+ (obj-r1 frame) 1) (+ (obj-c1 frame) 1) (- (obj-r2 frame) 1) (- (obj-c2 frame) 1)))\n             (trans (if (= (modulo (obj-color frame) 2) 1) (flip-lr interior) (flip-ud interior)))\n             (cleared (for*/fold ([acc out])\n                                  ([r (in-range (+ (obj-r1 frame) 1) (obj-r2 frame))]\n                                   [c (in-range (+ (obj-c1 frame) 1) (obj-c2 frame))])\n                        (set-cell acc r c 0))))\n        (for*/fold ([acc cleared])\n                   ([r (in-range (rows trans))]\n                    [c (in-range (cols trans))])\n          (let ((v (at trans r c)))\n            (if (not (= v 0)) (set-cell acc (+ (obj-r1 frame) 1 r) (+ (obj-c1 frame) 1 c) v) acc)))))))"
+  },
+  {
+    "id": "hard_c06",
+    "difficulty": "hard",
+    "name": "Sort objects by bounding-box perimeter and stack them",
+    "tags": [
+      "sorting",
+      "rotation",
+      "relayout"
+    ],
+    "written_rule": "Crop each object tightly. If an object's box is taller than it is wide, rotate it 90° clockwise so its longer side becomes horizontal. Then sort the objects by bounding-box perimeter from largest to smallest; if perimeters tie, keep row-major order. Stack them top-to-bottom with one background row between them.",
+    "program_function": "solve_c_h6_perimeter_sort_rotated_strip",
+    "program_solution": "(rule!\n  (let* ((items (sort (map (lambda (obj)\n                             (let* ((sub0 (subgrid g (obj-r1 obj) (obj-c1 obj) (obj-r2 obj) (obj-c2 obj)))\n                                    (sub (if (> (rows sub0) (cols sub0)) (rotate-cw sub0) sub0))\n                                    (per (* 2 (+ (rows sub) (cols sub)))))\n                               (list per (obj-r1 obj) (obj-c1 obj) sub)))\n                           (objects g 0))\n                      (lambda (a b)\n                        (if (= (first a) (first b))\n                            (if (= (second a) (second b))\n                                (< (third a) (third b))\n                                (< (second a) (second b)))\n                            (> (first a) (first b))))))\n         (shapes (map fourth items))\n         (out-h (+ (apply + (map rows shapes)) (max 0 (- (length shapes) 1))))\n         (out-w (apply max (map cols shapes))))\n    (let pack ([remaining shapes] [top 0] [out (empty-grid out-h out-w 0)])\n      (if (empty? remaining)\n          out\n          (let* ((shape (first remaining))\n                 (next (for*/fold ([acc out])\n                                   ([r (in-range (rows shape))]\n                                    [c (in-range (cols shape))])\n                         (let ((v (at shape r c)))\n                           (if (not (= v 0)) (set-cell acc (+ top r) c v) acc)))))\n            (pack (rest remaining) (+ top (rows shape) 1) next))))))"
+  },
+  {
+    "id": "hard_c07",
+    "difficulty": "hard",
+    "name": "Select the nth-largest object using marker count",
+    "tags": [
+      "counting",
+      "selection",
+      "extraction"
+    ],
+    "written_rule": "Count the 9-markers in the top row. Sort the non-marker objects by area from largest to smallest and output a tight crop of the nth-largest object, where n is the number of markers.",
+    "program_function": "solve_c_h7_select_nth_largest_by_marker_count",
+    "program_solution": "(rule!\n  (let* ((n (count-where (lambda (c) (= (at g 0 c) 9)) (range 0 (cols g))))\n         (body (for/list ([r (in-range (rows g))])\n                 (for/list ([c (in-range (cols g))])\n                   (if (and (= r 0) (= (at g r c) 9)) 0 (at g r c)))))\n         (objs (sort (objects body 0)\n                     (lambda (a b)\n                       (if (= (obj-size a) (obj-size b))\n                           (if (= (obj-r1 a) (obj-r1 b))\n                               (> (obj-c1 a) (obj-c1 b))\n                               (> (obj-r1 a) (obj-r1 b)))\n                           (> (obj-size a) (obj-size b)))))))\n    (define chosen (list-ref objs (- n 1)))\n    (subgrid body (obj-r1 chosen) (obj-c1 chosen) (obj-r2 chosen) (obj-c2 chosen))))",
+    "written_solution": "Count the maroon(9) markers in the top row. Sort the non-marker objects by area from largest to smallest and output a tight crop of the nth-largest object, where n is the number of markers."
+  }
+]

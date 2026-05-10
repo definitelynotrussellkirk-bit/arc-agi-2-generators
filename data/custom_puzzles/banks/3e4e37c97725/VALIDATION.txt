@@ -1,0 +1,129 @@
+ARC Puzzle Bank Set 17 — validation log
+
+easy_p01 train_1: PASS
+easy_p01 train_2: PASS
+easy_p01 train_3: PASS
+easy_p01 test_1: PASS
+easy_p01 summary: 4/4 passed
+
+easy_p02 train_1: PASS
+easy_p02 train_2: PASS
+easy_p02 train_3: PASS
+easy_p02 test_1: PASS
+easy_p02 summary: 4/4 passed
+
+easy_p03 train_1: PASS
+easy_p03 train_2: PASS
+easy_p03 train_3: PASS
+easy_p03 test_1: PASS
+easy_p03 summary: 4/4 passed
+
+easy_p04 train_1: PASS
+easy_p04 train_2: PASS
+easy_p04 train_3: PASS
+easy_p04 test_1: PASS
+easy_p04 summary: 4/4 passed
+
+easy_p05 train_1: PASS
+easy_p05 train_2: PASS
+easy_p05 train_3: PASS
+easy_p05 test_1: PASS
+easy_p05 summary: 4/4 passed
+
+easy_p06 train_1: PASS
+easy_p06 train_2: PASS
+easy_p06 train_3: PASS
+easy_p06 test_1: PASS
+easy_p06 summary: 4/4 passed
+
+easy_p07 train_1: PASS
+easy_p07 train_2: PASS
+easy_p07 train_3: PASS
+easy_p07 test_1: PASS
+easy_p07 summary: 4/4 passed
+
+medium_p01 train_1: PASS
+medium_p01 train_2: PASS
+medium_p01 train_3: PASS
+medium_p01 test_1: PASS
+medium_p01 summary: 4/4 passed
+
+medium_p02 train_1: PASS
+medium_p02 train_2: PASS
+medium_p02 train_3: PASS
+medium_p02 test_1: PASS
+medium_p02 summary: 4/4 passed
+
+medium_p03 train_1: PASS
+medium_p03 train_2: PASS
+medium_p03 train_3: PASS
+medium_p03 test_1: PASS
+medium_p03 summary: 4/4 passed
+
+medium_p04 train_1: PASS
+medium_p04 train_2: PASS
+medium_p04 train_3: PASS
+medium_p04 test_1: PASS
+medium_p04 summary: 4/4 passed
+
+medium_p05 train_1: PASS
+medium_p05 train_2: PASS
+medium_p05 train_3: PASS
+medium_p05 test_1: PASS
+medium_p05 summary: 4/4 passed
+
+medium_p06 train_1: PASS
+medium_p06 train_2: PASS
+medium_p06 train_3: PASS
+medium_p06 test_1: PASS
+medium_p06 summary: 4/4 passed
+
+medium_p07 train_1: PASS
+medium_p07 train_2: PASS
+medium_p07 train_3: PASS
+medium_p07 test_1: PASS
+medium_p07 summary: 4/4 passed
+
+hard_p01 train_1: PASS
+hard_p01 train_2: PASS
+hard_p01 train_3: PASS
+hard_p01 test_1: PASS
+hard_p01 summary: 4/4 passed
+
+hard_p02 train_1: PASS
+hard_p02 train_2: PASS
+hard_p02 train_3: PASS
+hard_p02 test_1: PASS
+hard_p02 summary: 4/4 passed
+
+hard_p03 train_1: PASS
+hard_p03 train_2: PASS
+hard_p03 train_3: PASS
+hard_p03 test_1: PASS
+hard_p03 summary: 4/4 passed
+
+hard_p04 train_1: PASS
+hard_p04 train_2: PASS
+hard_p04 train_3: PASS
+hard_p04 test_1: PASS
+hard_p04 summary: 4/4 passed
+
+hard_p05 train_1: PASS
+hard_p05 train_2: PASS
+hard_p05 train_3: PASS
+hard_p05 test_1: PASS
+hard_p05 summary: 4/4 passed
+
+hard_p06 train_1: PASS
+hard_p06 train_2: PASS
+hard_p06 train_3: PASS
+hard_p06 test_1: PASS
+hard_p06 summary: 4/4 passed
+
+hard_p07 train_1: PASS
+hard_p07 train_2: PASS
+hard_p07 train_3: PASS
+hard_p07 test_1: PASS
+hard_p07 summary: 4/4 passed
+
+TOTAL: 84/84 pairs passed

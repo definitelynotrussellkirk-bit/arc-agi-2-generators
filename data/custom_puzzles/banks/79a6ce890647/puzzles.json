@@ -1,0 +1,159 @@
+[
+  {
+    "id": "E85",
+    "name": "Complete diagonal blue pairs into red 2x2 squares",
+    "difficulty": "easy",
+    "written_solution": "Find each blue(1) component made of exactly two diagonally touching cells in a 2x2 box. Replace that entire 2x2 box with red(2). Leave every other object unchanged.",
+    "program_solution": "(rule!\n  (let ((cells (list)))\n    (for* ([r (in-range (- (rows g) 1))]\n           [c (in-range (- (cols g) 1))])\n      (let ((a (= (at g r c) 1))\n            (b (= (at g r (+ c 1)) 1))\n            (d (= (at g (+ r 1) c) 1))\n            (e (= (at g (+ r 1) (+ c 1)) 1)))\n        (when (or (and a e (not b) (not d))\n                  (and b d (not a) (not e)))\n          (set! cells (append (positions-in-rect r c (+ r 1) (+ c 1)) cells)))))\n    (paint-cells g cells 2)))",
+    "program_language": "racket"
+  },
+  {
+    "id": "E86",
+    "name": "Recolor the endpoints of green straight lines",
+    "difficulty": "easy",
+    "written_solution": "For each green(3) component that is a straight horizontal or vertical line of length at least 3, recolor its two endpoints to red(2). Keep the interior green(3) and leave non-line green(3) shapes unchanged.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define green-objs (filter (lambda (obj) (= (obj-color obj) 3)) (objects g 0)))\n    (define (line? obj)\n      (and (>= (obj-size obj) 3)\n           (or (= (obj-r1 obj) (obj-r2 obj)) (= (obj-c1 obj) (obj-c2 obj)))))\n    (define (endpoints obj)\n      (if (= (obj-r1 obj) (obj-r2 obj))\n          (list (list (obj-r1 obj) (obj-c1 obj)) (list (obj-r1 obj) (obj-c2 obj)))\n          (list (list (obj-r1 obj) (obj-c1 obj)) (list (obj-r2 obj) (obj-c1 obj)))))\n    (paint-cells g (flatmap endpoints (filter line? green-objs)) 2)))",
+    "program_language": "racket"
+  },
+  {
+    "id": "E87",
+    "name": "Fill one-cell gaps between magenta endpoints",
+    "difficulty": "easy",
+    "written_solution": "Whenever two magenta(6) cells sit two steps apart in the same row or column with a single background cell between them, fill that middle cell with orange(7). Leave all existing magenta(6) cells as they are.",
+    "program_solution": "(rule!\n  (grid-from-fn h w\n    (lambda (r c)\n      (let ((v (cell-at g r c)))\n        (if (and (= v 0)\n                 (or (and (> c 0) (< c (- w 1))\n                          (= (cell-at g r (- c 1)) 6)\n                          (= (cell-at g r (+ c 1)) 6))\n                     (and (> r 0) (< r (- h 1))\n                          (= (cell-at g (- r 1) c) 6)\n                          (= (cell-at g (+ r 1) c) 6))))\n            7\n            v)))))",
+    "program_language": "racket"
+  },
+  {
+    "id": "E88",
+    "name": "Recolor orange components that touch exactly one border",
+    "difficulty": "easy",
+    "written_solution": "Find each orange(7) component. If it touches exactly one of the four outer borders, recolor that entire component to blue(1). Components touching zero, two, or more borders stay orange(7).",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define orange-objs (filter (lambda (obj) (= (obj-color obj) 7)) (objects g 0)))\n    (define (border-count obj)\n      (+ (if (= (obj-r1 obj) 0) 1 0)\n         (if (= (obj-r2 obj) (- h 1)) 1 0)\n         (if (= (obj-c1 obj) 0) 1 0)\n         (if (= (obj-c2 obj) (- w 1)) 1 0)))\n    (define targets (filter (lambda (obj) (= (border-count obj) 1)) orange-objs))\n    (paint-cells g (flatmap obj-cells targets) 1)))",
+    "program_language": "racket"
+  },
+  {
+    "id": "E89",
+    "name": "Crop to the smallest nonzero connected component",
+    "difficulty": "easy",
+    "written_solution": "Among all nonzero connected components, find the one with the fewest cells. Output only the minimal bbox that contains that smallest component, preserving its internal zeros and colors.",
+    "program_solution": "(rule!\n  (let* ((objs (objects g 0))\n         (smallest (first (sort objs (lambda (a b) (< (obj-size a) (obj-size b)))))))\n    (crop g (obj-r1 smallest) (obj-c1 smallest) (obj-r2 smallest) (obj-c2 smallest))))",
+    "program_language": "racket"
+  },
+  {
+    "id": "E90",
+    "name": "Fill yellow frames with the color of their interior marker",
+    "difficulty": "easy",
+    "written_solution": "Each hollow yellow(4) rectangle contains exactly one colored marker cell inside it. Fill all background interior cells of that rectangle with the marker's color, while keeping the yellow(4) border and the marker itself.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define frames (filter (lambda (obj) (= (obj-color obj) 4)) (objects g 0)))\n    (define (inside-interior? obj p)\n      (and (> (fst p) (obj-r1 obj)) (< (fst p) (obj-r2 obj))\n           (> (snd p) (obj-c1 obj)) (< (snd p) (obj-c2 obj))))\n    (define (frame-fill-cells obj)\n      (let* ((inside (filter (lambda (p) (inside-interior? obj p)) (grid-positions g)))\n             (marker (first (filter (lambda (p) (not (= (cell-at g (fst p) (snd p)) 0))) inside)))\n             (color (cell-at g (fst marker) (snd marker))))\n        (map (lambda (p) (list (fst p) (snd p) color))\n             (filter (lambda (p) (= (cell-at g (fst p) (snd p)) 0)) inside))))\n    (paint-cells g (flatmap frame-fill-cells frames))))",
+    "program_language": "racket"
+  },
+  {
+    "id": "E91",
+    "name": "Connect aligned equal-colored markers",
+    "difficulty": "easy",
+    "written_solution": "For each color that appears exactly twice as two aligned single cells in the same row or column, draw a solid straight segment of that same color connecting the pair, including the endpoints.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (same-pos? a b)\n      (and (= (fst a) (fst b)) (= (snd a) (snd b))))\n    (define (point< a b)\n      (or (< (fst a) (fst b))\n          (and (= (fst a) (fst b)) (< (snd a) (snd b)))))\n    (define (ordered-pair pts)\n      (let ((a (first pts)) (b (second pts)))\n        (if (point< b a) (list b a) (list a b))))\n    (define colors (filter (lambda (color) (= (length (find-color g color)) 2)) (grid-colors g 0)))\n    (define records\n      (sort\n        (map (lambda (color)\n               (let ((pts (ordered-pair (find-color g color))))\n                 (list color (first pts) (second pts))))\n             colors)\n        (lambda (x y) (point< (second x) (second y)))))\n    (define (range-between a b)\n      (if (<= a b) (range a (+ b 1)) (range a (- b 1) -1)))\n    (define (clear-path? cells a b)\n      (all?\n        (lambda (p)\n          (or (same-pos? p a) (same-pos? p b) (= (cell-at g (fst p) (snd p)) 0)))\n        cells))\n    (define (segment rec)\n      (let* ((color (first rec))\n             (a (second rec))\n             (b (third rec))\n             (cells\n              (cond\n                [(= (fst a) (fst b))\n                 (map (lambda (c) (list (fst a) c color)) (range-between (snd a) (snd b)))]\n                [(= (snd a) (snd b))\n                 (map (lambda (r) (list r (snd a) color)) (range-between (fst a) (fst b)))]\n                [else (list)])))\n        (if (clear-path? cells a b) cells (list))))\n    (paint-cells g (flatmap segment records))))",
+    "program_language": "racket"
+  },
+  {
+    "id": "M85",
+    "name": "Translate a source shape from the red anchor to the green anchor",
+    "difficulty": "medium",
+    "written_solution": "Treat the red(2) cell as a source anchor and the green(3) cell as a target anchor. Copy the blue(1) shape by the translation vector from the red(2) anchor to the green(3) anchor, and draw the translated copy in cyan(8). Keep the original shape and anchors.",
+    "program_solution": "(rule!\n  (let* ((source (first (filter (lambda (o) (= (obj-color o) 1)) (objects g 0))))\n         (src (first (find-color g 2)))\n         (dst (first (find-color g 3)))\n         (dr (- (first dst) (first src)))\n         (dc (- (second dst) (second src))))\n    (foldl (lambda (p out)\n             (let ((nr (+ (first p) dr))\n                   (nc (+ (second p) dc)))\n               (if (in-bounds? nr nc (rows g) (cols g))\n                   (set-cell out nr nc 8)\n                   out)))\n           g\n           (obj-cells source))))"
+  },
+  {
+    "id": "M86",
+    "name": "Rotate a shape around a pivot according to the control code",
+    "difficulty": "medium",
+    "written_solution": "The maroon(9) cell is the anchor. The cyan(8) shape is the source. A single control cell with value 1, 2, 3, or 4 chooses a transform (1 → identity, 2 → 90° clockwise, 3 → 180°, 4 → 90° counter-clockwise) applied around the anchor. Stamp the rotated copy in red(2).",
+    "program_solution": "(rule!\n  (let* ((shape (first (filter (lambda (o) (= (obj-color o) 8)) (objects g 0))))\n         (pivot (first (find-color g 9)))\n         (code (third (first (filter (lambda (cell) (let ((v (third cell))) (and (>= v 1) (<= v 4)))) (grid-cells g))))))\n    (foldl (lambda (p out)\n             (let* ((dr (- (first p) (first pivot)))\n                    (dc (- (second p) (second pivot)))\n                    (nrnc (cond [(= code 1) (list (+ (first pivot) dr) (+ (second pivot) dc))]\n                                [(= code 2) (list (+ (first pivot) dc) (- (second pivot) dr))]\n                                [(= code 3) (list (- (first pivot) dr) (- (second pivot) dc))]\n                                [else (list (- (first pivot) dc) (+ (second pivot) dr))]))\n                    (nr (first nrnc))\n                    (nc (second nrnc)))\n               (if (in-bounds? nr nc (rows g) (cols g))\n                   (set-cell out nr nc 2)\n                   out)))\n           g\n           (obj-cells shape))))"
+  },
+  {
+    "id": "M87",
+    "name": "Output the sorted sizes of the red components",
+    "difficulty": "medium",
+    "written_solution": "Look only at red(2) connected components. Measure the size of each red(2) component, sort those sizes from smallest to largest, and output a single-row grid whose entries are exactly those sizes.",
+    "program_solution": "(rule!\n  (list (sort (map obj-size (filter (lambda (o) (= (obj-color o) 2)) (objects g 0))) <)))"
+  },
+  {
+    "id": "M88",
+    "name": "Fill chambers that contain exactly one seed",
+    "difficulty": "medium",
+    "written_solution": "Walls are gray(5). Partition the grid into chambers of non-wall cells. If a chamber contains exactly one seed cell of blue(1), 2, 3, or 4, fill every background cell in that chamber with that seed's color. Chambers with zero or multiple seeds stay unchanged.",
+    "program_solution": "(rule!\n  (let ((seen (make-hash))\n        (out g))\n    (for* ([r (in-range (rows g))] [c (in-range (cols g))])\n      (unless (or (hash-has-key? seen (cons r c)) (= (at g r c) 5))\n        (define queue (list (cons r c)))\n        (define chamber (list))\n        (hash-set! seen (first queue) #t)\n        (let bfs ([step 0])\n          (unless (empty? queue)\n            (let ((cur (first queue)))\n              (set! queue (rest queue))\n              (set! chamber (cons (list (car cur) (cdr cur)) chamber))\n              (for ([d (in-list cardinal-deltas)])\n                (let ((nr (+ (car cur) (first d)))\n                      (nc (+ (cdr cur) (second d))))\n                  (when (and (in-bounds? nr nc (rows g) (cols g))\n                             (not (hash-has-key? seen (cons nr nc)))\n                             (not (= (at g nr nc) 5)))\n                    (hash-set! seen (cons nr nc) #t)\n                    (set! queue (append queue (list (cons nr nc))))))))\n            (bfs (+ step 1))))\n        (let ((seeds (filter (lambda (p) (let ((v (at g (first p) (second p)))) (and (>= v 1) (<= v 4)))) chamber)))\n          (when (= (length seeds) 1)\n            (let ((color (at g (first (first seeds)) (second (first seeds)))))\n              (for ([p (in-list chamber)])\n                (when (= (at out (first p) (second p)) 0)\n                  (set! out (set-cell out (first p) (second p) color)))))))))\n    out))"
+  },
+  {
+    "id": "M89",
+    "name": "Draw rectangle borders from opposite-corner markers",
+    "difficulty": "medium",
+    "written_solution": "For each color that appears exactly twice as a diagonal pair of opposite corners, draw the full axis-aligned rectangle border connecting those two corners in that same color.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (rect-border a b)\n      (let* ((r1 (min (first a) (first b)))\n             (r2 (max (first a) (first b)))\n             (c1 (min (second a) (second b)))\n             (c2 (max (second a) (second b))))\n        (filter (lambda (p) (or (= (first p) r1) (= (first p) r2)\n                                (= (second p) c1) (= (second p) c2)))\n                (positions-in-rect r1 c1 r2 c2))))\n    (for/fold ([out g]) ([color (in-list (remove-duplicates (map third (filter (lambda (cell) (not (= (third cell) 0))) (grid-cells g)))))])\n      (let ((pts (find-color g color)))\n        (if (and (= (length pts) 2)\n                 (not (= (first (first pts)) (first (second pts))))\n                 (not (= (second (first pts)) (second (second pts)))))\n            (paint-cells out (rect-border (first pts) (second pts)) color)\n            out)))))"
+  },
+  {
+    "id": "M90",
+    "name": "Recolor the component with the unique vertical-symmetry status",
+    "difficulty": "medium",
+    "written_solution": "All blue(1) components are compared by vertical reflection after normalization. Exactly one component disagrees with the others in whether it is vertically symmetric. Recolor that odd-one-out component to red(2).",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (cell<? a b)\n      (or (< (first a) (first b))\n          (and (= (first a) (first b)) (< (second a) (second b)))))\n    (define (norm cells) (sort (normalize-cells cells) cell<?))\n    (define (reflect-v cells)\n      (let* ((s (norm cells))\n             (w (+ 1 (apply max (map second s)))))\n        (norm (map (lambda (p) (list (first p) (- w 1 (second p)))) s))))\n    (define comps (filter (lambda (o) (= (obj-color o) 1)) (objects g 0)))\n    (define flags (map (lambda (obj) (equal? (norm (obj-cells obj)) (reflect-v (obj-cells obj)))) comps))\n    (define true-count (count-where (lambda (v) v) flags))\n    (define false-count (- (length flags) true-count))\n    (if (and (> true-count 0) (> false-count 0) (or (= true-count 1) (= false-count 1)))\n        (let* ((target-flag (= true-count 1))\n               (pairs (map list comps flags))\n               (target (first (first (filter (lambda (p) (equal? (second p) target-flag)) pairs)))))\n          (paint-cells g (obj-cells target) 2))\n        g)))"
+  },
+  {
+    "id": "M91",
+    "name": "Fill each blank cell with the nearer seed color",
+    "difficulty": "medium",
+    "written_solution": "There is one red(2) seed (2) and one green(3) seed (3). For every background cell, compare Manhattan distance to the two seeds. Fill the cell with the nearer seed's color; if the distances tie, leave it background.",
+    "program_solution": "(rule!\n  (let* ((s2 (first (find-color g 2)))\n         (s3 (first (find-color g 3))))\n    (grid-from-fn (rows g) (cols g)\n      (lambda (r c)\n        (if (not (= (at g r c) 0))\n            (at g r c)\n            (let ((d2 (+ (abs (- r (first s2))) (abs (- c (second s2)))))\n                  (d3 (+ (abs (- r (first s3))) (abs (- c (second s3))))))\n              (cond [(< d2 d3) 2] [(< d3 d2) 3] [else 0])))))))"
+  },
+  {
+    "id": "H85",
+    "name": "Mark the cells that lie on every shortest path through a maze",
+    "difficulty": "hard",
+    "written_solution": "Walls are gray(5); start is red(2); goal is green(3). Mark every cell that lies on at least one shortest path from start to goal through non-wall cells.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (same-pos? a b)\n      (and (= (fst a) (fst b)) (= (snd a) (snd b))))\n    (define (record-of p records)\n      (find-first (lambda (rec) (same-pos? p (first rec))) records))\n    (define (set-record-count p new-count records)\n      (map\n        (lambda (rec)\n          (if (same-pos? p (first rec))\n              (list (first rec) (second rec) new-count)\n              rec))\n        records))\n    (define (neighbors p)\n      (filter\n        (lambda (n)\n          (let ((nr (fst n)) (nc (snd n)))\n            (and (in-bounds? nr nc h w) (not (= (cell-at g nr nc) 5)))))\n        (map (lambda (d) (list (+ (fst p) (fst d)) (+ (snd p) (snd d)))) cardinal-deltas)))\n    (define (dist-count start)\n      (let loop ((queue (list start)) (records (list (list start 0 1))))\n        (if (empty? queue)\n            records\n            (let* ((cur (first queue))\n                   (restq (cdr queue))\n                   (cur-rec (record-of cur records))\n                   (cur-dist (second cur-rec))\n                   (cur-count (third cur-rec)))\n              (let update ((ns (neighbors cur)) (q restq) (recs records))\n                (if (empty? ns)\n                    (loop q recs)\n                    (let* ((n (first ns))\n                           (nd (+ cur-dist 1))\n                           (hit (record-of n recs)))\n                      (cond\n                        [(not hit)\n                         (update (cdr ns) (append q (list n)) (append recs (list (list n nd cur-count))))]\n                        [(= (second hit) nd)\n                         (update (cdr ns) q (set-record-count n (+ (third hit) cur-count) recs))]\n                        [else (update (cdr ns) q recs)]))))))))\n    (let* ((start (first (find-color g 2)))\n           (goal (first (find-color g 3)))\n           (from-start (dist-count start))\n           (from-goal (dist-count goal))\n           (goal-rec (record-of goal from-start)))\n      (if (not goal-rec)\n          g\n          (let ((D (second goal-rec))\n                (total (third goal-rec)))\n            (grid-from-fn h w\n              (lambda (r c)\n                (let* ((v (cell-at g r c))\n                       (p (list r c))\n                       (rs (record-of p from-start))\n                       (rg (record-of p from-goal)))\n                  (if (and (= v 0)\n                           rs rg (= (+ (second rs) (second rg)) D)\n                           (= (* (third rs) (third rg)) total))\n                      8\n                      v)))))))))",
+    "program_language": "racket"
+  },
+  {
+    "id": "H86",
+    "name": "Fill the band between nested frames selected by the control number",
+    "difficulty": "hard",
+    "written_solution": "The yellow(4) frames are nested. The control cell has value 1 or 2. If it is k, fill the band between the k-th frame from the outside and the next inner frame with cyan(8), leaving the frames themselves unchanged.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (frame-area obj) (* (obj-h obj) (obj-w obj)))\n    (define (frame? obj)\n      (and (= (obj-color obj) 4)\n           (> (obj-h obj) 2)\n           (> (obj-w obj) 2)\n           (= (obj-size obj) (- (* 2 (+ (obj-h obj) (obj-w obj))) 4))))\n    (define frames (sort (filter frame? (objects g 0)) (lambda (a b) (> (frame-area a) (frame-area b)))))\n    (define control (third (first (filter (lambda (cell) (member? (third cell) (list 1 2))) (grid-cells g)))))\n    (define outer (nth frames (- control 1)))\n    (define inner (nth frames control))\n    (define (strictly-inside? obj r c)\n      (and (> r (obj-r1 obj)) (< r (obj-r2 obj)) (> c (obj-c1 obj)) (< c (obj-c2 obj))))\n    (define (inside-bbox? obj r c)\n      (and (>= r (obj-r1 obj)) (<= r (obj-r2 obj)) (>= c (obj-c1 obj)) (<= c (obj-c2 obj))))\n    (grid-from-fn h w\n      (lambda (r c)\n        (if (and (= (cell-at g r c) 0)\n                 (strictly-inside? outer r c)\n                 (not (inside-bbox? inner r c)))\n            8\n            (cell-at g r c))))))",
+    "program_language": "racket"
+  },
+  {
+    "id": "H87",
+    "name": "Stamp the intersection of two transformed copies of a source shape",
+    "difficulty": "hard",
+    "written_solution": "The source shape is cyan(8). Two control cells with values blue(1)..yellow(4) specify two transforms: blue(1) → identity, red(2) → 90° clockwise, green(3) → flip vertical, yellow(4) → flip horizontal. Apply both transforms to the normalized source shape and stamp only the cells that the two transformed copies share, using red(2), at the maroon(9) anchor cell as the top-left origin.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define source (first (filter (lambda (obj) (= (obj-color obj) 8)) (objects g 0))))\n    (define shape (normalize-cells (obj-cells source)))\n    (define codes (map third (filter (lambda (cell) (member? (third cell) (list 1 2 3 4))) (grid-cells g))))\n    (define anchor (first (find-color g 9)))\n    (define (flip-cells-ud cells)\n      (normalize-cells (map (lambda (p) (list (- (fst p)) (snd p))) cells)))\n    (define (transform code cells)\n      (cond\n        [(= code 1) (normalize-cells cells)]\n        [(= code 2) (normalize-cells (rotate-cells-cw cells))]\n        [(= code 3) (normalize-cells (flip-cells-lr cells))]\n        [else (flip-cells-ud cells)]))\n    (define (same-pos? a b)\n      (and (= (fst a) (fst b)) (= (snd a) (snd b))))\n    (define (pos-in? p cells)\n      (any? (lambda (q) (same-pos? p q)) cells))\n    (define a (transform (first codes) shape))\n    (define b (transform (second codes) shape))\n    (define overlap (filter (lambda (p) (pos-in? p b)) a))\n    (define stamp-cells\n      (map (lambda (p) (list (+ (fst anchor) (fst p)) (+ (snd anchor) (snd p)))) overlap))\n    (paint-cells g stamp-cells 2)))",
+    "program_language": "racket"
+  },
+  {
+    "id": "H88",
+    "name": "Mark wall-constrained equidistant cells between two seeds",
+    "difficulty": "hard",
+    "written_solution": "Walls are gray(5); seeds are 2 and 3. Using shortest-path distance through non-wall cells, mark every background cell whose distance to the two seeds is equal with cyan(8).",
+    "program_solution": "(rule!\n  (let* ((a (first (find-color g 2)))\n         (b (first (find-color g 3))))\n    (define (dist-from start)\n      (define dist (make-hash))\n      (define queue (list (cons (first start) (second start))))\n      (hash-set! dist (first queue) 0)\n      (let bfs ([step 0])\n        (unless (empty? queue)\n          (let ((cur (first queue)))\n            (set! queue (rest queue))\n            (for ([d (in-list cardinal-deltas)])\n              (let ((nr (+ (car cur) (first d)))\n                    (nc (+ (cdr cur) (second d))))\n                (when (and (in-bounds? nr nc (rows g) (cols g))\n                           (not (= (at g nr nc) 5))\n                           (not (hash-has-key? dist (cons nr nc))))\n                  (hash-set! dist (cons nr nc) (+ (hash-ref dist cur) 1))\n                  (set! queue (append queue (list (cons nr nc))))))))\n          (bfs (+ step 1))))\n      dist)\n    (define da (dist-from a))\n    (define db (dist-from b))\n    (grid-from-fn (rows g) (cols g)\n      (lambda (r c)\n        (if (and (= (at g r c) 0)\n                 (hash-has-key? da (cons r c))\n                 (hash-has-key? db (cons r c))\n                 (= (hash-ref da (cons r c)) (hash-ref db (cons r c))))\n            8\n            (at g r c))))))"
+  },
+  {
+    "id": "H89",
+    "name": "Translate a shape by the sum of two independent vectors",
+    "difficulty": "hard",
+    "written_solution": "The source shape is blue(1). The vector from red(2) to green(3) is one motion, and the vector from yellow(4) to magenta(6) is another. Add those two vectors, then stamp a translated copy of the blue(1) shape in cyan(8) using the summed motion. Keep the original shape and markers.",
+    "program_solution": "(rule!\n  (let* ((shape (first (filter (lambda (o) (= (obj-color o) 1)) (objects g 0))))\n         (p2 (first (find-color g 2)))\n         (p3 (first (find-color g 3)))\n         (p4 (first (find-color g 4)))\n         (p6 (first (find-color g 6)))\n         (dr (+ (- (first p3) (first p2)) (- (first p6) (first p4))))\n         (dc (+ (- (second p3) (second p2)) (- (second p6) (second p4)))))\n    (foldl (lambda (p out)\n             (let ((nr (+ (first p) dr))\n                   (nc (+ (second p) dc)))\n               (if (in-bounds? nr nc (rows g) (cols g))\n                   (set-cell out nr nc 8)\n                   out)))\n           g\n           (obj-cells shape))))"
+  },
+  {
+    "id": "H90",
+    "name": "Recolor every instance of the shape class that appears an odd number of times",
+    "difficulty": "hard",
+    "written_solution": "Normalize all blue(1) connected components by translation only. One normalized shape class appears an odd number of times while the others appear an even number of times. Recolor every component in that odd-frequency class to red(2).",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (cell<? a b)\n      (or (< (first a) (first b))\n          (and (= (first a) (first b)) (< (second a) (second b)))))\n    (define (norm cells) (sort (normalize-cells cells) cell<?))\n    (define comps (filter (lambda (o) (= (obj-color o) 1)) (objects g 0)))\n    (for/fold ([out g]) ([obj (in-list comps)])\n      (let ((freq (count-where (lambda (other) (equal? (norm (obj-cells obj)) (norm (obj-cells other)))) comps)))\n        (if (= (modulo freq 2) 1)\n            (paint-cells out (obj-cells obj) 2)\n            out)))))"
+  },
+  {
+    "id": "H91",
+    "name": "Fill each chamber with the majority gate color on its boundary",
+    "difficulty": "hard",
+    "written_solution": "Each black(0) chamber is enclosed by nonzero cells. Look at the boundary cells in colors blue(1)..yellow(4) touching that chamber: if exactly one such color appears, fill the chamber with that color; otherwise leave it black(0).",
+    "program_solution": "(rule!\n  (let ((seen (make-hash))\n        (out g))\n    (define (mode-unique vals)\n      (let* ((colors (remove-duplicates vals))\n             (ranked (sort (map (lambda (color) (list color (count-where (lambda (v) (= v color)) vals))) colors)\n                           (lambda (a b) (> (second a) (second b))))))\n        (cond [(empty? ranked) #f]\n              [(= (length ranked) 1) (first (first ranked))]\n              [(> (second (first ranked)) (second (second ranked))) (first (first ranked))]\n              [else #f])))\n    (for* ([r (in-range (rows g))] [c (in-range (cols g))])\n      (when (and (not (hash-has-key? seen (cons r c))) (= (at g r c) 0))\n        (define queue (list (cons r c)))\n        (define chamber (list))\n        (define boundary (list))\n        (hash-set! seen (first queue) #t)\n        (let bfs ([step 0])\n          (unless (empty? queue)\n            (let ((cur (first queue)))\n              (set! queue (rest queue))\n              (set! chamber (cons (list (car cur) (cdr cur)) chamber))\n              (for ([d (in-list cardinal-deltas)])\n                (let ((nr (+ (car cur) (first d)))\n                      (nc (+ (cdr cur) (second d))))\n                  (when (in-bounds? nr nc (rows g) (cols g))\n                    (cond [(and (= (at g nr nc) 0) (not (hash-has-key? seen (cons nr nc))))\n                           (hash-set! seen (cons nr nc) #t)\n                           (set! queue (append queue (list (cons nr nc))))]\n                          [(and (>= (at g nr nc) 1) (<= (at g nr nc) 4))\n                           (set! boundary (cons (at g nr nc) boundary))])))))\n            (bfs (+ step 1))))\n        (let ((color (mode-unique boundary)))\n          (when color\n            (set! out (paint-cells out chamber color))))))\n    out))"
+  }
+]

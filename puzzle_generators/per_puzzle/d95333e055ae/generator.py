@@ -1,0 +1,125 @@
+"""Generator for arc_puzzle_bank_21_set24_bundle:hard_p02 — BFS path with portals.
+
+Rule: BFS from color-2 start to color-3 goal, avoiding color-8 walls. Colors
+4, 5, 6 form portal pairs (each color appears exactly 2× — entering one teleports
+to the other). Path painted color 7 in 0-cells along the route.
+
+Combinatorial axes (8): grid_h, grid_w, palette_kind, palette_size,
+position_bias, n_distinct_colors, density, texture.
+Degenerates: no_start (no color-2 → BFS has no source); no_goal
+(no color-3 → BFS has no destination); walls_block_path (walls
+fully separate start from goal).
+"""
+from __future__ import annotations
+
+from puzzle_generators.base import gen_ctx
+from puzzle_generators.helpers.grid import full_grid
+
+GENERATOR_ID = "d95333e055ae"
+VERSION = "1.1.0"
+TASK_ID = "d95333e055ae"
+
+SUMMARY = "Start (color 2), goal (color 3), 0-3 walls (color 8), optional portal pairs."
+
+INVARIANTS = [
+    "background is 0",
+    "exactly one color-2 start cell and one color-3 goal cell",
+    "0-3 sparse color-8 wall cells",
+    "0-1 optional portal pair (color 4) each at distinct positions",
+]
+
+PALETTE_KINDS = ("default", "warm", "cool", "varied")
+DEGENERATE_TEXTURES = ("no_start", "no_goal", "walls_block_path")
+HELPFUL_TEXTURES = PALETTE_KINDS
+
+AXES = {
+    "grid_h":            {"type": "int", "default": "rng 9..11", "valid": "8..14"},
+    "grid_w":            {"type": "int", "default": "rng 11..13", "valid": "10..16"},
+    "n_walls":           {"type": "int", "default": "rng 0..3", "valid": "0..5"},
+    "use_portal":        {"type": "int", "default": "rng 0..1", "valid": "0..1"},
+    "palette_kind":      {"type": "str", "default": "rng helpful",
+                          "valid": "|".join(PALETTE_KINDS)},
+    "palette_size":      {"type": "int", "default": "rng 3..4", "valid": "2..5"},
+    "position_bias":     {"type": "str", "default": "start_goal_with_walls",
+                          "valid": "start_goal_with_walls"},
+    "n_distinct_colors": {"type": "int", "default": "rng 3..4", "valid": "2..5"},
+    "density":           {"type": "str", "default": "sparse", "valid": "sparse"},
+    "texture":           {"type": "str", "default": "alias for palette_kind",
+                          "valid": "|".join(HELPFUL_TEXTURES + DEGENERATE_TEXTURES)},
+}
+
+
+def generate(seed, sample_index, *, difficulty=None, **overrides):
+    ctx = gen_ctx(seed=seed, sample_index=sample_index,
+                  version=VERSION, task_id=TASK_ID,
+                  difficulty=difficulty, overrides=overrides)
+    if overrides.get("texture") in DEGENERATE_TEXTURES:
+        return _draw_from_degenerate(overrides["texture"], None)
+    if difficulty == "easy":
+        h = ctx.draw_int("grid_h", 9, 9)
+        w = ctx.draw_int("grid_w", 11, 12)
+        n_walls = ctx.draw_int("n_walls", 0, 1)
+    elif difficulty == "hard":
+        h = ctx.draw_int("grid_h", 10, 11)
+        w = ctx.draw_int("grid_w", 12, 13)
+        n_walls = ctx.draw_int("n_walls", 2, 3)
+    else:
+        h = ctx.draw_int("grid_h", 9, 11)
+        w = ctx.draw_int("grid_w", 11, 13)
+        n_walls = ctx.draw_int("n_walls", 0, 3)
+    use_portal = ctx.draw_int("use_portal", 0, 1)
+    rng = ctx.draw_rng("layout")
+
+    for outer in range(40):
+        g = full_grid(h, w, 0)
+        sr = rng.randint(0, h - 1); sc = rng.randint(0, w - 1)
+        g[sr][sc] = 2
+        for _ in range(120):
+            gr = rng.randint(0, h - 1); gc = rng.randint(0, w - 1)
+            if (gr, gc) == (sr, sc): continue
+            if abs(gr - sr) + abs(gc - sc) < 4: continue
+            g[gr][gc] = 3
+            break
+        else:
+            continue
+        for _ in range(n_walls):
+            for _t in range(40):
+                r = rng.randint(0, h - 1); c = rng.randint(0, w - 1)
+                if g[r][c] != 0: continue
+                if abs(r - sr) + abs(c - sc) < 2: continue
+                if abs(r - gr) + abs(c - gc) < 2: continue
+                g[r][c] = 8
+                break
+        if use_portal:
+            placed_p = 0
+            portal_color = 4
+            while placed_p < 2:
+                for _t in range(40):
+                    r = rng.randint(0, h - 1); c = rng.randint(0, w - 1)
+                    if g[r][c] != 0: continue
+                    g[r][c] = portal_color
+                    placed_p += 1
+                    break
+                else:
+                    break
+        return g
+    raise ValueError("could not realize set24 p02 layout")
+
+
+def _draw_from_degenerate(name, rng):
+    h, w = 10, 12
+    g = full_grid(h, w, 0)
+    if name == "no_start":
+        g[6][10] = 3
+        g[3][5] = 8; g[7][6] = 8
+        return g
+    if name == "no_goal":
+        g[2][1] = 2
+        g[3][5] = 8; g[7][6] = 8
+        return g
+    if name == "walls_block_path":
+        g[2][1] = 2; g[6][10] = 3
+        for r in range(h):
+            g[r][6] = 8
+        return g
+    return g

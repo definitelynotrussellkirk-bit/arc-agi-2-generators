@@ -1,0 +1,393 @@
+[
+  {
+    "id": "easy_01_exact_horizontal_triples",
+    "title": "Exact Horizontal Triples",
+    "difficulty": "easy",
+    "skills": [
+      "run detection",
+      "exact length",
+      "same-size recolor"
+    ],
+    "written_solution": "Recolor every row segment of red(2) cells of exact length 3 to orange(7). Leave shorter and longer red(2) runs unchanged.",
+    "solver_name": "solve_easy_01_exact_horizontal_triples",
+    "scaffold": [
+      "Ignore all non-red cells.",
+      "Scan each row for contiguous red runs.",
+      "Only recolor runs whose length is exactly 3."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (v1-run-end-row grid r c color) (let loop ((cc c)) (if (and (< (+ cc 1) (cols grid)) (= (at grid r (+ cc 1)) color)) (loop (+ cc 1)) cc))) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range (cols g)))) (if (and (= (at g r c) 2) (or (= c 0) (not (= (at g r (- c 1)) 2)))) (let ((end (v1-run-end-row g r c 2))) (if (= (+ 1 (- end c)) 3) (paint-cells out (map (lambda (cc) (list r cc)) (range c (+ end 1))) 7) out)) out))))"
+  },
+  {
+    "id": "easy_02_frame_2x2_blocks",
+    "title": "Frame the 2x2 Blocks",
+    "difficulty": "easy",
+    "skills": [
+      "2x2 object detection",
+      "border drawing"
+    ],
+    "written_solution": "Find each isolated 2x2 green(3) block and draw a one-cell gray(5) frame around it, keeping the green(3) block unchanged.",
+    "solver_name": "solve_easy_02_frame_2x2_blocks",
+    "scaffold": [
+      "Find every 2x2 all-green block.",
+      "Treat each block's bounding box as fixed.",
+      "Add a one-cell outer border on the surrounding background."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (- (rows g) 1))) (c (in-range (- (cols g) 1)))) (if (and (= (at g r c) 3) (= (at g (+ r 1) c) 3) (= (at g r (+ c 1)) 3) (= (at g (+ r 1) (+ c 1)) 3)) (for*/fold ((acc out)) ((rr (in-range (- r 1) (+ r 3))) (cc (in-range (- c 1) (+ c 3)))) (if (and (in-bounds? rr cc (rows g) (cols g)) (not (and (<= r rr (+ r 1)) (<= c cc (+ c 1)))) (= (at acc rr cc) 0)) (set-cell acc rr cc 5) acc)) out))))"
+  },
+  {
+    "id": "easy_03_recolor_L_by_key",
+    "title": "Keyed L-Triomino Recolor",
+    "difficulty": "easy",
+    "skills": [
+      "shape detection",
+      "singleton key",
+      "recolor"
+    ],
+    "written_solution": "the unique non-3 color cell is the key color. Recolor every green(3) L-triomino to that key color, and leave the key cell in place.",
+    "solver_name": "solve_easy_03_recolor_L_by_key",
+    "scaffold": [
+      "First identify the singleton key color.",
+      "Then segment the green components.",
+      "Recolor only components that are size 3 and fit a 2x2 box."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-colors-reading grid) (remove-duplicates (filter (lambda (v) (not (= v 0))) (map (lambda (p) (at grid (first p) (second p))) (grid-positions grid))))) (define (v3-l-triomino? obj) (let ((bb (obj-bbox obj))) (and (= (obj-size obj) 3) (= (- (third bb) (first bb)) 1) (= (- (fourth bb) (second bb)) 1)))) (let ((key (first (filter (lambda (color) (and (not (= color 3)) (= (length (find-color g color)) 1))) (e8b-colors-reading g))))) (for/fold ((out g)) ((obj (in-list (filter (lambda (obj) (= (obj-color obj) 3)) (objects g 0))))) (if (v3-l-triomino? obj) (paint-cells out (obj-cells obj) key) out)))))"
+  },
+  {
+    "id": "easy_04_intersections_from_markers",
+    "title": "Border Marker Intersections",
+    "difficulty": "easy",
+    "skills": [
+      "row-column composition",
+      "border markers"
+    ],
+    "written_solution": "Red(2) markers in the left border select rows. Blue(1) markers in the top border select columns. Put yellow(4) cells at every selected row/column intersection.",
+    "solver_name": "solve_easy_04_intersections_from_markers",
+    "scaffold": [
+      "Read selected rows from the left edge.",
+      "Read selected columns from the top edge.",
+      "Combine them by Cartesian product."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (let ((rs (filter (lambda (r) (= (at g r 0) 2)) (range 1 (rows g)))) (cs (filter (lambda (c) (= (at g 0 c) 1)) (range 1 (cols g))))) (for*/fold ((out g)) ((r (in-list rs)) (c (in-list cs))) (if (= (at out r c) 0) (set-cell out r c 4) out)))))"
+  },
+  {
+    "id": "easy_05_complete_rectangle_borders_from_corners",
+    "title": "Complete Rectangle Borders",
+    "difficulty": "easy",
+    "skills": [
+      "corner detection",
+      "rectangle completion"
+    ],
+    "written_solution": "Each set of four same-colored corner dots defines an axis-aligned rectangle. Draw the full rectangle border in that same color.",
+    "solver_name": "solve_easy_05_complete_rectangle_borders_from_corners",
+    "scaffold": [
+      "Group corner dots by color.",
+      "For each color, look for four corners of an axis-aligned rectangle.",
+      "Draw just the border, not the filled interior."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-colors-reading grid) (remove-duplicates (filter (lambda (v) (not (= v 0))) (map (lambda (p) (at grid (first p) (second p))) (grid-positions grid))))) (define (f14-border-cells r0 c0 r1 c1) (for*/list ((r (in-range r0 (+ r1 1))) (c (in-range c0 (+ c1 1))) #:when (or (= r r0) (= r r1) (= c c0) (= c c1))) (list r c))) (for/fold ((out g)) ((color (in-list (sort (e8b-colors-reading g) <)))) (let* ((cells (find-color g color)) (rs (sort (remove-duplicates (map first cells)) <)) (cs (sort (remove-duplicates (map second cells)) <))) (for*/fold ((acc out)) ((r1 (in-list rs)) (r2 (in-list rs)) (c1 (in-list cs)) (c2 (in-list cs)) #:when (and (< r1 r2) (< c1 c2))) (let ((corners (list (list r1 c1) (list r1 c2) (list r2 c1) (list r2 c2)))) (if (all? (lambda (p) (member? p cells)) corners) (paint-cells acc (f14-border-cells r1 c1 r2 c2) color) acc)))))))"
+  },
+  {
+    "id": "easy_06_mirror_object_across_bar",
+    "title": "Mirror Across the Guide Bar",
+    "difficulty": "easy",
+    "skills": [
+      "mirror symmetry",
+      "guide line",
+      "copy"
+    ],
+    "written_solution": "A full-height gray(5) vertical bar is the mirror axis. Copy every red(2) cell across the bar to the opposite side in cyan(8), keeping the original object and the bar.",
+    "solver_name": "solve_easy_06_mirror_object_across_bar",
+    "scaffold": [
+      "Locate the full-height vertical guide bar.",
+      "Measure each object's horizontal offset from the bar.",
+      "Copy the object to the opposite side using the mirrored offset."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (let ((bar-col (first (filter (lambda (c) (all? (lambda (r) (= (at g r c) 5)) (range (rows g)))) (range (cols g)))))) (for/fold ((out g)) ((p (in-list (find-color g 2)))) (let ((mc (- (* 2 bar-col) (second p)))) (if (and (in-bounds? (first p) mc (rows g) (cols g)) (= (at out (first p) mc) 0)) (set-cell out (first p) mc 8) out))))))"
+  },
+  {
+    "id": "easy_07_keep_largest_component_recolor",
+    "title": "Keep the Largest Component",
+    "difficulty": "easy",
+    "skills": [
+      "connected components",
+      "size comparison",
+      "selection"
+    ],
+    "written_solution": "Among all green(3) connected components, keep only the largest one and recolor it to maroon(9). Everything else becomes background.",
+    "solver_name": "solve_easy_07_keep_largest_component_recolor",
+    "scaffold": [
+      "Find all green connected components.",
+      "Compare their sizes.",
+      "Keep only the largest and recolor it."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-list< a b) (cond ((empty? a) #f) ((< (first a) (first b)) #t) ((> (first a) (first b)) #f) (else (e8b-list< (rest a) (rest b))))) (let ((largest (first (sort (filter (lambda (obj) (= (obj-color obj) 3)) (objects g 0)) (lambda (a b) (or (> (obj-size a) (obj-size b)) (and (= (obj-size a) (obj-size b)) (e8b-list< (obj-bbox a) (obj-bbox b))))))))) (paint-cells (empty-grid (rows g) (cols g) 0) (obj-cells largest) 9))))"
+  },
+  {
+    "id": "medium_01_connect_matching_endpoints",
+    "title": "Connect Matching Endpoints",
+    "difficulty": "medium",
+    "skills": [
+      "pair matching",
+      "line drawing"
+    ],
+    "written_solution": "For each color that appears exactly twice, connect the two endpoints with a straight horizontal or vertical line of that same color.",
+    "solver_name": "solve_medium_01_connect_matching_endpoints",
+    "scaffold": [
+      "Treat each color independently.",
+      "Each usable color appears exactly twice.",
+      "Fill the inclusive straight path between the two endpoints."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-colors-reading grid) (remove-duplicates (filter (lambda (v) (not (= v 0))) (map (lambda (p) (at grid (first p) (second p))) (grid-positions grid))))) (for/fold ((out g)) ((color (in-list (sort (e8b-colors-reading g) <)))) (let ((cells (find-color g color))) (if (= (length cells) 2) (let* ((a (first cells)) (b (second cells)) (r1 (first a)) (c1 (second a)) (r2 (first b)) (c2 (second b))) (cond ((= r1 r2) (paint-cells out (map (lambda (c) (list r1 c)) (range (min c1 c2) (+ (max c1 c2) 1))) color)) ((= c1 c2) (paint-cells out (map (lambda (r) (list r c1)) (range (min r1 r2) (+ (max r1 r2) 1))) color)) (else out))) out)))))"
+  },
+  {
+    "id": "medium_02_translate_object_by_vector",
+    "title": "Translate by Marker Vector",
+    "difficulty": "medium",
+    "skills": [
+      "vector extraction",
+      "object translation"
+    ],
+    "written_solution": "The blue(1) and red(2) markers define a translation vector from blue(1) to red(2). Move the green(3) object by that vector and draw the translated copy in cyan(8) on a background output grid.",
+    "solver_name": "solve_medium_02_translate_object_by_vector",
+    "scaffold": [
+      "Read the vector from marker 1 to marker 2.",
+      "Extract the green object as a set of coordinates.",
+      "Apply the same vector to every object cell."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (let* ((p1 (first (find-color g 1))) (p2 (first (find-color g 2))) (dr (- (first p2) (first p1))) (dc (- (second p2) (second p1)))) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((p (in-list (find-color g 3)))) (let ((rr (+ (first p) dr)) (cc (+ (second p) dc))) (if (in-bounds? rr cc (rows g) (cols g)) (set-cell out rr cc 8) out))))))"
+  },
+  {
+    "id": "medium_03_fill_keyed_rectangle_holes",
+    "title": "Fill the Keyed Rings",
+    "difficulty": "medium",
+    "skills": [
+      "color selection",
+      "ring detection",
+      "interior fill"
+    ],
+    "written_solution": "One color appears both as a singleton key and as one or more hollow rectangular rings. Fill the interiors of the rings of that keyed color with cyan(8), leaving other rings unchanged.",
+    "solver_name": "solve_medium_03_fill_keyed_rectangle_holes",
+    "scaffold": [
+      "Identify the color that appears both as a singleton key and as a ring.",
+      "Find the rectangular ring components of that color.",
+      "Fill only their interiors."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (f14-border-cells r0 c0 r1 c1) (for*/list ((r (in-range r0 (+ r1 1))) (c (in-range c0 (+ c1 1))) #:when (or (= r r0) (= r r1) (= c c0) (= c c1))) (list r c))) (define (v3-rect-border-good? grid bb color) (let ((r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb))) (and (>= (- r1 r0) 2) (>= (- c1 c0) 2) (all? (lambda (p) (= (at grid (first p) (second p)) color)) (f14-border-cells r0 c0 r1 c1))))) (let* ((objs (objects g 0)) (colors (remove-duplicates (map obj-color objs))) (key (first (filter (lambda (color) (let ((same (filter (lambda (obj) (= (obj-color obj) color)) objs))) (and (any? (lambda (obj) (= (obj-size obj) 1)) same) (any? (lambda (obj) (> (obj-size obj) 1)) same)))) colors)))) (for/fold ((out g)) ((obj (in-list (filter (lambda (obj) (and (= (obj-color obj) key) (> (obj-size obj) 1))) objs)))) (let ((bb (obj-bbox obj))) (if (v3-rect-border-good? g bb key) (for*/fold ((acc out)) ((r (in-range (+ (first bb) 1) (third bb))) (c (in-range (+ (second bb) 1) (fourth bb)))) (if (= (at acc r c) 0) (set-cell acc r c 8) acc)) out))))))"
+  },
+  {
+    "id": "medium_04_mark_bbox_corners",
+    "title": "Mark Bounding-Box Corners",
+    "difficulty": "medium",
+    "skills": [
+      "connected components",
+      "bounding boxes"
+    ],
+    "written_solution": "For each yellow(4) object, compute its bbox and mark the four corners of that box with blue(1). Keep the original object cells.",
+    "solver_name": "solve_medium_04_mark_bbox_corners",
+    "scaffold": [
+      "Segment the green objects first.",
+      "Compute each object's bounding box.",
+      "Write four corner markers per box."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (for/fold ((out g)) ((obj (in-list (filter (lambda (obj) (= (obj-color obj) 4)) (objects g 0))))) (let ((bb (obj-bbox obj))) (paint-cells out (list (list (first bb) (second bb)) (list (first bb) (fourth bb)) (list (third bb) (second bb)) (list (third bb) (fourth bb))) 1)))))"
+  },
+  {
+    "id": "medium_05_stamp_exemplar_at_targets",
+    "title": "Stamp the Exemplar at Every Target",
+    "difficulty": "medium",
+    "skills": [
+      "template extraction",
+      "anchor-relative copy",
+      "multi-target stamping"
+    ],
+    "written_solution": "The exemplar is the unique connected pattern containing a blue(1) anchor plus green(3) body cells. Copy the green(3) body cells to every other blue(1) target anchor using the same offsets.",
+    "solver_name": "solve_medium_05_stamp_exemplar_at_targets",
+    "scaffold": [
+      "Find the one connected pattern that contains both the anchor and body.",
+      "Measure body-cell offsets relative to the anchor.",
+      "Replay those offsets at every other anchor."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define dirs4 (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (define (t10-open-region grid start walls) (let bfs ((queue (list start)) (seen (list start)) (cells (list))) (if (empty? queue) (reverse cells) (let* ((cur (first queue)) (nbrs (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (not (member? p seen)) (not (member? (at grid (first p) (second p)) walls)))) (map (lambda (d) (list (+ (first cur) (first d)) (+ (second cur) (second d)))) dirs4)))) (bfs (append (rest queue) nbrs) (append seen nbrs) (cons cur cells)))))) (define (v3-first-exemplar grid) (let* ((positions (filter (lambda (p) (not (= (at grid (first p) (second p)) 0))) (grid-positions grid))) (hits (filter (lambda (entry) (let ((vals (map (lambda (p) (at grid (first p) (second p))) (second entry)))) (and (member? 1 vals) (member? 3 vals)))) (map (lambda (p) (list p (t10-open-region grid p (list 0)))) positions))) (region (second (first hits))) (anchor (first (filter (lambda (p) (= (at grid (first p) (second p)) 1)) region))) (offsets (map (lambda (p) (list (- (first p) (first anchor)) (- (second p) (second anchor)))) (filter (lambda (p) (= (at grid (first p) (second p)) 3)) region)))) (list anchor offsets))) (let* ((info (v3-first-exemplar g)) (anchor (first info)) (offsets (second info)) (targets (filter (lambda (p) (not (equal? p anchor))) (find-color g 1)))) (for/fold ((out g)) ((target (in-list targets))) (for/fold ((acc out)) ((off (in-list offsets))) (let ((rr (+ (first target) (first off))) (cc (+ (second target) (second off)))) (if (and (in-bounds? rr cc (rows g) (cols g)) (= (at acc rr cc) 0)) (set-cell acc rr cc 3) acc)))))))"
+  },
+  {
+    "id": "medium_06_recolor_border_touching_objects",
+    "title": "Recolor Border-Touching Objects",
+    "difficulty": "medium",
+    "skills": [
+      "connected components",
+      "border relation"
+    ],
+    "written_solution": "Find all yellow(4) objects. Recolor the ones that touch any grid border to red(2); leave interior yellow(4) objects unchanged.",
+    "solver_name": "solve_medium_06_recolor_border_touching_objects",
+    "scaffold": [
+      "Segment the green objects.",
+      "Ask whether any cell of an object touches the outer frame.",
+      "Recolor only those touching components."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (for/fold ((out g)) ((obj (in-list (filter (lambda (obj) (= (obj-color obj) 4)) (objects g 0))))) (if (any? (lambda (p) (or (= (first p) 0) (= (second p) 0) (= (first p) (- (rows g) 1)) (= (second p) (- (cols g) 1)))) (obj-cells obj)) (paint-cells out (obj-cells obj) 2) out))))"
+  },
+  {
+    "id": "medium_07_raycast_cross_from_centers",
+    "title": "Ray-Cast Crosses",
+    "difficulty": "medium",
+    "skills": [
+      "ray casting",
+      "blockers",
+      "grid growth"
+    ],
+    "written_solution": "From each magenta(6) center, extend magenta(6) rays up, down, left, and right through background cells until a gray(5) blocker or the edge stops the ray.",
+    "solver_name": "solve_medium_07_raycast_cross_from_centers",
+    "scaffold": [
+      "Start from each magenta center.",
+      "Shoot rays in four cardinal directions.",
+      "Stop each ray at a blocker or the grid edge."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define dirs4 (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (for/fold ((out g)) ((center (in-list (find-color g 6)))) (for/fold ((acc out)) ((d (in-list dirs4))) (let loop ((rr (+ (first center) (first d))) (cc (+ (second center) (second d))) (cur acc)) (if (and (in-bounds? rr cc (rows g) (cols g)) (not (= (at g rr cc) 5))) (loop (+ rr (first d)) (+ cc (second d)) (set-cell cur rr cc 6)) cur))))))"
+  },
+  {
+    "id": "hard_01_rotate_exemplar_by_target_color",
+    "title": "Rotate the Exemplar by Target Color",
+    "difficulty": "hard",
+    "skills": [
+      "template extraction",
+      "rotation",
+      "color-coded control"
+    ],
+    "written_solution": "The exemplar is the connected shape with a blue(1) anchor and green(3) body. Copy its green(3) body to each target marker: red(2) → identity, yellow(4) → 90° clockwise, magenta(6) → 180°, cyan(8) → 90° counter-clockwise.",
+    "solver_name": "solve_hard_01_rotate_exemplar_by_target_color",
+    "scaffold": [
+      "Extract the exemplar as anchor plus relative body offsets.",
+      "Decode target-marker color into a rotation amount.",
+      "Rotate the offsets before stamping them at each target."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define dirs4 (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (define (t10-alist-ref pairs key default) (let ((hits (filter (lambda (p) (= (first p) key)) pairs))) (if (empty? hits) default (second (first hits))))) (define (t10-open-region grid start walls) (let bfs ((queue (list start)) (seen (list start)) (cells (list))) (if (empty? queue) (reverse cells) (let* ((cur (first queue)) (nbrs (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (not (member? p seen)) (not (member? (at grid (first p) (second p)) walls)))) (map (lambda (d) (list (+ (first cur) (first d)) (+ (second cur) (second d)))) dirs4)))) (bfs (append (rest queue) nbrs) (append seen nbrs) (cons cur cells)))))) (define (v3-rotate-raw offsets k) (let loop ((remaining offsets) (out (list))) (if (empty? remaining) (reverse out) (let* ((p (first remaining)) (rot (let rotate-one ((rr (first p)) (cc (second p)) (n (modulo k 4))) (if (= n 0) (list rr cc) (rotate-one cc (- rr) (- n 1)))))) (loop (rest remaining) (cons rot out)))))) (define (v3-first-exemplar grid) (let* ((positions (filter (lambda (p) (not (= (at grid (first p) (second p)) 0))) (grid-positions grid))) (hits (filter (lambda (entry) (let ((vals (map (lambda (p) (at grid (first p) (second p))) (second entry)))) (and (member? 1 vals) (member? 3 vals)))) (map (lambda (p) (list p (t10-open-region grid p (list 0)))) positions))) (region (second (first hits))) (anchor (first (filter (lambda (p) (= (at grid (first p) (second p)) 1)) region))) (offsets (map (lambda (p) (list (- (first p) (first anchor)) (- (second p) (second anchor)))) (filter (lambda (p) (= (at grid (first p) (second p)) 3)) region)))) (list anchor offsets))) (let* ((info (v3-first-exemplar g)) (anchor (first info)) (offsets (second info)) (rot-map (list (list 2 0) (list 4 1) (list 6 2) (list 8 3))) (targets (filter (lambda (p) (and (not (equal? (list (first p) (second p)) anchor)) (member? (third p) (map first rot-map)))) (for*/list ((r (in-range (rows g))) (c (in-range (cols g))) #:when (not (= (at g r c) 0))) (list r c (at g r c)))))) (for/fold ((out g)) ((target (in-list targets))) (let ((k (t10-alist-ref rot-map (third target) 0))) (for/fold ((acc out)) ((off (in-list (v3-rotate-raw offsets k)))) (let ((rr (+ (first target) (first off))) (cc (+ (second target) (second off)))) (if (and (in-bounds? rr cc (rows g) (cols g)) (= (at acc rr cc) 0)) (set-cell acc rr cc 3) acc))))))))"
+  },
+  {
+    "id": "hard_02_scale_smallest_object_2x",
+    "title": "Scale the Smallest Object 2x",
+    "difficulty": "hard",
+    "skills": [
+      "component selection",
+      "scaling"
+    ],
+    "written_solution": "Among all green(3) objects, choose the smallest component. Remove everything else and draw a 2x scaled version of that smallest object in cyan(8), anchored at the same top-left corner.",
+    "solver_name": "solve_hard_02_scale_smallest_object_2x",
+    "scaffold": [
+      "Find all green components and choose the smallest.",
+      "Normalize it to its top-left corner.",
+      "Replace each source cell by a 2x2 block at doubled coordinates."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-list< a b) (cond ((empty? a) #f) ((< (first a) (first b)) #t) ((> (first a) (first b)) #f) (else (e8b-list< (rest a) (rest b))))) (define (v1-normalized-offsets obj) (let* ((bb (obj-bbox obj)) (r0 (first bb)) (c0 (second bb))) (sort (map (lambda (p) (list (- (first p) r0) (- (second p) c0))) (obj-cells obj)) e8b-list<))) (let* ((smallest (first (sort (filter (lambda (obj) (= (obj-color obj) 3)) (objects g 0)) (lambda (a b) (or (< (obj-size a) (obj-size b)) (and (= (obj-size a) (obj-size b)) (e8b-list< (obj-bbox a) (obj-bbox b)))))))) (bb (obj-bbox smallest)) (r0 (first bb)) (c0 (second bb))) (for*/fold ((out (empty-grid (rows g) (cols g) 0))) ((p (in-list (v1-normalized-offsets smallest))) (dr (in-range 2)) (dc (in-range 2))) (let ((rr (+ r0 (* 2 (first p)) dr)) (cc (+ c0 (* 2 (second p)) dc))) (if (in-bounds? rr cc (rows g) (cols g)) (set-cell out rr cc 8) out))))))"
+  },
+  {
+    "id": "hard_03_dual_key_select_and_recolor",
+    "title": "Dual-Key Shape and Color Selection",
+    "difficulty": "hard",
+    "skills": [
+      "two control signals",
+      "shape classification",
+      "conditional recolor"
+    ],
+    "written_solution": "A singleton shape key chooses which family of green(3) objects to recolor: blue(1) selects L-triominoes, yellow(4) selects plus-shapes. A singleton color key (2, 6, or 8) gives the new color. Recolor only the selected family to the color key.",
+    "solver_name": "solve_hard_03_dual_key_select_and_recolor",
+    "scaffold": [
+      "Read the shape key and the color key separately.",
+      "Classify each green component by shape family.",
+      "Recolor only the family named by the shape key."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-list< a b) (cond ((empty? a) #f) ((< (first a) (first b)) #t) ((> (first a) (first b)) #f) (else (e8b-list< (rest a) (rest b))))) (define (v1-normalized-offsets obj) (let* ((bb (obj-bbox obj)) (r0 (first bb)) (c0 (second bb))) (sort (map (lambda (p) (list (- (first p) r0) (- (second p) c0))) (obj-cells obj)) e8b-list<))) (define (v3-l-triomino? obj) (let ((bb (obj-bbox obj))) (and (= (obj-size obj) 3) (= (- (third bb) (first bb)) 1) (= (- (fourth bb) (second bb)) 1)))) (define (v3-plus5? obj) (equal? (v1-normalized-offsets obj) (list (list 0 1) (list 1 0) (list 1 1) (list 1 2) (list 2 1)))) (define (v3-first-color-by-count grid candidates) (let loop ((remaining candidates) (hit #f)) (if (empty? remaining) hit (let ((color (first remaining))) (loop (rest remaining) (if (= (length (find-color grid color)) 1) color hit)))))) (let ((color-key (v3-first-color-by-count g (list 2 6 8))) (shape-key (v3-first-color-by-count g (list 1 4)))) (for/fold ((out g)) ((obj (in-list (filter (lambda (obj) (= (obj-color obj) 3)) (objects g 0))))) (let ((family (cond ((v3-l-triomino? obj) 'L) ((v3-plus5? obj) 'PLUS) (else 'OTHER)))) (if (or (and (= shape-key 1) (equal? family 'L)) (and (= shape-key 4) (equal? family 'PLUS))) (paint-cells out (obj-cells obj) color-key) out))))))"
+  },
+  {
+    "id": "hard_04_row_col_intersections_within_bbox",
+    "title": "Intersections Only Inside the Frame",
+    "difficulty": "hard",
+    "skills": [
+      "global markers",
+      "bbox gating",
+      "multi-step composition"
+    ],
+    "written_solution": "Blue(1) top markers choose columns and red(2) left markers choose rows, but only intersections strictly inside the orange(7) rectangular frame are filled. Put cyan(8) at those valid intersections only.",
+    "solver_name": "solve_hard_04_row_col_intersections_within_bbox",
+    "scaffold": [
+      "Read candidate rows and columns from the border markers.",
+      "Find the interior of the gray frame.",
+      "Only keep row/column intersections that fall inside that interior."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (let* ((bb (bbox-of-cells (find-color g 7))) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb)) (rs (filter (lambda (r) (and (= (at g r 0) 2) (< r0 r) (< r r1))) (range 1 (rows g)))) (cs (filter (lambda (c) (and (= (at g 0 c) 1) (< c0 c) (< c c1))) (range 1 (cols g))))) (for*/fold ((out g)) ((r (in-list rs)) (c (in-list cs))) (if (= (at out r c) 0) (set-cell out r c 8) out)))))"
+  },
+  {
+    "id": "hard_05_symmetric_object_mirror",
+    "title": "Mirror Only the Symmetric Object",
+    "difficulty": "hard",
+    "skills": [
+      "property-based selection",
+      "symmetry",
+      "copy"
+    ],
+    "written_solution": "Several yellow(4) objects appear left of a full-height gray(5) guide bar. Exactly one of them is vertically symmetric within its own bbox. Mirror only that symmetric object across the guide bar in cyan(8).",
+    "solver_name": "solve_hard_05_symmetric_object_mirror",
+    "scaffold": [
+      "Test each left-side object for vertical symmetry within its own box.",
+      "Select the unique symmetric one.",
+      "Mirror only that object across the guide bar."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (nonzero-cells grid) (filter (lambda (p) (not (= (at grid (first p) (second p)) 0))) (grid-positions grid))) (define (crop-nonzero grid) (let ((cells (nonzero-cells grid))) (if (empty? cells) (list (list 0)) (let* ((bb (bbox-of-cells cells))) (subgrid grid (first bb) (second bb) (third bb) (fourth bb)))))) (define (f14b-binary-crop grid) (crop-nonzero (grid-from-fn (rows grid) (cols grid) (lambda (r c) (if (= (at grid r c) 0) 0 1))))) (define (t12b-vertical-symmetric-grid? grid) (equal? (f14b-binary-crop grid) (f14b-binary-crop (flip-lr grid)))) (define (v0-object-crop grid obj) (let* ((bb (obj-bbox obj)) (r0 (first bb)) (c0 (second bb)) (h (+ 1 (- (third bb) r0))) (w (+ 1 (- (fourth bb) c0)))) (for/fold ((out (empty-grid h w 0))) ((p (in-list (obj-cells obj)))) (set-cell out (- (first p) r0) (- (second p) c0) (at grid (first p) (second p)))))) (let* ((bar-col (first (filter (lambda (c) (all? (lambda (r) (= (at g r c) 5)) (range (rows g)))) (range (cols g))))) (target (first (filter (lambda (obj) (t12b-vertical-symmetric-grid? (v0-object-crop g obj))) (filter (lambda (obj) (= (obj-color obj) 4)) (objects g 0)))))) (for/fold ((out g)) ((p (in-list (obj-cells target)))) (let ((mc (- (* 2 bar-col) (second p)))) (if (and (in-bounds? (first p) mc (rows g) (cols g)) (= (at out (first p) mc) 0)) (set-cell out (first p) mc 8) out))))))"
+  },
+  {
+    "id": "hard_06_rank_components_by_area_recolor",
+    "title": "Rank Components by Area",
+    "difficulty": "hard",
+    "skills": [
+      "connected components",
+      "sorting",
+      "rank-based recolor"
+    ],
+    "written_solution": "There are exactly three green(3) connected components. Recolor the smallest one to red(2), the middle one to yellow(4), and the largest one to magenta(6).",
+    "solver_name": "solve_hard_06_rank_components_by_area_recolor",
+    "scaffold": [
+      "Segment the three components.",
+      "Sort them by area from smallest to largest.",
+      "Apply a different target color to each rank."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-list< a b) (cond ((empty? a) #f) ((< (first a) (first b)) #t) ((> (first a) (first b)) #f) (else (e8b-list< (rest a) (rest b))))) (let ((ordered (sort (filter (lambda (obj) (= (obj-color obj) 3)) (objects g 0)) (lambda (a b) (or (< (obj-size a) (obj-size b)) (and (= (obj-size a) (obj-size b)) (e8b-list< (obj-bbox a) (obj-bbox b)))))))) (for/fold ((out g)) ((obj (in-list ordered)) (color (in-list (list 2 4 6)))) (paint-cells out (obj-cells obj) color)))))"
+  },
+  {
+    "id": "hard_07_fill_ring_by_repeated_corner_color",
+    "title": "Fill Rings by the Repeated Corner Color",
+    "difficulty": "hard",
+    "skills": [
+      "counting",
+      "global key extraction",
+      "ring filling"
+    ],
+    "written_solution": "Look at the four corner marker colors. The color that appears most often is the fill color. Fill the interiors of all hollow green(3) rings with that repeated corner color, while keeping the rings and corner markers.",
+    "solver_name": "solve_hard_07_fill_ring_by_repeated_corner_color",
+    "scaffold": [
+      "Read the four corner-marker colors as a multiset.",
+      "Choose the color that occurs most often.",
+      "Use that as the fill for every hollow ring interior."
+    ],
+    "program_language": "python",
+    "program_solution": "(rule! (let ((dummy 0)) (define (f14-border-cells r0 c0 r1 c1) (for*/list ((r (in-range r0 (+ r1 1))) (c (in-range c0 (+ c1 1))) #:when (or (= r r0) (= r r1) (= c c0) (= c c1))) (list r c))) (define (v3-rect-border-good? grid bb color) (let ((r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb))) (and (>= (- r1 r0) 2) (>= (- c1 c0) 2) (all? (lambda (p) (= (at grid (first p) (second p)) color)) (f14-border-cells r0 c0 r1 c1))))) (let* ((corners (filter (lambda (v) (not (= v 0))) (list (at g 0 0) (at g 0 (- (cols g) 1)) (at g (- (rows g) 1) 0) (at g (- (rows g) 1) (- (cols g) 1))))) (fill-color (let loop ((remaining corners) (best (first corners)) (best-count -1)) (if (empty? remaining) best (let* ((color (first remaining)) (cnt (count-where (lambda (v) (= v color)) corners))) (if (> cnt best-count) (loop (rest remaining) color cnt) (loop (rest remaining) best best-count))))))) (for/fold ((out g)) ((obj (in-list (filter (lambda (obj) (= (obj-color obj) 3)) (objects g 0))))) (let ((bb (obj-bbox obj))) (if (v3-rect-border-good? g bb 3) (for*/fold ((acc out)) ((r (in-range (+ (first bb) 1) (third bb))) (c (in-range (+ (second bb) 1) (fourth bb)))) (if (= (at acc r c) 0) (set-cell acc r c fill-color) acc)) out))))))"
+  }
+]

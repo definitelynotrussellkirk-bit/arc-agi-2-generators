@@ -1,0 +1,338 @@
+[
+  {
+    "id": "easy_p01",
+    "difficulty": "easy",
+    "name": "Diagonal Agreement Fill",
+    "tags": [
+      "local",
+      "diagonal",
+      "completion"
+    ],
+    "written_rule": "If a black(0) cell has the same non-background color on all four diagonal neighbors, fill the center with that color. Leave everything else unchanged.",
+    "program_function": "solve_easy_p01",
+    "primitive_names": [
+      "diag_agreement_fill"
+    ],
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range 1 (- (rows g) 1))) (c (in-range 1 (- (cols g) 1)))) (let ((vals (list (at g (- r 1) (- c 1)) (at g (- r 1) (+ c 1)) (at g (+ r 1) (- c 1)) (at g (+ r 1) (+ c 1))))) (if (and (= (at g r c) 0) (not (= (first vals) 0)) (all? (lambda (v) (= v (first vals))) vals)) (set-cell out r c (first vals)) out)))))"
+  },
+  {
+    "id": "easy_p02",
+    "difficulty": "easy",
+    "name": "Rightward Shadow Cast",
+    "tags": [
+      "local",
+      "beam",
+      "same_size"
+    ],
+    "written_rule": "In each row, every nonzero cell paints its own color right through consecutive background cells, stopping just before the next nonzero cell or the border.",
+    "program_function": "solve_easy_p02",
+    "primitive_names": [
+      "right_shadow_cast"
+    ],
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range (cols g)))) (let ((v (at g r c))) (if (= v 0) out (let shadow ((cc (+ c 1)) (acc out)) (cond ((>= cc (cols g)) acc) ((not (= (at g r cc) 0)) acc) (else (shadow (+ cc 1) (set-cell acc r cc v))))))))))"
+  },
+  {
+    "id": "easy_p03",
+    "difficulty": "easy",
+    "name": "Cross-Core Filter",
+    "tags": [
+      "local",
+      "topology",
+      "filter"
+    ],
+    "written_rule": "Keep only the cells that have same-color neighbors directly above, below, left, and right. Turn every other cell to 0.",
+    "program_function": "solve_easy_p03",
+    "primitive_names": [
+      "cross_core_filter"
+    ],
+    "program_solution": "(rule! (let ((dummy 0)) (grid-from-fn (rows g) (cols g) (lambda (r c) (let ((v (at g r c))) (if (and (not (= v 0)) (> r 0) (< r (- (rows g) 1)) (> c 0) (< c (- (cols g) 1)) (= (at g (- r 1) c) v) (= (at g (+ r 1) c) v) (= (at g r (- c 1)) v) (= (at g r (+ c 1)) v)) v 0))))))"
+  },
+  {
+    "id": "easy_p04",
+    "difficulty": "easy",
+    "name": "Exact Two-Gap Bridge",
+    "tags": [
+      "local",
+      "interval",
+      "same_size"
+    ],
+    "written_rule": "Whenever two same-color cells in one row or one column are separated by exactly two background cells, fill those two background cells with that color.",
+    "program_function": "solve_easy_p04",
+    "primitive_names": [
+      "exact_two_gap_bridge"
+    ],
+    "program_solution": "(rule! (let ((dummy 0)) (let* ((h (rows g)) (w (cols g)) (after-rows (for*/fold ((out g)) ((r (in-range h)) (c (in-range 0 (- w 3)))) (let ((v (at g r c))) (if (and (not (= v 0)) (= (at g r (+ c 1)) 0) (= (at g r (+ c 2)) 0) (= (at g r (+ c 3)) v)) (set-cell (set-cell out r (+ c 1) v) r (+ c 2) v) out))))) (for*/fold ((out after-rows)) ((r (in-range 0 (- h 3))) (c (in-range w))) (let ((v (at g r c))) (if (and (not (= v 0)) (= (at g (+ r 1) c) 0) (= (at g (+ r 2) c) 0) (= (at g (+ r 3) c) v)) (set-cell (set-cell out (+ r 1) c v) (+ r 2) c v) out))))))"
+  },
+  {
+    "id": "easy_p05",
+    "difficulty": "easy",
+    "name": "Square Corner Bloom",
+    "tags": [
+      "local",
+      "shape",
+      "same_size"
+    ],
+    "written_rule": "For every solid monochrome 2x2 block, add one same-color cell on each of its four diagonal corners when those cells are inside the grid.",
+    "program_function": "solve_easy_p05",
+    "primitive_names": [
+      "square_corner_bloom"
+    ],
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range 0 (- (rows g) 1))) (c (in-range 0 (- (cols g) 1)))) (let ((v (at g r c))) (if (and (not (= v 0)) (= (at g r (+ c 1)) v) (= (at g (+ r 1) c) v) (= (at g (+ r 1) (+ c 1)) v)) (for/fold ((acc out)) ((d (in-list (list (list -1 -1) (list -1 2) (list 2 -1) (list 2 2))))) (let ((rr (+ r (first d))) (cc (+ c (second d)))) (if (and (in-bounds? rr cc (rows g) (cols g)) (= (at acc rr cc) 0)) (set-cell acc rr cc v) acc))) out)))))"
+  },
+  {
+    "id": "easy_p06",
+    "difficulty": "easy",
+    "name": "Knight Bloom",
+    "tags": [
+      "offset",
+      "local",
+      "same_size"
+    ],
+    "written_rule": "Each isolated nonzero seed keeps its own cell and also paints the eight knight-move positions around it with the same color.",
+    "program_function": "solve_easy_p06",
+    "primitive_names": [
+      "knight_bloom"
+    ],
+    "program_solution": "(rule! (let ((dummy 0)) (define knight-deltas (list (list -2 -1) (list -2 1) (list -1 -2) (list -1 2) (list 1 -2) (list 1 2) (list 2 -1) (list 2 1))) (define dir8-deltas (list (list -1 -1) (list -1 0) (list -1 1) (list 0 -1) (list 0 1) (list 1 -1) (list 1 0) (list 1 1))) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range (cols g)))) (let ((v (at g r c))) (if (and (not (= v 0)) (all? (lambda (d) (let ((rr (+ r (first d))) (cc (+ c (second d)))) (or (not (in-bounds? rr cc (rows g) (cols g))) (= (at g rr cc) 0)))) dir8-deltas)) (for/fold ((acc out)) ((d (in-list knight-deltas))) (let ((rr (+ r (first d))) (cc (+ c (second d)))) (if (and (in-bounds? rr cc (rows g) (cols g)) (= (at acc rr cc) 0)) (set-cell acc rr cc v) acc))) out)))))"
+  },
+  {
+    "id": "easy_p07",
+    "difficulty": "easy",
+    "name": "Barbell Rectangle Fill",
+    "tags": [
+      "shape",
+      "completion",
+      "same_size"
+    ],
+    "written_rule": "Whenever two same-color solid 2x2 blocks line up in the same rows or the same columns, fill the full rectangle that connects them.",
+    "program_function": "solve_easy_p07",
+    "primitive_names": [
+      "barbell_fill"
+    ],
+    "program_solution": "(rule! (let ((dummy 0)) (define (solid-2x2-blocks grid) (filter values (for*/list ((r (in-range 0 (- (rows grid) 1))) (c (in-range 0 (- (cols grid) 1)))) (let ((v (at grid r c))) (if (and (not (= v 0)) (= (at grid r (+ c 1)) v) (= (at grid (+ r 1) c) v) (= (at grid (+ r 1) (+ c 1)) v)) (list v r c) #f))))) (let ((blocks (solid-2x2-blocks g))) (for*/fold ((out g)) ((i (in-range (length blocks))) (j (in-range (+ i 1) (length blocks)))) (let* ((a (list-ref blocks i)) (b (list-ref blocks j)) (v1 (first a)) (r1 (second a)) (c1 (third a)) (v2 (first b)) (r2 (second b)) (c2 (third b))) (cond ((not (= v1 v2)) out) ((= r1 r2) (let ((left (min c1 c2)) (right (+ (max c1 c2) 1))) (for*/fold ((acc out)) ((rr (in-list (list r1 (+ r1 1)))) (cc (in-range left (+ right 1)))) (set-cell acc rr cc v1)))) ((= c1 c2) (let ((top (min r1 r2)) (bottom (+ (max r1 r2) 1))) (for*/fold ((acc out)) ((cc (in-list (list c1 (+ c1 1)))) (rr (in-range top (+ bottom 1)))) (set-cell acc rr cc v1)))) (else out)))))))"
+  },
+  {
+    "id": "medium_p01",
+    "difficulty": "medium",
+    "name": "Border-Touch Rank Recolor",
+    "tags": [
+      "object",
+      "classification",
+      "same_size"
+    ],
+    "written_rule": "Find each connected object and recolor the whole object by how many outer borders it touches: 0 borders -> blue(1), 1 border -> red(2), 2 borders -> green(3), and 3 or 4 borders -> yellow(4).",
+    "program_function": "solve_medium_p01",
+    "primitive_names": [
+      "border_touch_rank"
+    ],
+    "program_solution": "(rule! (let ((dummy 0)) (define (border-touch-count obj h w) (+ (if (any? (lambda (p) (= (first p) 0)) (obj-cells obj)) 1 0) (if (any? (lambda (p) (= (first p) (- h 1))) (obj-cells obj)) 1 0) (if (any? (lambda (p) (= (second p) 0)) (obj-cells obj)) 1 0) (if (any? (lambda (p) (= (second p) (- w 1))) (obj-cells obj)) 1 0))) (define (rank-touch-color n) (cond ((= n 0) 1) ((= n 1) 2) ((= n 2) 3) (else 4))) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((obj (in-list (objects g 0)))) (paint-cells out (obj-cells obj) (rank-touch-color (border-touch-count obj (rows g) (cols g)))))))"
+  },
+  {
+    "id": "medium_p02",
+    "difficulty": "medium",
+    "name": "Compartment Gravity",
+    "tags": [
+      "physics",
+      "walls",
+      "same_size"
+    ],
+    "written_rule": "Treat gray(5) cells as fixed vertical walls. In each column segment between walls, let the nonzero non-wall cells fall down as far as they can, preserving their top-to-bottom order.",
+    "program_function": "solve_medium_p02",
+    "primitive_names": [
+      "compartment_gravity"
+    ],
+    "program_solution": "(rule! (let ((dummy 0)) (for/fold ((out g)) ((c (in-range (cols g)))) (let column-loop ((start 0) (acc out)) (if (>= start (rows g)) acc (let find-end ((end start)) (if (and (< end (rows g)) (not (= (at g end c) 5))) (find-end (+ end 1)) (let* ((segment-rows (range start end)) (falling (filter (lambda (v) (not (= v 0))) (map (lambda (r) (at g r c)) segment-rows))) (nzeros (- (length segment-rows) (length falling))) (newseg (append (make-list nzeros 0) falling)) (filled (for/fold ((a acc)) ((r (in-list segment-rows)) (v (in-list newseg))) (set-cell a r c v))) (with-wall (if (< end (rows g)) (set-cell filled end c 5) filled))) (column-loop (+ end 1) with-wall)))))))))"
+  },
+  {
+    "id": "medium_p03",
+    "difficulty": "medium",
+    "name": "Pair Marker Rectangle Fill",
+    "tags": [
+      "marker",
+      "geometry",
+      "same_size"
+    ],
+    "written_rule": "For each color that appears exactly twice as isolated marker cells, fill the full axis-aligned rectangle spanning those two markers with that color.",
+    "program_function": "solve_medium_p03",
+    "primitive_names": [
+      "pair_bbox_fill"
+    ],
+    "program_solution": "(rule! (let ((dummy 0)) (define (positions-of-color grid color) (filter (lambda (p) (= (at grid (first p) (second p)) color)) (grid-positions grid))) (let ((colors (let collect ((ps (grid-positions g)) (seen (list)) (acc (list))) (if (empty? ps) (reverse acc) (let* ((p (first ps)) (v (at g (first p) (second p)))) (if (and (not (= v 0)) (not (member? v seen))) (collect (rest ps) (cons v seen) (cons v acc)) (collect (rest ps) seen acc))))))) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((color (in-list colors))) (let ((cells (positions-of-color g color))) (if (= (length cells) 2) (let* ((a (first cells)) (b (second cells)) (r0 (min (first a) (first b))) (r1 (max (first a) (first b))) (c0 (min (second a) (second b))) (c1 (max (second a) (second b)))) (for*/fold ((acc out)) ((r (in-range r0 (+ r1 1))) (c (in-range c0 (+ c1 1)))) (set-cell acc r c color))) out))))))"
+  },
+  {
+    "id": "medium_p04",
+    "difficulty": "medium",
+    "name": "Count-Key Object Crop",
+    "tags": [
+      "selection",
+      "crop",
+      "marker"
+    ],
+    "written_rule": "Count the red(2) markers in the top row. Ignore those markers, sort the remaining connected objects from left to right, and output the tight crop of the k-th object.",
+    "program_function": "solve_medium_p04",
+    "primitive_names": [
+      "count_key_crop"
+    ],
+    "program_solution": "(rule! (let ((dummy 0)) (define (obj-col-row< a b) (cond ((not (= (obj-c1 a) (obj-c1 b))) (< (obj-c1 a) (obj-c1 b))) (else (< (obj-r1 a) (obj-r1 b))))) (define (crop-obj grid obj) (let* ((r0 (obj-r1 obj)) (c0 (obj-c1 obj)) (h (obj-h obj)) (w (obj-w obj))) (for/fold ((out (empty-grid h w 0))) ((p (in-list (obj-cells obj)))) (set-cell out (- (first p) r0) (- (second p) c0) (at grid (first p) (second p)))))) (let* ((k (count-where (lambda (c) (= (at g 0 c) 2)) (range 0 (cols g)))) (gg (for/fold ((out g)) ((c (in-range (cols g)))) (if (= (at out 0 c) 2) (set-cell out 0 c 0) out))) (comps (sort (objects gg 0) obj-col-row<))) (if (empty? comps) (list (list 0)) (crop-obj gg (list-ref comps (- (min (max k 1) (length comps)) 1)))))))"
+  },
+  {
+    "id": "medium_p05",
+    "difficulty": "medium",
+    "name": "Nearest-Corner Dock",
+    "tags": [
+      "movement",
+      "geometry",
+      "same_size"
+    ],
+    "written_rule": "Take the unique object, crop it tightly, and place that crop into whichever canvas corner is nearest to the object's current center. The object keeps its shape and color.",
+    "program_function": "solve_medium_p05",
+    "primitive_names": [
+      "nearest_corner_dock"
+    ],
+    "program_solution": "(rule! (let ((dummy 0)) (define (crop-obj grid obj) (let* ((r0 (obj-r1 obj)) (c0 (obj-c1 obj)) (h (obj-h obj)) (w (obj-w obj))) (for/fold ((out (empty-grid h w 0))) ((p (in-list (obj-cells obj)))) (set-cell out (- (first p) r0) (- (second p) c0) (at grid (first p) (second p)))))) (define (paste-crop grid crop r0 c0) (for*/fold ((out grid)) ((r (in-range (rows crop))) (c (in-range (cols crop)))) (let ((v (at crop r c)) (rr (+ r0 r)) (cc (+ c0 c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows grid) (cols grid))) (set-cell out rr cc v) out)))) (define (square n) (* n n)) (define (corner-score pos ch cw cr2 cc2) (+ (square (- (+ (* 2 (first pos)) ch -1) cr2)) (square (- (+ (* 2 (second pos)) cw -1) cc2)))) (let* ((comps (objects g 0))) (if (empty? comps) g (let* ((obj (first comps)) (crop (crop-obj g obj)) (ch (rows crop)) (cw (cols crop)) (cr2 (+ (obj-r1 obj) (obj-r2 obj))) (cc2 (+ (obj-c1 obj) (obj-c2 obj))) (corners (list (list 0 0) (list 0 (- (cols g) cw)) (list (- (rows g) ch) 0) (list (- (rows g) ch) (- (cols g) cw)))) (target (first (sort corners (lambda (a b) (< (corner-score a ch cw cr2 cc2) (corner-score b ch cw cr2 cc2))))))) (paste-crop (empty-grid (rows g) (cols g) 0) crop (first target) (second target)))))))"
+  },
+  {
+    "id": "medium_p06",
+    "difficulty": "medium",
+    "name": "Largest-Object Mirror Crop",
+    "tags": [
+      "selection",
+      "transform",
+      "crop"
+    ],
+    "written_rule": "Select the largest connected object, crop it tightly, reflect that crop left-to-right, and output only the mirrored crop.",
+    "program_function": "solve_medium_p06",
+    "primitive_names": [
+      "largest_mirror_crop"
+    ],
+    "program_solution": "(rule! (let ((dummy 0)) (define (obj-largest< a b) (cond ((not (= (obj-size a) (obj-size b))) (> (obj-size a) (obj-size b))) ((not (= (obj-r1 a) (obj-r1 b))) (< (obj-r1 a) (obj-r1 b))) (else (< (obj-c1 a) (obj-c1 b))))) (define (crop-obj grid obj) (let* ((r0 (obj-r1 obj)) (c0 (obj-c1 obj)) (h (obj-h obj)) (w (obj-w obj))) (for/fold ((out (empty-grid h w 0))) ((p (in-list (obj-cells obj)))) (set-cell out (- (first p) r0) (- (second p) c0) (at grid (first p) (second p)))))) (let ((comps (objects g 0))) (if (empty? comps) (list (list 0)) (flip-lr (crop-obj g (first (sort comps obj-largest<))))))))"
+  },
+  {
+    "id": "medium_p07",
+    "difficulty": "medium",
+    "name": "Height Gallery",
+    "tags": [
+      "gallery",
+      "object",
+      "layout"
+    ],
+    "written_rule": "Crop every connected object, sort the crops by height from tallest to shortest (breaking ties by width), and lay them out left-to-right on one canvas, bottom-aligned, with a single background column between crops.",
+    "program_function": "solve_medium_p07",
+    "primitive_names": [
+      "height_gallery"
+    ],
+    "program_solution": "(rule! (let ((dummy 0)) (define (obj-height-gallery< a b) (let ((ha (obj-h a)) (hb (obj-h b)) (wa (obj-w a)) (wb (obj-w b))) (cond ((not (= ha hb)) (> ha hb)) ((not (= wa wb)) (> wa wb)) ((not (= (obj-c1 a) (obj-c1 b))) (< (obj-c1 a) (obj-c1 b))) (else (< (obj-r1 a) (obj-r1 b)))))) (define (crop-obj grid obj) (let* ((r0 (obj-r1 obj)) (c0 (obj-c1 obj)) (h (obj-h obj)) (w (obj-w obj))) (for/fold ((out (empty-grid h w 0))) ((p (in-list (obj-cells obj)))) (set-cell out (- (first p) r0) (- (second p) c0) (at grid (first p) (second p)))))) (define (paste-crop grid crop r0 c0) (for*/fold ((out grid)) ((r (in-range (rows crop))) (c (in-range (cols crop)))) (let ((v (at crop r c)) (rr (+ r0 r)) (cc (+ c0 c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows grid) (cols grid))) (set-cell out rr cc v) out)))) (define (gallery-bottom crops) (if (empty? crops) (list (list 0)) (let* ((h (apply max (map rows crops))) (w (+ (apply + (map cols crops)) (max 0 (- (length crops) 1))))) (let pack ((remaining crops) (left 0) (out (empty-grid h w 0))) (if (empty? remaining) out (let* ((crop (first remaining)) (top (- h (rows crop)))) (pack (rest remaining) (+ left (cols crop) 1) (paste-crop out crop top left)))))))) (let ((comps (objects g 0))) (if (empty? comps) (list (list 0)) (gallery-bottom (map (lambda (obj) (crop-obj g obj)) (sort comps obj-height-gallery<)))))))"
+  },
+  {
+    "id": "hard_p01",
+    "difficulty": "hard",
+    "name": "Mirror Laser Trace",
+    "tags": [
+      "beam",
+      "simulation",
+      "mirrors"
+    ],
+    "written_rule": "Launch the beam from the unique start cell on the border. It travels inward, reflects off / mirrors (3) and \\ mirrors (4), stops at walls (5) or when it leaves the grid, and paints every empty traversed cell with cyan(8).",
+    "program_function": "solve_hard_p01",
+    "primitive_names": [
+      "mirror_laser"
+    ],
+    "program_solution": "(rule! (let ((dummy 0)) (define (positions-of-color grid color) (filter (lambda (p) (= (at grid (first p) (second p)) color)) (grid-positions grid))) (let* ((starts (positions-of-color g 2))) (if (empty? starts) g (let* ((start (first starts)) (r0 (first start)) (c0 (second start)) (d (cond ((= c0 0) (list 0 1)) ((= c0 (- (cols g) 1)) (list 0 -1)) ((= r0 0) (list 1 0)) (else (list -1 0)))) (visited (make-hash))) (let trace ((r r0) (c c0) (dr (first d)) (dc (second d)) (out g)) (let ((rr (+ r dr)) (cc (+ c dc))) (cond ((not (in-bounds? rr cc (rows g) (cols g))) out) ((= (at g rr cc) 5) out) ((hash-has-key? visited (list rr cc dr dc)) out) (else (hash-set! visited (list rr cc dr dc) #t) (let ((v (at g rr cc)) (next-out (if (= (at g rr cc) 0) (set-cell out rr cc 8) out))) (cond ((= v 0) (trace rr cc dr dc next-out)) ((= v 3) (trace rr cc (- dc) (- dr) next-out)) ((= v 4) (trace rr cc dc dr next-out)) ((= v 2) (trace rr cc dr dc next-out)) (else next-out))))))))))))"
+  },
+  {
+    "id": "hard_p02",
+    "difficulty": "hard",
+    "name": "Dual-Key Door Shortest Path",
+    "tags": [
+      "pathfinding",
+      "stateful",
+      "maze"
+    ],
+    "written_rule": "Travel from the start(2) to the goal(3) by the shortest valid path. Walls are 4. Collect key 5 to open door 6, and key 7 to open door 8. Paint the traversed empty path cells with maroon(9).",
+    "program_function": "solve_hard_p02",
+    "primitive_names": [
+      "dual_key_door_bfs"
+    ],
+    "program_solution": "(rule! (let ((dummy 0)) (define (has-key1? keys) (or (= keys 1) (= keys 3))) (define (has-key2? keys) (or (= keys 2) (= keys 3))) (define (add-key1 keys) (if (has-key1? keys) keys (+ keys 1))) (define (add-key2 keys) (if (has-key2? keys) keys (+ keys 2))) (define (positions-of-color grid color) (filter (lambda (p) (= (at grid (first p) (second p)) color)) (grid-positions grid))) (let* ((start (first (positions-of-color g 2))) (goal (first (positions-of-color g 3))) (queue (list (list (first start) (second start) 0))) (prev (make-hash)) (end-state #f)) (define (can-enter? v keys) (and (not (= v 4)) (or (not (= v 6)) (has-key1? keys)) (or (not (= v 8)) (has-key2? keys)))) (hash-set! prev (first queue) #f) (define (search) (unless (or (empty? queue) end-state) (define cur (first queue)) (set! queue (rest queue)) (define r (first cur)) (define c (second cur)) (define keys (third cur)) (when (and (= r (first goal)) (= c (second goal))) (set! end-state cur)) (unless end-state (for ((d (in-list cardinal-deltas))) (define rr (+ r (first d))) (define cc (+ c (second d))) (when (and (in-bounds? rr cc (rows g) (cols g)) (can-enter? (at g rr cc) keys)) (define v (at g rr cc)) (define nk (cond ((= v 5) (add-key1 keys)) ((= v 7) (add-key2 keys)) (else keys))) (define st (list rr cc nk)) (when (not (hash-has-key? prev st)) (hash-set! prev st cur) (set! queue (append queue (list st))))))) (search))) (search) (if (not end-state) g (let rebuild ((cur end-state) (out g)) (if (eq? cur #f) out (let* ((r (first cur)) (c (second cur)) (v (at out r c)) (next (if (member? v (list 2 3 4 5 6 7 8)) out (set-cell out r c 9)))) (rebuild (hash-ref prev cur #f) next))))))))"
+  },
+  {
+    "id": "hard_p03",
+    "difficulty": "hard",
+    "name": "Visibility Matrix",
+    "tags": [
+      "relation",
+      "matrix",
+      "object"
+    ],
+    "written_rule": "Sort the connected objects by top-to-bottom, then left-to-right. Output an n×n matrix with blue(1) on the diagonal and 8 whenever a pair of objects has unobstructed horizontal or vertical line-of-sight through at least one empty cell.",
+    "program_function": "solve_hard_p03",
+    "primitive_names": [
+      "visibility_matrix"
+    ],
+    "program_solution": "(rule! (let ((dummy 0)) (define (obj-top-left< a b) (cond ((not (= (obj-r1 a) (obj-r1 b))) (< (obj-r1 a) (obj-r1 b))) (else (< (obj-c1 a) (obj-c1 b))))) (define (line-of-sight? grid a b) (any? (lambda (pa) (let ((ra (first pa)) (ca (second pa))) (or (let scan ((c (+ ca 1)) (seen #f)) (cond ((>= c (cols grid)) #f) ((= (at grid ra c) 0) (scan (+ c 1) #t)) (else (and seen (member? (list ra c) (obj-cells b)))))) (let scan ((c (- ca 1)) (seen #f)) (cond ((< c 0) #f) ((= (at grid ra c) 0) (scan (- c 1) #t)) (else (and seen (member? (list ra c) (obj-cells b)))))) (let scan ((r (+ ra 1)) (seen #f)) (cond ((>= r (rows grid)) #f) ((= (at grid r ca) 0) (scan (+ r 1) #t)) (else (and seen (member? (list r ca) (obj-cells b)))))) (let scan ((r (- ra 1)) (seen #f)) (cond ((< r 0) #f) ((= (at grid r ca) 0) (scan (- r 1) #t)) (else (and seen (member? (list r ca) (obj-cells b))))))))) (obj-cells a))) (let* ((comps (sort (objects g 0) obj-top-left<)) (n (length comps))) (grid-from-fn n n (lambda (i j) (cond ((= i j) 1) ((line-of-sight? g (list-ref comps i) (list-ref comps j)) 8) (else 0)))))))"
+  },
+  {
+    "id": "hard_p04",
+    "difficulty": "hard",
+    "name": "Area-Rank Frame Assignment",
+    "tags": [
+      "assignment",
+      "frames",
+      "ranking"
+    ],
+    "written_rule": "Ignore the hollow gray(5) frames and sort the free objects by area from smallest to largest. Sort the frames by their interior area from smallest to largest, then center each cropped object inside the correspondingly ranked frame.",
+    "program_function": "solve_hard_p04",
+    "primitive_names": [
+      "area_rank_frame_assign"
+    ],
+    "program_solution": "(rule! (let ((dummy 0)) (define (py-bbox obj) (list (obj-r1 obj) (obj-r2 obj) (obj-c1 obj) (obj-c2 obj))) (define (bb< a b) (cond ((not (= (first a) (first b))) (< (first a) (first b))) ((not (= (second a) (second b))) (< (second a) (second b))) ((not (= (third a) (third b))) (< (third a) (third b))) (else (< (fourth a) (fourth b))))) (define (obj-size-asc< a b) (cond ((not (= (obj-size a) (obj-size b))) (< (obj-size a) (obj-size b))) (else (bb< (py-bbox a) (py-bbox b))))) (define (crop-obj grid obj) (let* ((r0 (obj-r1 obj)) (c0 (obj-c1 obj)) (h (obj-h obj)) (w (obj-w obj))) (for/fold ((out (empty-grid h w 0))) ((p (in-list (obj-cells obj)))) (set-cell out (- (first p) r0) (- (second p) c0) (at grid (first p) (second p)))))) (define (paste-crop grid crop r0 c0) (for*/fold ((out grid)) ((r (in-range (rows crop))) (c (in-range (cols crop)))) (let ((v (at crop r c)) (rr (+ r0 r)) (cc (+ c0 c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows grid) (cols grid))) (set-cell out rr cc v) out)))) (define (rect-frame? obj) (let* ((cells (obj-cells obj)) (r0 (obj-r1 obj)) (r1 (obj-r2 obj)) (c0 (obj-c1 obj)) (c1 (obj-c2 obj))) (and (= (obj-color obj) 5) (>= (- r1 r0) 2) (>= (- c1 c0) 2) (all? (lambda (p) (let ((r (first p)) (c (second p))) (or (= r r0) (= r r1) (= c c0) (= c c1)))) cells) (all? (lambda (p) (member? p cells)) (append (for/list ((c (in-range c0 (+ c1 1)))) (list r0 c)) (for/list ((c (in-range c0 (+ c1 1)))) (list r1 c)) (for/list ((r (in-range r0 (+ r1 1)))) (list r c0)) (for/list ((r (in-range r0 (+ r1 1)))) (list r c1))))))) (define (frame-bbs grid) (sort (map py-bbox (filter rect-frame? (objects grid 0))) bb<)) (define (bb-border-cells bb) (let ((r0 (first bb)) (r1 (second bb)) (c0 (third bb)) (c1 (fourth bb))) (remove-duplicates (append (for/list ((c (in-range c0 (+ c1 1)))) (list r0 c)) (for/list ((c (in-range c0 (+ c1 1)))) (list r1 c)) (for/list ((r (in-range r0 (+ r1 1)))) (list r c0)) (for/list ((r (in-range r0 (+ r1 1)))) (list r c1)))))) (define (frame-interior-area bb) (max 0 (* (- (second bb) (first bb) 1) (- (fourth bb) (third bb) 1)))) (define (frame-area< a b) (if (= (frame-interior-area a) (frame-interior-area b)) (bb< a b) (< (frame-interior-area a) (frame-interior-area b)))) (define (center-in-frame grid crop bb) (let* ((top (first bb)) (bottom (second bb)) (left (third bb)) (right (fourth bb)) (ih (- bottom top 1)) (iw (- right left 1)) (sr (+ top 1 (max 0 (quotient (- ih (rows crop)) 2)))) (sc (+ left 1 (max 0 (quotient (- iw (cols crop)) 2))))) (paste-crop grid crop sr sc))) (let* ((frames (frame-bbs g)) (frame-cells (remove-duplicates (flatmap bb-border-cells frames))) (comps (sort (filter (lambda (obj) (and (not (= (obj-color obj) 5)) (not (any? (lambda (p) (member? p frame-cells)) (obj-cells obj))))) (objects g 0)) obj-size-asc<)) (frames-sorted (sort frames frame-area<)) (with-frames (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((bb (in-list frames))) (paint-cells out (bb-border-cells bb) 5)))) (let assign ((objs comps) (bbs frames-sorted) (out with-frames)) (if (or (empty? objs) (empty? bbs)) out (assign (rest objs) (rest bbs) (center-in-frame out (crop-obj g (first objs)) (first bbs))))))))"
+  },
+  {
+    "id": "hard_p05",
+    "difficulty": "hard",
+    "name": "Dual-Key Boolean Composer",
+    "tags": [
+      "boolean",
+      "transform",
+      "composition"
+    ],
+    "written_rule": "Use the top-right key to transform the second object, normalize both cropped objects to one origin, then combine them according to the top-left key: 1 → union, 2 → intersection, 3 → xor, 4 → A-minus-B, anything else=B-minus-A.",
+    "program_function": "solve_hard_p05",
+    "primitive_names": [
+      "dual_key_boolean"
+    ],
+    "program_solution": "(rule! (let ((dummy 0)) (define (obj-top-left< a b) (cond ((not (= (obj-r1 a) (obj-r1 b))) (< (obj-r1 a) (obj-r1 b))) (else (< (obj-c1 a) (obj-c1 b))))) (define (crop-obj grid obj) (let* ((r0 (obj-r1 obj)) (c0 (obj-c1 obj)) (h (obj-h obj)) (w (obj-w obj))) (for/fold ((out (empty-grid h w 0))) ((p (in-list (obj-cells obj)))) (set-cell out (- (first p) r0) (- (second p) c0) (at grid (first p) (second p)))))) (define (paste-crop grid crop r0 c0) (for*/fold ((out grid)) ((r (in-range (rows crop))) (c (in-range (cols crop)))) (let ((v (at crop r c)) (rr (+ r0 r)) (cc (+ c0 c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows grid) (cols grid))) (set-cell out rr cc v) out)))) (define (transform-by-key grid key) (cond ((= key 1) grid) ((= key 2) (rotate-cw grid)) ((= key 3) (flip-lr grid)) ((= key 4) (flip-ud grid)) ((= key 5) (rotate-180 grid)) ((= key 6) (rotate-ccw grid)) (else grid))) (define (normalize-crop grid) (crop-to-content grid 0)) (define (boolean-overlay a b op-key) (let* ((aa0 (normalize-crop a)) (bb0 (normalize-crop b)) (h (max (rows aa0) (rows bb0))) (w (max (cols aa0) (cols bb0))) (aa (paste-crop (empty-grid h w 0) aa0 0 0)) (bb (paste-crop (empty-grid h w 0) bb0 0 0))) (grid-from-fn h w (lambda (r c) (let ((av (not (= (at aa r c) 0))) (bv (not (= (at bb r c) 0)))) (cond ((= op-key 1) (cond ((and (equal? av #t) (equal? bv #t)) 8) ((equal? av #t) 2) ((equal? bv #t) 3) (else 0))) ((= op-key 2) (if (and av bv) 8 0)) ((= op-key 3) (cond ((and (equal? av #t) (not bv)) 2) ((and (equal? bv #t) (not av)) 3) (else 0))) ((= op-key 4) (if (and av (not bv)) 2 0)) (else (if (and bv (not av)) 3 0)))))))) (let* ((op-key (at g 0 0)) (tf-key (at g 0 (- (cols g) 1))) (gg (set-cell (set-cell g 0 0 0) 0 (- (cols g) 1) 0)) (comps (sort (objects gg 0) obj-top-left<))) (if (< (length comps) 2) (list (list 0)) (let* ((a (crop-obj gg (first comps))) (b (crop-obj gg (second comps))) (b2 (transform-by-key b tf-key))) (boolean-overlay a b2 op-key))))))"
+  },
+  {
+    "id": "hard_p06",
+    "difficulty": "hard",
+    "name": "Orbit Stamp Around Anchor",
+    "tags": [
+      "transform",
+      "stamping",
+      "rotation"
+    ],
+    "written_rule": "Crop the template object, then stamp four copies of it around the anchor(9): the original in the up-left, a 90° in the up-right, a 180° in the down-left, and a 270° in the down-right.",
+    "program_function": "solve_hard_p06",
+    "primitive_names": [
+      "orbit_stamp"
+    ],
+    "program_solution": "(rule! (let ((dummy 0)) (define (paste-crop grid crop r0 c0) (for*/fold ((out grid)) ((r (in-range (rows crop))) (c (in-range (cols crop)))) (let ((v (at crop r c)) (rr (+ r0 r)) (cc (+ c0 c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows grid) (cols grid))) (set-cell out rr cc v) out)))) (define (positions-of-color grid color) (filter (lambda (p) (= (at grid (first p) (second p)) color)) (grid-positions grid))) (define (normalize-crop grid) (crop-to-content grid 0)) (let* ((anchors (positions-of-color g 9)) (anchor (first anchors)) (gg (set-cell g (first anchor) (second anchor) 0)) (crop (normalize-crop gg)) (ch (rows crop)) (cw (cols crop)) (variants (list crop (rotate-cw crop) (rotate-180 crop) (rotate-ccw crop))) (offsets (list (list (- 0 ch 1) (- 0 cw 1)) (list (- 0 ch 1) 1) (list 1 (- 0 cw 1)) (list 1 1))) (base (set-cell (empty-grid (rows g) (cols g) 0) (first anchor) (second anchor) 9))) (for/fold ((out base)) ((var (in-list variants)) (off (in-list offsets))) (paste-crop out var (+ (first anchor) (first off)) (+ (second anchor) (second off)))))))"
+  },
+  {
+    "id": "hard_p07",
+    "difficulty": "hard",
+    "name": "Frame-Key Transform Stamp",
+    "tags": [
+      "transform",
+      "frames",
+      "multi_target"
+    ],
+    "written_rule": "Use the free template object as the stamp. For each hollow frame, read its nearby key (1 → identity, 2 → rotate90, 3 → flip-left-right, 4 → flip-up-down), transform the template accordingly, and center that transformed template inside the frame.",
+    "program_function": "solve_hard_p07",
+    "primitive_names": [
+      "frame_key_stamp"
+    ],
+    "program_solution": "(rule! (let ((dummy 0)) (define (py-bbox obj) (list (obj-r1 obj) (obj-r2 obj) (obj-c1 obj) (obj-c2 obj))) (define (bb< a b) (cond ((not (= (first a) (first b))) (< (first a) (first b))) ((not (= (second a) (second b))) (< (second a) (second b))) ((not (= (third a) (third b))) (< (third a) (third b))) (else (< (fourth a) (fourth b))))) (define (paste-crop grid crop r0 c0) (for*/fold ((out grid)) ((r (in-range (rows crop))) (c (in-range (cols crop)))) (let ((v (at crop r c)) (rr (+ r0 r)) (cc (+ c0 c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows grid) (cols grid))) (set-cell out rr cc v) out)))) (define (transform-by-key grid key) (cond ((= key 1) grid) ((= key 2) (rotate-cw grid)) ((= key 3) (flip-lr grid)) ((= key 4) (flip-ud grid)) ((= key 5) (rotate-180 grid)) ((= key 6) (rotate-ccw grid)) (else grid))) (define (rect-frame? obj) (let* ((cells (obj-cells obj)) (r0 (obj-r1 obj)) (r1 (obj-r2 obj)) (c0 (obj-c1 obj)) (c1 (obj-c2 obj))) (and (= (obj-color obj) 5) (>= (- r1 r0) 2) (>= (- c1 c0) 2) (all? (lambda (p) (let ((r (first p)) (c (second p))) (or (= r r0) (= r r1) (= c c0) (= c c1)))) cells) (all? (lambda (p) (member? p cells)) (append (for/list ((c (in-range c0 (+ c1 1)))) (list r0 c)) (for/list ((c (in-range c0 (+ c1 1)))) (list r1 c)) (for/list ((r (in-range r0 (+ r1 1)))) (list r c0)) (for/list ((r (in-range r0 (+ r1 1)))) (list r c1))))))) (define (frame-bbs grid) (sort (map py-bbox (filter rect-frame? (objects grid 0))) bb<)) (define (bb-border-cells bb) (let ((r0 (first bb)) (r1 (second bb)) (c0 (third bb)) (c1 (fourth bb))) (remove-duplicates (append (for/list ((c (in-range c0 (+ c1 1)))) (list r0 c)) (for/list ((c (in-range c0 (+ c1 1)))) (list r1 c)) (for/list ((r (in-range r0 (+ r1 1)))) (list r c0)) (for/list ((r (in-range r0 (+ r1 1)))) (list r c1)))))) (define (center-in-frame grid crop bb) (let* ((top (first bb)) (bottom (second bb)) (left (third bb)) (right (fourth bb)) (ih (- bottom top 1)) (iw (- right left 1)) (sr (+ top 1 (max 0 (quotient (- ih (rows crop)) 2)))) (sc (+ left 1 (max 0 (quotient (- iw (cols crop)) 2))))) (paste-crop grid crop sr sc))) (let* ((frames (frame-bbs g)) (frame-cells (remove-duplicates (flatmap bb-border-cells frames))) (template-cells (filter (lambda (p) (let ((v (at g (first p) (second p)))) (and (not (member? v (list 0 1 2 3 4 5))) (not (member? p frame-cells))))) (grid-positions g)))) (if (empty? template-cells) g (let* ((bb (bbox-of-cells template-cells)) (template (subgrid g (first bb) (second bb) (third bb) (fourth bb))) (with-frames (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((fr (in-list frames))) (paint-cells out (bb-border-cells fr) 5)))) (for/fold ((out with-frames)) ((fr (in-list frames))) (let* ((r0 (first fr)) (r1 (second fr)) (c0 (third fr)) (c1 (fourth fr)) (key-positions (list (list (- r0 1) c0) (list (- r0 1) c1) (list (+ r1 1) c0) (list (+ r1 1) c1) (list r0 (- c0 1)) (list r0 (+ c1 1)) (list r1 (- c0 1)) (list r1 (+ c1 1)))) (keys (filter values (map (lambda (p) (if (in-bounds? (first p) (second p) (rows g) (cols g)) (let ((v (at g (first p) (second p)))) (if (and (>= v 1) (<= v 4)) v #f)) #f)) key-positions))) (key (if (empty? keys) 1 (apply min keys))) (var (transform-by-key template key))) (center-in-frame out var fr))))))))"
+  }
+]
