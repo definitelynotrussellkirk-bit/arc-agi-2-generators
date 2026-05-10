@@ -1,4 +1,8 @@
-# ARC-AGI-2 Puzzle Generators
+# What's all the Racket about?
+
+*A corpus of 3,889 ARC-AGI-2 puzzles where each puzzle's solution is
+written explicitly as a small Racket program, paired with a Python
+generator that produces unbounded fresh inputs.*
 
 > **v0.1, work in progress.** Things work end-to-end (audit + lint
 > pass, runner produces validated pairs), but the rough edges are
