@@ -129,7 +129,77 @@ The full Racket prelude that backs them lives at
 `arc_repl/racket_prelude/arc-prelude.rkt`. It's a single
 `#lang racket` file, no external deps.
 
-## 8. Generator anatomy
+## 8. The REPL — interactive verification
+
+`arc_repl/` is an S-expression REPL that wraps an ARC task with macros
+for exploring it, building a candidate rule, and verifying the rule
+against the train pairs without leaving the prompt.
+
+```python
+from arc_repl.executor import ArcExecutor
+
+task = {
+    "train": [
+        {"input":  [[1, 0, 0], [0, 2, 0], [0, 0, 3]],
+         "output": [[0, 0, 3], [0, 2, 0], [1, 0, 0]]},
+    ],
+    "test": [{"input": [[8, 0, 0], [0, 9, 0], [0, 0, 4]]}],
+}
+x = ArcExecutor(task, auto_scan_on_load=False)
+
+x.step("(diagnose!)")            # shapes, color roles, diff clusters
+x.step("(try! (lambda (g) (flip-ud g)) 0)")   # try an idea, no commit
+x.step("(rule! (flip-ud g))")    # commit
+x.step("(test-all!)")            # ALL PASS (1/1)
+x.step("(apply! 0)")             # _1 = Grid(3x3) ...
+x.step("(submit! _1)")
+```
+
+The most useful macros at a glance:
+
+| Macro                | What it does                                                       |
+|----------------------|--------------------------------------------------------------------|
+| `(diagnose!)`        | shapes, color roles, per-pair diff bbox + transitions              |
+| `(try! expr [N])`    | apply `expr` to pair `N`, compare to expected — no rule committed  |
+| `(rule! expr)`       | commit `expr` as the current rule (`g`/`h`/`w` auto-bound)         |
+| `(test-all!)`        | run current rule on every train pair                               |
+| `(test! N)` on FAIL  | layered diff: bbox + per-color `+/-` + recolor transitions         |
+| `(auto-scan!)`       | run every feature, rank by informativeness                         |
+| `(suggest!)`         | map the scan to candidate rules (e.g. `recolor_map {1: 7, 2: 3}`)  |
+| `(render! diff N)`   | PNG to `/tmp/` visualizing rule-output vs expected                 |
+| `(apply! T)` + `(submit! _1)` | produce + commit a test-input answer                      |
+
+Failure mode that the layered diff catches cleanly — set a rule that's
+*almost* right and the diff tells you exactly which colors went wrong:
+
+```
+!1 = FAIL — pair 0: 3/6 differ
+  region: rows 0-1, cols 0-2
+  color 7: +3 at (0,0),(0,2),(1,1)
+  color 8: -3
+  recolors: 8→7(3)
+```
+
+That last line is the canonical hint — your rule produced `8` where it
+should have produced `7`.
+
+Two walkthroughs ship under `examples/`:
+
+- [`examples/repl_demo.html`](examples/repl_demo.html) — open it in a
+  browser. Static, self-contained, no dependencies. Renders the train
+  pairs and the REPL's produced test output as actual colored grids,
+  alongside the REPL transcript. Best for a visual first-pass.
+- [`examples/repl_demo.py`](examples/repl_demo.py) — runnable. Exercises
+  every macro above on three tiny tasks (flip-ud, recolor,
+  deliberately-wrong rule) and ends with a `(render!)` call that drops
+  PNGs under `/tmp/`.
+
+```bash
+python3 examples/repl_demo.py
+xdg-open examples/repl_demo.html    # or just double-click
+```
+
+## 9. Generator anatomy
 
 Open any one — they're all the same shape:
 
@@ -160,7 +230,7 @@ def generate(seed, sample_index, *, difficulty=None, **overrides):
 The runner pipes that grid through the puzzle's Racket rule and
 validates the output before returning.
 
-## 9. Lint your work
+## 10. Lint your work
 
 ```bash
 python3 scripts/lint_generator.py puzzle_generators/per_puzzle/<hash>/generator.py

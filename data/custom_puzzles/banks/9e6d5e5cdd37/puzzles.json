@@ -1,0 +1,318 @@
+[
+  {
+    "id": "E120",
+    "title": "Offset Cloud Replay",
+    "difficulty": "easy",
+    "skills": [
+      "relative offsets",
+      "anchor replay",
+      "same-size painting"
+    ],
+    "suggested_staged_path": "Ignore the special 9 except as an origin. First read the 4-cells as a set of offsets, then replay that offset cloud around every 2 anchor.",
+    "written_solution": "Find the maroon(9) cell and record the relative positions of all yellow(4) cells around it. Erase the template. For every red(2) in the grid, place yellow(4)s at those same relative offsets and keep the anchor itself as red(2).",
+    "program_name": "rule_e120",
+    "program_source": "def rule_e120(g):\n    h,w=size(g)\n    ref=find_color_positions(g,9)[0]\n    offsets=[(r-ref[0], c-ref[1]) for r,row in enumerate(g) for c,v in enumerate(row) if v==4]\n    anchors=find_color_positions(g,2)\n    out=blank(h,w)\n    for ar,ac in anchors:\n        out[ar][ac]=2\n    out=offset_scatter(out, offsets, anchors, paint_color=4, merge='overwrite')\n    for ar,ac in anchors:\n        out[ar][ac]=2\n    return out",
+    "program_solution": "(rule!\n  (let* ((ref (first (find-color g 9)))\n         (offsets (map (lambda (p) (list (- (first p) (first ref)) (- (second p) (second ref))))\n                       (find-color g 4)))\n         (anchors (find-color g 2)))\n    (let* ((painted\n            (for/fold ([out (paint-cells (empty-grid (rows g) (cols g) 0) anchors 2)])\n                      ([anchor (in-list anchors)])\n              (for/fold ([acc out]) ([off (in-list offsets)])\n                (let ((rr (+ (first anchor) (first off)))\n                      (cc (+ (second anchor) (second off))))\n                  (if (in-bounds? rr cc (rows acc) (cols acc))\n                      (set-cell acc rr cc 4)\n                      acc))))))\n      (paint-cells painted anchors 2))))"
+  },
+  {
+    "id": "E121",
+    "title": "Endpoint Segment Fill",
+    "difficulty": "easy",
+    "skills": [
+      "row completion",
+      "endpoint reasoning",
+      "same-size fill"
+    ],
+    "suggested_staged_path": "Look one row at a time. Whenever a color appears as separated endpoints in a row, fill the horizontal run between them.",
+    "written_solution": "For each row, find the leftmost and rightmost occurrence of each non-background color. Fill every cell between those endpoints with that same color.",
+    "program_name": "rule_e121",
+    "program_source": "def rule_e121(g):\n    out=clone(g)\n    h,w=size(g)\n    for r in range(h):\n        positions=defaultdict(list)\n        for c,v in enumerate(g[r]):\n            if v!=0:\n                positions[v].append(c)\n        for col, cols in positions.items():\n            if len(cols)>=2:\n                c0,c1=min(cols), max(cols)\n                for c in range(c0,c1+1):\n                    out[r][c]=col\n    return out",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (fill-one-row out r color)\n      (let ((cols-hit (map second (filter-cells g (lambda (rr c v) (and (= rr r) (= v color)))))))\n        (if (< (length cols-hit) 2)\n            out\n            (for/fold ([acc out]) ([c (in-range (apply min cols-hit) (+ (apply max cols-hit) 1))])\n              (set-cell acc r c color)))))\n    (for/fold ([out g]) ([r (in-range (rows g))])\n      (for/fold ([acc out]) ([color (in-list (remove-duplicates (filter (lambda (v) (not (= v 0))) (row g r))))])\n        (fill-one-row acc r color)))))"
+  },
+  {
+    "id": "E122",
+    "title": "Opposite Corner Rectangle Fill",
+    "difficulty": "easy",
+    "skills": [
+      "rectangle inference",
+      "corner markers",
+      "area fill"
+    ],
+    "suggested_staged_path": "Treat each color as giving you two opposite corners. Convert the sparse clues into full solid rectangles.",
+    "written_solution": "For each non-background color, take its two marked cells as opposite corners of an axis-aligned rectangle. Fill the whole rectangle with that color.",
+    "program_name": "rule_e122",
+    "program_source": "def rule_e122(g):\n    out=blank(*size(g))\n    positions=defaultdict(list)\n    for r,row in enumerate(g):\n        for c,v in enumerate(row):\n            if v!=0:\n                positions[v].append((r,c))\n    for col, cells in positions.items():\n        if len(cells)>=2:\n            (r0,c0),(r1,c1)=cells[0], cells[-1]\n            rr0,cc0=min(r0,r1),min(c0,c1)\n            rr1,cc1=max(r0,r1),max(c0,c1)\n            for r in range(rr0,rr1+1):\n                for c in range(cc0,cc1+1):\n                    out[r][c]=col\n    return out",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define colors (remove-duplicates (map third (filter (lambda (cell) (not (= (third cell) 0))) (grid-cells g)))))\n    (define (paint-rect out color)\n      (let ((cells (filter-cells g (lambda (r c v) (= v color)))))\n        (if (< (length cells) 2)\n            out\n            (let* ((a (first cells))\n                   (b (last cells))\n                   (r1 (min (first a) (first b)))\n                   (r2 (max (first a) (first b)))\n                   (c1 (min (second a) (second b)))\n                   (c2 (max (second a) (second b))))\n              (paint-cells out (positions-in-rect r1 c1 r2 c2) color)))))\n    (for/fold ([out (empty-grid (rows g) (cols g) 0)]) ([color (in-list colors)])\n      (paint-rect out color))))"
+  },
+  {
+    "id": "E123",
+    "title": "Guide Reflection",
+    "difficulty": "easy",
+    "skills": [
+      "mirror symmetry",
+      "guide line",
+      "same-size copy"
+    ],
+    "suggested_staged_path": "The full-height 8 column is the mirror. Copy the left motif across that line without deleting the original.",
+    "written_solution": "Find the vertical guide made entirely of 8s. For every nonzero non-guide cell on the left, reflect it to the symmetric position on the right and keep the original cells and the guide.",
+    "program_name": "rule_e123",
+    "program_source": "def rule_e123(g):\n    h,w=size(g)\n    out=clone(g)\n    guide=[c for c in range(w) if all(g[r][c]==8 for r in range(h))][0]\n    for r in range(h):\n        for c in range(guide):\n            v=g[r][c]\n            if v!=0 and v!=8:\n                mc=guide + (guide-c)\n                if 0<=mc<w:\n                    out[r][mc]=v\n    return out",
+    "program_solution": "(rule!\n  (let* ((guide (first (filter (lambda (c)\n                                 (all? (lambda (r) (= (at g r c) 8)) (range 0 (rows g))))\n                               (range 0 (cols g))))))\n    (for*/fold ([out g])\n               ([r (in-range (rows g))]\n                [c (in-range guide)])\n      (let ((v (at g r c))\n            (mc (+ guide (- guide c))))\n        (if (and (not (= v 0)) (not (= v 8)) (in-bounds? r mc (rows g) (cols g)))\n            (set-cell out r mc v)\n            out)))))"
+  },
+  {
+    "id": "E124",
+    "title": "Sorted Count Strip",
+    "difficulty": "easy",
+    "skills": [
+      "counting",
+      "sorting by color",
+      "crop output"
+    ],
+    "suggested_staged_path": "Ignore positions. Count how many times each color appears, then write a compact strip ordered by color number.",
+    "written_solution": "Count every nonzero cell by color. Output a single row containing each color repeated its count times, ordered from the smallest color to the largest.",
+    "program_name": "rule_e124",
+    "program_source": "def rule_e124(g):\n    counts=Counter(v for row in g for v in row if v!=0)\n    colors=sorted(counts)\n    row=[]\n    for col in colors:\n        row.extend([col]*counts[col])\n    return [row if row else [0]]",
+    "program_solution": "(rule!\n  (let* ((colors (grid-colors g 0))\n         (row-out (for*/list ([color (in-list colors)]\n                              [_ (in-range (count-where (lambda (cell) (= (third cell) color)) (grid-cells g)))])\n                    color)))\n    (list (if (empty? row-out) (list 0) row-out))))"
+  },
+  {
+    "id": "E125",
+    "title": "Largest Component Crop",
+    "difficulty": "easy",
+    "skills": [
+      "component detection",
+      "area comparison",
+      "crop output"
+    ],
+    "suggested_staged_path": "Separate the disconnected nonzero components. Keep only the biggest one and crop tightly around it.",
+    "written_solution": "Find all connected nonzero components. Choose the one with the most cells and output its tight bbox.",
+    "program_name": "rule_e125",
+    "program_source": "def rule_e125(g):\n    comps=components_nonzero(g)\n    cells=sorted(comps, key=lambda x:(-len(x), bbox(x)[0], bbox(x)[1]))[0]\n    return crop_bbox(g, cells)",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (nonzero-components grid)\n      (let loop ([remaining (filter-cells grid (lambda (r c v) (not (= v 0))))] [acc (list)])\n        (if (empty? remaining)\n            (reverse acc)\n            (let* ((start (first remaining))\n                   (cells (connected-region grid (first start) (second start)\n                            (lambda (r c v) (not (= v 0))) 4)))\n              (loop (filter (lambda (p) (not (member? p cells))) remaining)\n                    (cons cells acc))))))\n    (let* ((chosen (first\n                    (sort (nonzero-components g)\n                      (lambda (a b)\n                        (let ((ba (bbox-of-cells a)) (bb (bbox-of-cells b)))\n                          (cond [(not (= (length a) (length b))) (> (length a) (length b))]\n                                [(not (= (first ba) (first bb))) (< (first ba) (first bb))]\n                                [else (< (second ba) (second bb))]))))))\n           (bb (bbox-of-cells chosen)))\n      (subgrid g (first bb) (second bb) (third bb) (fourth bb)))))"
+  },
+  {
+    "id": "E126",
+    "title": "Complete the 2x2 Blocks",
+    "difficulty": "easy",
+    "skills": [
+      "local completion",
+      "2x2 reasoning",
+      "same-size repair"
+    ],
+    "suggested_staged_path": "Scan each 2x2 window. Whenever three cells already agree on a color and one corner is empty, fill the missing corner.",
+    "written_solution": "In every 2x2 block that contains three copies of the same non-background color and one zero, replace the zero with that color. Apply this everywhere until no such block remains.",
+    "program_name": "rule_e126",
+    "program_source": "def rule_e126(g):\n    out=clone(g)\n    h,w=size(g)\n    changed=True\n    while changed:\n        changed=False\n        for r in range(h-1):\n            for c in range(w-1):\n                vals=[out[r][c],out[r][c+1],out[r+1][c],out[r+1][c+1]]\n                nonzero=[v for v in vals if v!=0]\n                if vals.count(0)==1 and len(nonzero)==3 and len(set(nonzero))==1:\n                    idx=vals.index(0)\n                    rr=r + idx//2\n                    cc=c + idx%2\n                    out[rr][cc]=nonzero[0]\n                    changed=True\n    return out",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (step grid)\n      (for*/fold ([state (list grid 0)])\n                 ([r (in-range (- (rows grid) 1))]\n                  [c (in-range (- (cols grid) 1))])\n        (let* ((out (first state))\n               (changed (second state))\n               (vals (list (at out r c) (at out r (+ c 1))\n                           (at out (+ r 1) c) (at out (+ r 1) (+ c 1))))\n               (nz (filter (lambda (v) (not (= v 0))) vals)))\n          (if (and (= (count-where (lambda (v) (= v 0)) vals) 1)\n                   (= (length nz) 3)\n                   (= (length (remove-duplicates nz)) 1))\n              (let* ((idx (let loop ([xs vals] [i 0])\n                            (if (= (first xs) 0) i (loop (rest xs) (+ i 1)))))\n                     (rr (+ r (quotient idx 2)))\n                     (cc (+ c (modulo idx 2))))\n                (list (set-cell out rr cc (first nz)) 1))\n              (list out changed)))))\n    (let loop ([grid g] [fuel (* (rows g) (cols g))])\n      (if (= fuel 0)\n          grid\n          (let ((result (step grid)))\n            (if (= (second result) 1)\n                (loop (first result) (- fuel 1))\n                (first result)))))))"
+  },
+  {
+    "id": "M120",
+    "title": "Rotated Offset Replay",
+    "difficulty": "medium",
+    "skills": [
+      "relative offsets",
+      "rotation commands",
+      "anchor replay"
+    ],
+    "suggested_staged_path": "Read the 7-cells as an offset cloud around the 9 origin. Then let each anchor color tell you which rotation to apply before replaying the cloud.",
+    "written_solution": "Record the relative positions of the orange(7) cells around the maroon(9). Each anchor color encodes a rotation: red(2) → none, green(3) → 90° clockwise, yellow(4) → 180°, gray(5) → 270° clockwise. Replay the rotated cloud around each anchor and keep the anchor colors.",
+    "program_name": "rule_m120",
+    "program_source": "def rule_m120(g):\n    h,w=size(g)\n    ref=find_color_positions(g,9)[0]\n    offsets=[(r-ref[0], c-ref[1]) for r,row in enumerate(g) for c,v in enumerate(row) if v==7]\n    anchors=[]\n    transforms=[]\n    for r,row in enumerate(g):\n        for c,v in enumerate(row):\n            if v in (2,3,4,5):\n                anchors.append((r,c,v))\n                transforms.append({2:0,3:1,4:2,5:3}[v])\n    out=blank(h,w)\n    for r,c,v in anchors:\n        out[r][c]=v\n    out=offset_scatter(out, offsets, anchors, transforms=transforms,\n                       recolor=lambda aval,i,od,nd: 7, merge='overwrite')\n    for r,c,v in anchors:\n        out[r][c]=v\n    return out",
+    "program_solution": "(rule!\n  (let* ((ref (first (find-color g 9)))\n         (offsets (map (lambda (p) (list (- (first p) (first ref)) (- (second p) (second ref))))\n                       (find-color g 7)))\n         (anchors (filter (lambda (cell)\n                            (member? (third cell) (list 2 3 4 5)))\n                          (grid-cells g))))\n    (define (anchor-transform color)\n      (cond [(= color 2) 0] [(= color 3) 1] [(= color 4) 2] [else 3]))\n    (define (rotate-offset off t)\n      (let ((dr (first off)) (dc (second off)))\n        (cond [(= t 0) (list dr dc)]\n              [(= t 1) (list dc (- dr))]\n              [(= t 2) (list (- dr) (- dc))]\n              [else (list (- dc) dr)])))\n    (let* ((seeded (paint-cells (empty-grid (rows g) (cols g) 0)\n                                (map (lambda (cell) (list (first cell) (second cell) (third cell))) anchors)))\n           (painted\n            (for/fold ([out seeded]) ([anchor (in-list anchors)])\n              (let ((t (anchor-transform (third anchor))))\n                (for/fold ([acc out]) ([off (in-list offsets)])\n                  (let* ((rot (rotate-offset off t))\n                         (rr (+ (first anchor) (first rot)))\n                         (cc (+ (second anchor) (second rot))))\n                    (if (in-bounds? rr cc (rows acc) (cols acc))\n                        (set-cell acc rr cc 7)\n                        acc)))))))\n      (paint-cells painted (map (lambda (cell) (list (first cell) (second cell) (third cell))) anchors)))))"
+  },
+  {
+    "id": "M121",
+    "title": "Legend Motif Sequencing",
+    "difficulty": "medium",
+    "skills": [
+      "legend order",
+      "component cropping",
+      "horizontal packing"
+    ],
+    "suggested_staged_path": "The top row tells you only the order. Find the matching monochrome motifs below, crop each one tightly, and lay them out left to right in legend order.",
+    "written_solution": "Read the nonzero colors in the top row from left to right. For each such color, find the disconnected component of that color below, crop it to its bbox, and concatenate the crops horizontally with a zero separator column.",
+    "program_name": "rule_m121",
+    "program_source": "def rule_m121(g):\n    legend=[v for v in g[0] if v!=0]\n    comps=components_color(g)\n    blocks=[]\n    for col in legend:\n        matches=[comp['cells'] for comp in comps if comp['color']==col and bbox(comp['cells'])[0] > 0]\n        cells=sorted(matches, key=lambda x:(-len(x), bbox(x)[0], bbox(x)[1]))[0]\n        blocks.append(crop_bbox(g, cells))\n    return concat_h(blocks, sep=1)",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (pack-h grids gap)\n      (let* ((h (apply max (map rows grids)))\n             (w (+ (apply + (map cols grids)) (* gap (max 0 (- (length grids) 1))))))\n        (let loop ([out (empty-grid h w 0)] [remaining grids] [left 0])\n          (if (empty? remaining)\n              out\n              (let ((block (first remaining)))\n                (loop (for*/fold ([acc out])\n                                  ([r (in-range (rows block))]\n                                   [c (in-range (cols block))]\n                                   #:when (not (= (at block r c) 0)))\n                        (set-cell acc r (+ left c) (at block r c)))\n                      (rest remaining)\n                      (+ left (cols block) gap)))))))\n    (let* ((legend (filter (lambda (v) (not (= v 0))) (row g 0)))\n           (blocks\n            (map (lambda (color)\n                   (let* ((matches (filter (lambda (obj)\n                                             (and (= (obj-color obj) color) (> (obj-r1 obj) 0)))\n                                           (objects g 0)))\n                          (chosen (first\n                                   (sort matches\n                                     (lambda (a b)\n                                       (cond [(not (= (obj-size a) (obj-size b))) (> (obj-size a) (obj-size b))]\n                                             [(not (= (obj-r1 a) (obj-r1 b))) (< (obj-r1 a) (obj-r1 b))]\n                                             [else (< (obj-c1 a) (obj-c1 b))]))))))\n                     (subgrid g (obj-r1 chosen) (obj-c1 chosen) (obj-r2 chosen) (obj-c2 chosen))))\n                 legend)))\n      (pack-h blocks 1))))"
+  },
+  {
+    "id": "M122",
+    "title": "Chamber Seed Fill",
+    "difficulty": "medium",
+    "skills": [
+      "region filling",
+      "walls and chambers",
+      "seed propagation"
+    ],
+    "suggested_staged_path": "Treat 1 as walls and look for enclosed chambers. If a chamber contains one seed color, flood the empty cells of that chamber with that color.",
+    "written_solution": "Walls of 1 partition the grid into regions. For each non-wall region that contains exactly one nonzero seed color, fill its zero cells with that seed color while keeping the walls unchanged.",
+    "program_name": "rule_m122",
+    "program_source": "def rule_m122(g):\n    h,w=size(g)\n    out=clone(g)\n    seen=set()\n    for r in range(h):\n        for c in range(w):\n            if g[r][c]==1 or (r,c) in seen:\n                continue\n            q=[(r,c)]\n            seen.add((r,c))\n            region=[]\n            colors=set()\n            while q:\n                rr,cc=q.pop()\n                region.append((rr,cc))\n                if g[rr][cc] > 1:\n                    colors.add(g[rr][cc])\n                for dr,dc in DIR4:\n                    nr,nc=rr+dr,cc+dc\n                    if in_bounds(g,nr,nc) and g[nr][nc]!=1 and (nr,nc) not in seen:\n                        seen.add((nr,nc))\n                        q.append((nr,nc))\n            if len(colors)==1:\n                col=next(iter(colors))\n                for rr,cc in region:\n                    if out[rr][cc]==0:\n                        out[rr][cc]=col\n    return out",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (let loop ([remaining (filter-cells g (lambda (r c v) (not (= v 1))))] [out g])\n      (if (empty? remaining)\n          out\n          (let* ((start (first remaining))\n                 (region (connected-region g (first start) (second start)\n                           (lambda (r c v) (not (= v 1))) 4))\n                 (colors (remove-duplicates\n                           (filter (lambda (v) (> v 1))\n                                   (map (lambda (p) (at g (first p) (second p))) region))))\n                 (next-remaining (filter (lambda (p) (not (member? p region))) remaining)))\n            (if (= (length colors) 1)\n                (loop next-remaining\n                      (for/fold ([acc out]) ([p (in-list region)])\n                        (if (= (at acc (first p) (second p)) 0)\n                            (set-cell acc (first p) (second p) (first colors))\n                            acc)))\n                (loop next-remaining out)))))))"
+  },
+  {
+    "id": "M123",
+    "title": "Area Winner Matrix",
+    "difficulty": "medium",
+    "skills": [
+      "area comparison",
+      "relational output",
+      "matrix construction"
+    ],
+    "suggested_staged_path": "Measure the areas of the three colored components first. Then convert those pairwise comparisons into a tiny 3x3 table.",
+    "written_solution": "Order the component colors numerically. In the output matrix, entry (i,j) is the color of the larger of those two components, or 0 on the diagonal and for equal areas.",
+    "program_name": "rule_m123",
+    "program_source": "def rule_m123(g):\n    comps=[]\n    for comp in components_color(g):\n        if comp['color'] != 0:\n            comps.append((comp['color'], len(comp['cells'])))\n    comps=sorted(comps)\n    colors=[c for c,a in comps]\n    areas={c:a for c,a in comps}\n    out=blank(len(colors), len(colors))\n    for i,ci in enumerate(colors):\n        for j,cj in enumerate(colors):\n            if i==j:\n                out[i][j]=0\n            elif areas[ci] > areas[cj]:\n                out[i][j]=ci\n            elif areas[cj] > areas[ci]:\n                out[i][j]=cj\n            else:\n                out[i][j]=0\n    return out",
+    "program_solution": "(rule!\n  (let* ((comps (sort (objects g 0)\n                      (lambda (a b)\n                        (if (= (obj-color a) (obj-color b))\n                            (< (obj-size a) (obj-size b))\n                            (< (obj-color a) (obj-color b))))))\n         (n (length comps)))\n    (grid-from-fn n n\n      (lambda (r c)\n        (let ((a (nth comps r)) (b (nth comps c)))\n          (cond [(= r c) 0]\n                [(> (obj-size a) (obj-size b)) (obj-color a)]\n                [(> (obj-size b) (obj-size a)) (obj-color b)]\n                [else 0]))))))"
+  },
+  {
+    "id": "M124",
+    "title": "Commanded Extraction",
+    "difficulty": "medium",
+    "skills": [
+      "command decoding",
+      "crop output",
+      "geometric transform"
+    ],
+    "suggested_staged_path": "Ignore the absolute position of the lower motif. Read the single command in the top row, crop the motif, then apply the indicated transform.",
+    "written_solution": "The lone nonzero cell in the top row encodes a transform: red(2) → identity, green(3) → 90° clockwise, yellow(4) → 180°, gray(5) → flip horizontal, magenta(6) → flip vertical. Crop the motif below and output the transformed crop.",
+    "program_name": "rule_m124",
+    "program_source": "def rule_m124(g):\n    cmd=[v for v in g[0] if v!=0][0]\n    mapping={2:0,3:1,4:2,5:4,6:5}\n    comps=sorted(components_nonzero(g[1:]), key=lambda x:bbox(x))\n    # rebuild cell coords with +1 row offset\n    cells=[(r+1,c) for r,c in comps[0]]\n    motif=crop_bbox(g, cells)\n    return apply_transform(motif, mapping[cmd])",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (apply-transform grid cmd)\n      (cond [(= cmd 0) grid]\n            [(= cmd 1) (rotate-cw grid)]\n            [(= cmd 2) (rotate-180 grid)]\n            [(= cmd 3) (transpose grid)]\n            [(= cmd 4) (flip-lr grid)]\n            [else (flip-ud grid)]))\n    (define (nonzero-components grid)\n      (let loop ([remaining (filter-cells grid (lambda (r c v) (not (= v 0))))] [acc (list)])\n        (if (empty? remaining)\n            (reverse acc)\n            (let* ((start (first remaining))\n                   (cells (connected-region grid (first start) (second start)\n                            (lambda (r c v) (not (= v 0))) 4)))\n              (loop (filter (lambda (p) (not (member? p cells))) remaining)\n                    (cons cells acc))))))\n    (define (mapped-cmd cmd)\n      (cond [(= cmd 2) 0] [(= cmd 3) 1] [(= cmd 4) 2] [(= cmd 5) 4] [else 5]))\n    (let* ((cmd (first (filter (lambda (v) (not (= v 0))) (row g 0))))\n           (body (subgrid g 1 0 (- (rows g) 1) (- (cols g) 1)))\n           (chosen (first\n                    (sort (nonzero-components body)\n                      (lambda (a b)\n                        (let ((ba (bbox-of-cells a)) (bb (bbox-of-cells b)))\n                          (if (= (first ba) (first bb))\n                              (< (second ba) (second bb))\n                              (< (first ba) (first bb))))))))\n           (bb (bbox-of-cells chosen))\n           (motif (subgrid body (first bb) (second bb) (third bb) (fourth bb))))\n      (apply-transform motif (mapped-cmd cmd)))))"
+  },
+  {
+    "id": "M125",
+    "title": "Nested Frame Depth Recolor",
+    "difficulty": "medium",
+    "skills": [
+      "nesting depth",
+      "frame detection",
+      "palette remapping"
+    ],
+    "suggested_staged_path": "All frames start as 8. Sort them from outermost to innermost and then recolor by depth.",
+    "written_solution": "Each cyan(8) component is a rectangular frame. Order the frames from outside to inside and recolor them using the fixed depth palette red(2), yellow(4), magenta(6), orange(7), … while leaving the background empty.",
+    "program_name": "rule_m125",
+    "program_source": "def rule_m125(g):\n    frames=[comp['cells'] for comp in components_color(g) if comp['color']==8]\n    frames=sorted(frames, key=lambda cells: (bbox(cells)[2]-bbox(cells)[0]+1)*(bbox(cells)[3]-bbox(cells)[1]+1), reverse=True)\n    out=blank(*size(g))\n    for depth, cells in enumerate(frames):\n        col=DEPTH_PALETTE[depth]\n        for r,c in cells:\n            out[r][c]=col\n    return out",
+    "program_solution": "(rule!\n  (let* ((palette (list 2 4 6 7 3 5 9))\n         (frames (sort (filter (lambda (obj) (= (obj-color obj) 8)) (objects g 0))\n                       (lambda (a b)\n                         (> (* (obj-h a) (obj-w a)) (* (obj-h b) (obj-w b)))))))\n    (let loop ([out (empty-grid (rows g) (cols g) 0)] [remaining frames] [depth 0])\n      (if (empty? remaining)\n          out\n          (loop (paint-cells out (obj-cells (first remaining)) (nth palette depth))\n                (rest remaining)\n                (+ depth 1))))))"
+  },
+  {
+    "id": "M126",
+    "title": "Column Gravity with Obstacles",
+    "difficulty": "medium",
+    "skills": [
+      "gravity",
+      "columnwise simulation",
+      "static blockers"
+    ],
+    "suggested_staged_path": "Treat 1-cells as fixed blockers. Within each column segment between blockers, let the colored cells fall to the bottom while preserving their vertical order.",
+    "written_solution": "Keep the 1-cells fixed. In every column and in every vertical segment separated by 1s, collect the colored cells and drop them to the lowest available positions of that segment, preserving their order.",
+    "program_name": "rule_m126",
+    "program_source": "def rule_m126(g):\n    h,w=size(g)\n    out=blank(h,w)\n    for r in range(h):\n        for c in range(w):\n            if g[r][c]==1:\n                out[r][c]=1\n    for c in range(w):\n        start=h-1\n        r=h-1\n        while r>=0:\n            if g[r][c]==1:\n                start=r-1\n                r-=1\n                continue\n            end=r\n            while r>=0 and g[r][c]!=1:\n                r-=1\n            seg_top=r+1\n            vals=[g[rr][c] for rr in range(seg_top, end+1) if g[rr][c] not in (0,1)]\n            write=end\n            for v in reversed(vals):\n                out[write][c]=v\n                write-=1\n    return out",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (segment-values c top bot)\n      (filter (lambda (v) (and (not (= v 0)) (not (= v 1))))\n              (for/list ([r (in-range top (+ bot 1))]) (at g r c))))\n    (define (write-segment out c top bot vals)\n      (let loop ([acc out] [remaining (reverse vals)] [r bot])\n        (if (empty? remaining)\n            acc\n            (loop (set-cell acc r c (first remaining)) (rest remaining) (- r 1)))))\n    (define (process-col out c)\n      (let loop ([r (- (rows g) 1)] [acc out])\n        (cond [(< r 0) acc]\n              [(= (at g r c) 1) (loop (- r 1) acc)]\n              [else\n               (let scan ([top r])\n                 (if (or (< top 0) (= (at g top c) 1))\n                     (let* ((seg-top (+ top 1))\n                            (seg-bot r)\n                            (vals (segment-values c seg-top seg-bot)))\n                       (loop (- seg-top 2) (write-segment acc c seg-top seg-bot vals)))\n                     (scan (- top 1))))])))\n    (let* ((walls (filter-cells g (lambda (r c v) (= v 1))))\n           (base (paint-cells (empty-grid (rows g) (cols g) 0) walls 1)))\n      (for/fold ([out base]) ([c (in-range (cols g))])\n        (process-col out c)))))"
+  },
+  {
+    "id": "H120",
+    "title": "Keyed Offset Merge",
+    "difficulty": "hard",
+    "skills": [
+      "relative offsets",
+      "rotation commands",
+      "color remapping",
+      "overlap merge"
+    ],
+    "suggested_staged_path": "Start like the medium offset task, but now each anchor color also changes the paint color. When two clouds overlap, the larger color wins.",
+    "written_solution": "Read the cyan(8) cells as an offset cloud around the maroon(9) origin. Anchor colors red(2), green(3), yellow(4), gray(5) encode rotations 0°, 90°, 180°, 270° and also paint colors yellow(4), gray(5), magenta(6), orange(7). Replay each rotated cloud around its anchor and merge overlaps by taking the maximum color at each cell.",
+    "program_name": "rule_h120",
+    "program_source": "def rule_h120(g):\n    h,w=size(g)\n    ref=find_color_positions(g,9)[0]\n    offsets=[(r-ref[0], c-ref[1]) for r,row in enumerate(g) for c,v in enumerate(row) if v==8]\n    anchors=[]\n    transforms=[]\n    for r,row in enumerate(g):\n        for c,v in enumerate(row):\n            if v in (2,3,4,5):\n                anchors.append((r,c,v))\n                transforms.append({2:0,3:1,4:2,5:3}[v])\n    color_map={2:4,3:5,4:6,5:7}\n    out=blank(h,w)\n    for r,c,v in anchors:\n        out[r][c]=v\n    out=offset_scatter(out, offsets, anchors, transforms=transforms,\n                       recolor=lambda aval,i,od,nd: color_map[aval], merge='max')\n    for r,c,v in anchors:\n        out[r][c]=max(out[r][c], v)\n    return out",
+    "program_solution": "(rule!\n  (let* ((ref (first (find-color g 9)))\n         (offsets (map (lambda (p) (list (- (first p) (first ref)) (- (second p) (second ref))))\n                       (find-color g 8)))\n         (anchors (filter (lambda (cell)\n                            (member? (third cell) (list 2 3 4 5)))\n                          (grid-cells g))))\n    (define (anchor-transform color)\n      (cond [(= color 2) 0] [(= color 3) 1] [(= color 4) 2] [else 3]))\n    (define (paint-color color)\n      (cond [(= color 2) 4] [(= color 3) 5] [(= color 4) 6] [else 7]))\n    (define (rotate-offset off t)\n      (let ((dr (first off)) (dc (second off)))\n        (cond [(= t 0) (list dr dc)]\n              [(= t 1) (list dc (- dr))]\n              [(= t 2) (list (- dr) (- dc))]\n              [else (list (- dc) dr)])))\n    (for/fold ([out (empty-grid (rows g) (cols g) 0)]) ([anchor (in-list anchors)])\n      (let ((t (anchor-transform (third anchor)))\n            (new-color (paint-color (third anchor)))\n            (with-anchor (set-cell out (first anchor) (second anchor) (third anchor))))\n        (for/fold ([acc with-anchor]) ([off (in-list offsets)])\n          (let* ((rot (rotate-offset off t))\n                 (rr (+ (first anchor) (first rot)))\n                 (cc (+ (second anchor) (second rot))))\n            (if (in-bounds? rr cc (rows acc) (cols acc))\n                (set-cell acc rr cc (max (at acc rr cc) new-color))\n                acc)))))))"
+  },
+  {
+    "id": "H121",
+    "title": "Transform by Example",
+    "difficulty": "hard",
+    "skills": [
+      "analogy",
+      "transform inference",
+      "crop output"
+    ],
+    "suggested_staged_path": "Use the upper pair to discover the transform first. Once you know that transform, ignore the example and apply it to the lower motif.",
+    "written_solution": "There are three disconnected motifs: A, transformed A, and B. Infer which dihedral transform maps A to its example partner, then apply the same transform to B and output the transformed crop.",
+    "program_name": "rule_h121",
+    "program_source": "def rule_h121(g):\n    comps=sorted(components_nonzero(g), key=lambda cells: bbox(cells))\n    a=crop_bbox(g, comps[0])\n    ap=crop_bbox(g, comps[1])\n    b=crop_bbox(g, comps[2])\n    found=None\n    for t in TRANSFORMS:\n        if apply_transform(a, t) == ap:\n            found=t\n            break\n    return apply_transform(b, found)",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (apply-transform grid cmd)\n      (cond [(= cmd 0) grid]\n            [(= cmd 1) (rotate-cw grid)]\n            [(= cmd 2) (rotate-180 grid)]\n            [(= cmd 3) (transpose grid)]\n            [(= cmd 4) (flip-lr grid)]\n            [else (flip-ud grid)]))\n    (define (nonzero-components grid)\n      (let loop ([remaining (filter-cells grid (lambda (r c v) (not (= v 0))))] [acc (list)])\n        (if (empty? remaining)\n            (reverse acc)\n            (let* ((start (first remaining))\n                   (cells (connected-region grid (first start) (second start)\n                            (lambda (r c v) (not (= v 0))) 4)))\n              (loop (filter (lambda (p) (not (member? p cells))) remaining)\n                    (cons cells acc))))))\n    (define (crop-cells cells)\n      (let ((bb (bbox-of-cells cells)))\n        (subgrid g (first bb) (second bb) (third bb) (fourth bb))))\n    (let* ((components (sort (nonzero-components g)\n                             (lambda (a b)\n                               (let ((ba (bbox-of-cells a)) (bb (bbox-of-cells b)))\n                                 (if (= (first ba) (first bb))\n                                     (< (second ba) (second bb))\n                                     (< (first ba) (first bb)))))))\n           (a (crop-cells (first components)))\n           (ap (crop-cells (second components)))\n           (b (crop-cells (third components)))\n           (cmd (find-first (lambda (t) (equal? (apply-transform a t) ap)) (list 0 1 2 3 4 5))))\n      (apply-transform b (if (eq? cmd #f) 0 cmd)))))"
+  },
+  {
+    "id": "H122",
+    "title": "Canonical Packing by Perimeter",
+    "difficulty": "hard",
+    "skills": [
+      "perimeter computation",
+      "component cropping",
+      "canonical ordering"
+    ],
+    "suggested_staged_path": "Separate the disconnected components, compute which one has the biggest boundary, then pack the crops from most boundary to least.",
+    "written_solution": "Find all connected components. Crop each one tightly, sort them by descending 4-neighbor perimeter (breaking ties by size), and concatenate the crops horizontally with a zero separator column.",
+    "program_name": "rule_h122",
+    "program_source": "def rule_h122(g):\n    comps=components_nonzero(g)\n    comps=sorted(comps, key=lambda cells:(-rect_perimeter(cells), -len(cells), bbox(cells)[0], bbox(cells)[1]))\n    blocks=[crop_bbox(g, cells) for cells in comps]\n    return concat_h(blocks, sep=1)",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (nonzero-components grid)\n      (let loop ([remaining (filter-cells grid (lambda (r c v) (not (= v 0))))] [acc (list)])\n        (if (empty? remaining)\n            (reverse acc)\n            (let* ((start (first remaining))\n                   (cells (connected-region grid (first start) (second start)\n                            (lambda (r c v) (not (= v 0))) 4)))\n              (loop (filter (lambda (p) (not (member? p cells))) remaining)\n                    (cons cells acc))))))\n    (define (perimeter cells)\n      (for*/sum ([p (in-list cells)]\n                 [d (in-list cardinal-deltas)])\n        (let ((q (list (+ (first p) (first d)) (+ (second p) (second d)))))\n          (if (member? q cells) 0 1))))\n    (define (pack-h grids gap)\n      (let* ((h (apply max (map rows grids)))\n             (w (+ (apply + (map cols grids)) (* gap (max 0 (- (length grids) 1))))))\n        (let loop ([out (empty-grid h w 0)] [remaining grids] [left 0])\n          (if (empty? remaining)\n              out\n              (let ((block (first remaining)))\n                (loop (for*/fold ([acc out])\n                                  ([r (in-range (rows block))]\n                                   [c (in-range (cols block))]\n                                   #:when (not (= (at block r c) 0)))\n                        (set-cell acc r (+ left c) (at block r c)))\n                      (rest remaining)\n                      (+ left (cols block) gap)))))))\n    (define (crop-cells cells)\n      (let ((bb (bbox-of-cells cells)))\n        (subgrid g (first bb) (second bb) (third bb) (fourth bb))))\n    (let* ((components (sort (nonzero-components g)\n                             (lambda (a b)\n                               (let ((pa (perimeter a)) (pb (perimeter b))\n                                     (ba (bbox-of-cells a)) (bb (bbox-of-cells b)))\n                                 (cond [(not (= pa pb)) (> pa pb)]\n                                       [(not (= (length a) (length b))) (> (length a) (length b))]\n                                       [(not (= (first ba) (first bb))) (< (first ba) (first bb))]\n                                       [else (< (second ba) (second bb))])))))\n           (blocks (map crop-cells components)))\n      (pack-h blocks 1))))"
+  },
+  {
+    "id": "H123",
+    "title": "Nearest-Seed Partition with Ties",
+    "difficulty": "hard",
+    "skills": [
+      "distance reasoning",
+      "partitioning",
+      "tie handling"
+    ],
+    "suggested_staged_path": "Treat the nonzero cells as seeds. For each empty cell, compare Manhattan distances to all seeds and mark ties separately.",
+    "written_solution": "Every zero cell is colored by the nearest seed under Manhattan distance. If two or more seed colors are tied for the minimum distance, the cell becomes cyan(8). Original seed cells stay unchanged.",
+    "program_name": "rule_h123",
+    "program_source": "def rule_h123(g):\n    h,w=size(g)\n    seeds=[(r,c,v) for r,row in enumerate(g) for c,v in enumerate(row) if v!=0]\n    out=blank(h,w)\n    for r in range(h):\n        for c in range(w):\n            if g[r][c]!=0:\n                out[r][c]=g[r][c]\n                continue\n            dists=[]\n            for sr,sc,col in seeds:\n                d=abs(r-sr)+abs(c-sc)\n                dists.append((d,col))\n            m=min(d for d,col in dists)\n            cols={col for d,col in dists if d==m}\n            out[r][c]=next(iter(cols)) if len(cols)==1 else 8\n    return out",
+    "program_solution": "(rule!\n  (let ((seeds (filter (lambda (cell) (not (= (third cell) 0))) (grid-cells g))))\n    (define (dist cell r c)\n      (+ (abs (- r (first cell))) (abs (- c (second cell)))))\n    (define (fill-value r c)\n      (let* ((dmin (apply min (map (lambda (cell) (dist cell r c)) seeds)))\n             (colors (remove-duplicates\n                       (map third (filter (lambda (cell) (= (dist cell r c) dmin)) seeds)))))\n        (if (= (length colors) 1) (first colors) 8)))\n    (grid-from-fn (rows g) (cols g)\n      (lambda (r c)\n        (if (= (at g r c) 0) (fill-value r c) (at g r c))))))"
+  },
+  {
+    "id": "H124",
+    "title": "Composed Transform Strip",
+    "difficulty": "hard",
+    "skills": [
+      "command composition",
+      "multiple transforms",
+      "crop output"
+    ],
+    "suggested_staged_path": "Do not jump straight to the answer. First decode the command strip into a sequence of transforms, then apply them one after another to the lower motif.",
+    "written_solution": "Read the nonzero command colors in the top row from left to right. Map 2,3,4,5,6 to rotate90, rotate180, rotate270, flip_h, flip_v, apply those transforms sequentially to the lower motif, and output the final crop.",
+    "program_name": "rule_h124",
+    "program_source": "def rule_h124(g):\n    cmds=[v for v in g[0] if v!=0]\n    mapping={2:1,3:2,4:3,5:4,6:5}\n    comps=[cells for cells in components_nonzero(g) if bbox(cells)[0] > 0]\n    motif=crop_bbox(g, sorted(comps, key=bbox)[0])\n    out=motif\n    for cmd in cmds:\n        out=apply_transform(out, mapping[cmd])\n    return out",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (apply-transform grid cmd)\n      (cond [(= cmd 0) grid]\n            [(= cmd 1) (rotate-cw grid)]\n            [(= cmd 2) (rotate-180 grid)]\n            [(= cmd 3) (transpose grid)]\n            [(= cmd 4) (flip-lr grid)]\n            [else (flip-ud grid)]))\n    (define (nonzero-components grid)\n      (let loop ([remaining (filter-cells grid (lambda (r c v) (not (= v 0))))] [acc (list)])\n        (if (empty? remaining)\n            (reverse acc)\n            (let* ((start (first remaining))\n                   (cells (connected-region grid (first start) (second start)\n                            (lambda (r c v) (not (= v 0))) 4)))\n              (loop (filter (lambda (p) (not (member? p cells))) remaining)\n                    (cons cells acc))))))\n    (define (mapped-cmd cmd)\n      (cond [(= cmd 2) 1] [(= cmd 3) 2] [(= cmd 4) 3] [(= cmd 5) 4] [else 5]))\n    (let* ((cmds (filter (lambda (v) (not (= v 0))) (row g 0)))\n           (components (filter (lambda (cells) (> (first (bbox-of-cells cells)) 0))\n                               (nonzero-components g)))\n           (chosen (first (sort components\n                            (lambda (a b)\n                              (let ((ba (bbox-of-cells a)) (bb (bbox-of-cells b)))\n                                (if (= (first ba) (first bb))\n                                    (< (second ba) (second bb))\n                                    (< (first ba) (first bb))))))))\n           (bb (bbox-of-cells chosen))\n           (motif (subgrid g (first bb) (second bb) (third bb) (fourth bb))))\n      (foldl (lambda (cmd acc) (apply-transform acc (mapped-cmd cmd))) motif cmds))))"
+  },
+  {
+    "id": "H125",
+    "title": "Size-Matched Frame Insertion",
+    "difficulty": "hard",
+    "skills": [
+      "frame detection",
+      "size matching",
+      "placement by fit"
+    ],
+    "suggested_staged_path": "Separate the empty 8-frames from the free shapes. Match each shape’s cropped size to one frame’s interior size and then insert it there.",
+    "written_solution": "Find every hollow rectangular frame of 8s and compute its interior size. Crop the other components, match each crop to the frame whose interior has the same size, and place that crop into that frame’s interior.",
+    "program_name": "rule_h125",
+    "program_source": "def rule_h125(g):\n    out=clone(g)\n    frame_comps=[comp['cells'] for comp in components_color(g) if comp['color']==8]\n    frames=[]\n    for cells in frame_comps:\n        r0,c0,r1,c1=bbox(cells)\n        if len(cells) == 2*((r1-r0+1)+(c1-c0+1))-4:\n            frames.append((r0,c0,r1,c1))\n    shapes=[cells for cells in components_nonzero(g) if g[cells[0][0]][cells[0][1]] != 8]\n    shape_info=[]\n    for cells in shapes:\n        block=crop_bbox(g,cells)\n        bh,bw=size(block)\n        shape_info.append((bh,bw,block))\n    used=[False]*len(shape_info)\n    for r0,c0,r1,c1 in sorted(frames):\n        ih,iw=(r1-r0-1),(c1-c0-1)\n        for i,(bh,bw,block) in enumerate(shape_info):\n            if not used[i] and (bh,bw)==(ih,iw):\n                for r in range(bh):\n                    for c in range(bw):\n                        if block[r][c]!=0:\n                            out[r0+1+r][c0+1+c]=block[r][c]\n                used[i]=True\n                break\n    return out",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (nonzero-components grid)\n      (let loop ([remaining (filter-cells grid (lambda (r c v) (not (= v 0))))] [acc (list)])\n        (if (empty? remaining)\n            (reverse acc)\n            (let* ((start (first remaining))\n                   (cells (connected-region grid (first start) (second start)\n                            (lambda (r c v) (not (= v 0))) 4)))\n              (loop (filter (lambda (p) (not (member? p cells))) remaining)\n                    (cons cells acc))))))\n    (define (rect-frame? obj)\n      (= (obj-size obj) (- (* 2 (+ (obj-h obj) (obj-w obj))) 4)))\n    (define (crop-cells cells)\n      (let ((bb (bbox-of-cells cells)))\n        (subgrid g (first bb) (second bb) (third bb) (fourth bb))))\n    (let* ((frames (sort (map obj-bbox (filter (lambda (obj)\n                                                 (and (= (obj-color obj) 8) (rect-frame? obj)))\n                                               (objects g 0)))\n                         (lambda (a b)\n                           (if (= (first a) (first b))\n                               (< (second a) (second b))\n                               (< (first a) (first b))))))\n           (shapes (filter (lambda (cells)\n                             (not (= (at g (first (first cells)) (second (first cells))) 8)))\n                           (nonzero-components g)))\n           (shape-info (map (lambda (cells)\n                              (let ((block (crop-cells cells)))\n                                (list (rows block) (cols block) block)))\n                            shapes)))\n      (let loop-frames ([out g] [remaining frames] [used (list)])\n        (if (empty? remaining)\n            out\n            (let* ((fr (first remaining))\n                   (ih (- (third fr) (first fr) 1))\n                   (iw (- (fourth fr) (second fr) 1))\n                   (match (find-first\n                            (lambda (item)\n                              (and (= (first item) ih) (= (second item) iw)\n                                   (not (member? item used))))\n                            shape-info)))\n              (if (eq? match #f)\n                  (loop-frames out (rest remaining) used)\n                  (let ((block (third match)))\n                    (loop-frames\n                      (for*/fold ([acc out])\n                                 ([r (in-range (rows block))]\n                                  [c (in-range (cols block))]\n                                  #:when (not (= (at block r c) 0)))\n                        (set-cell acc (+ (first fr) 1 r) (+ (second fr) 1 c) (at block r c)))\n                      (rest remaining)\n                      (cons match used))))))))))"
+  },
+  {
+    "id": "H126",
+    "title": "Transform and Palette by Example",
+    "difficulty": "hard",
+    "skills": [
+      "analogy",
+      "transform inference",
+      "palette mapping"
+    ],
+    "suggested_staged_path": "Use the upper pair twice: once to infer geometry and once to infer the color substitution. Then apply both to the lower motif.",
+    "written_solution": "The upper pair shows a geometric transform together with a color mapping. Infer both from A to A-prime, then apply that same transform and recoloring to the lower motif B and output the result.",
+    "program_name": "rule_h126",
+    "program_source": "def rule_h126(g):\n    comps=sorted(components_nonzero(g), key=lambda cells: bbox(cells))\n    a=crop_bbox(g, comps[0])\n    ap=crop_bbox(g, comps[1])\n    b=crop_bbox(g, comps[2])\n    found_t=None\n    mapping=None\n    for t in TRANSFORMS:\n        ta=apply_transform(a, t)\n        if size(ta) != size(ap):\n            continue\n        ok=True\n        m={}\n        rev={}\n        h,w=size(ta)\n        for r in range(h):\n            for c in range(w):\n                va,vb=ta[r][c], ap[r][c]\n                if (va==0) != (vb==0):\n                    ok=False\n                    break\n                if va!=0:\n                    if va in m and m[va]!=vb:\n                        ok=False\n                        break\n                    if vb in rev and rev[vb]!=va:\n                        ok=False\n                        break\n                    m[va]=vb\n                    rev[vb]=va\n            if not ok:\n                break\n        if ok:\n            found_t=t\n            mapping=m\n            break\n    tb=apply_transform(b, found_t)\n    out=clone(tb)\n    for r,row in enumerate(out):\n        for c,v in enumerate(row):\n            if v!=0:\n                out[r][c]=mapping[v]\n    return out",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (apply-transform grid cmd)\n      (cond [(= cmd 0) grid]\n            [(= cmd 1) (rotate-cw grid)]\n            [(= cmd 2) (rotate-180 grid)]\n            [(= cmd 3) (transpose grid)]\n            [(= cmd 4) (flip-lr grid)]\n            [else (flip-ud grid)]))\n    (define (nonzero-components grid)\n      (let loop ([remaining (filter-cells grid (lambda (r c v) (not (= v 0))))] [acc (list)])\n        (if (empty? remaining)\n            (reverse acc)\n            (let* ((start (first remaining))\n                   (cells (connected-region grid (first start) (second start)\n                            (lambda (r c v) (not (= v 0))) 4)))\n              (loop (filter (lambda (p) (not (member? p cells))) remaining)\n                    (cons cells acc))))))\n    (define (crop-cells cells)\n      (let ((bb (bbox-of-cells cells)))\n        (subgrid g (first bb) (second bb) (third bb) (fourth bb))))\n    (define (mapping-for a ap cmd)\n      (let ((ta (apply-transform a cmd)))\n        (if (or (not (= (rows ta) (rows ap))) (not (= (cols ta) (cols ap))))\n            #f\n            (let loop ([cells (grid-cells ta)] [mapping (list)] [reverse-map (list)])\n              (cond [(empty? cells) mapping]\n                    [else\n                     (let* ((cell (first cells))\n                            (r (first cell))\n                            (c (second cell))\n                            (va (third cell))\n                            (vb (at ap r c)))\n                       (cond [(not (= (= va 0) (= vb 0))) #f]\n                             [(= va 0) (loop (rest cells) mapping reverse-map)]\n                             [else\n                              (let ((old (find-first (lambda (p) (= (first p) va)) mapping))\n                                    (rev (find-first (lambda (p) (= (first p) vb)) reverse-map)))\n                                (cond [(and (not (eq? old #f)) (not (= (second old) vb))) #f]\n                                      [(and (not (eq? rev #f)) (not (= (second rev) va))) #f]\n                                      [else\n                                       (loop (rest cells)\n                                             (if (eq? old #f) (cons (list va vb) mapping) mapping)\n                                             (if (eq? rev #f) (cons (list vb va) reverse-map) reverse-map))]))]))])))))\n    (define (lookup color mapping)\n      (let ((hit (find-first (lambda (p) (= (first p) color)) mapping)))\n        (if (eq? hit #f) color (second hit))))\n    (let* ((components (sort (nonzero-components g)\n                             (lambda (a b)\n                               (let ((ba (bbox-of-cells a)) (bb (bbox-of-cells b)))\n                                 (if (= (first ba) (first bb))\n                                     (< (second ba) (second bb))\n                                     (< (first ba) (first bb)))))))\n           (a (crop-cells (first components)))\n           (ap (crop-cells (second components)))\n           (b (crop-cells (third components)))\n           (hit (find-first (lambda (t) (not (eq? (mapping-for a ap t) #f))) (list 0 1 2 3 4 5)))\n           (mapping (mapping-for a ap hit))\n           (tb (apply-transform b hit)))\n      (grid-from-fn (rows tb) (cols tb)\n        (lambda (r c)\n          (let ((v (at tb r c)))\n            (if (= v 0) 0 (lookup v mapping))))))))"
+  }
+]

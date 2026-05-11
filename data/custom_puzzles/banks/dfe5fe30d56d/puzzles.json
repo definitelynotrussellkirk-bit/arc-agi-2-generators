@@ -1,0 +1,359 @@
+[
+  {
+    "id": "easy_j01",
+    "difficulty": "easy",
+    "name": "Expand singleton seeds into radius-2 diamonds",
+    "tags": [
+      "same_size",
+      "local",
+      "manhattan",
+      "seeds"
+    ],
+    "written_rule": "Every nonzero singleton seed expands into the full Manhattan-distance-2 diamond of the same color.",
+    "program_function": "solve_j01_diamond_bloom",
+    "primitive_names": [
+      "diamond_bloom"
+    ],
+    "program_solution": "(rule!\n  (for/fold ([out (empty-grid (rows g) (cols g) 0)])\n            ([cell (in-list (filter (lambda (x) (not (= (third x) 0))) (grid-cells g)))])\n    (let ((r0 (first cell)) (c0 (second cell)) (color (third cell)))\n      (for*/fold ([acc out])\n                 ([r (in-range (rows g))]\n                  [c (in-range (cols g))])\n        (if (<= (+ (abs (- r r0)) (abs (- c c0))) 2)\n            (set-cell acc r c color)\n            acc)))))"
+  },
+  {
+    "id": "easy_j02",
+    "difficulty": "easy",
+    "name": "Keep only the middle cell of each odd horizontal run",
+    "tags": [
+      "same_size",
+      "runs",
+      "rows",
+      "selection"
+    ],
+    "written_rule": "Each odd-length row segment collapses to just its middle cell. Background stays black(0).",
+    "program_function": "solve_j02_run_median",
+    "primitive_names": [
+      "run_median"
+    ],
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (paint-runs r)\n      (let loop ([c 0] [out (empty-grid (rows g) (cols g) 0)])\n        (cond [(>= c (cols g)) out]\n              [(= (at g r c) 0) (loop (+ c 1) out)]\n              [else\n               (let* ((color (at g r c))\n                      (end (let find-end ([cc c])\n                             (if (and (< cc (cols g)) (= (at g r cc) color))\n                                 (find-end (+ cc 1))\n                                 (- cc 1))))\n                      (mid (+ c (quotient (+ (- end c) 1) 2))))\n                 (loop (+ end 1) (set-cell out r mid color)))])))\n    (for/fold ([out (empty-grid (rows g) (cols g) 0)]) ([r (in-range (rows g))])\n      (for*/fold ([acc out])\n                 ([c (in-range (cols g))])\n        (let ((v (at (paint-runs r) r c)))\n          (if (not (= v 0)) (set-cell acc r c v) acc))))))"
+  },
+  {
+    "id": "easy_j03",
+    "difficulty": "easy",
+    "name": "Fill alternating cells between matched row endpoints",
+    "tags": [
+      "same_size",
+      "rows",
+      "bridges",
+      "alternation"
+    ],
+    "written_rule": "When a row has exactly two equal nonzero endpoints with only black(0) cells between them, fill every other interior cell starting from the left endpoint side.",
+    "program_function": "solve_j03_zebra_bridge",
+    "primitive_names": [
+      "zebra_bridge"
+    ],
+    "program_solution": "(rule!\n  (for/fold ([out g]) ([r (in-range (rows g))])\n    (for/fold ([acc out]) ([color (in-list (grid-colors g 0))])\n      (let ((cols (filter (lambda (c) (= (at g r c) color)) (range 0 (cols g)))))\n        (if (and (= (length cols) 2)\n                 (all? (lambda (c) (= (at g r c) 0)) (range (+ (first cols) 1) (second cols))))\n            (for/fold ([row-out acc])\n                      ([c (in-range (+ (first cols) 1) (second cols))]\n                       [k (in-naturals 1)])\n              (if (= (modulo k 2) 1) (set-cell row-out r c color) row-out))\n            acc)))))"
+  },
+  {
+    "id": "easy_j04",
+    "difficulty": "easy",
+    "name": "Fill the missing center of each plus",
+    "tags": [
+      "same_size",
+      "local",
+      "plus",
+      "completion"
+    ],
+    "written_rule": "If a black(0) cell has the same non-background color on all four orthogonal neighbors, fill the center with that color.",
+    "program_function": "solve_j04_plus_vote_fill",
+    "primitive_names": [
+      "plus_vote_fill"
+    ],
+    "program_solution": "(rule!\n  (for*/fold ([out g])\n             ([r (in-range 1 (- (rows g) 1))]\n              [c (in-range 1 (- (cols g) 1))])\n    (let ((vals (list (at g (- r 1) c) (at g (+ r 1) c) (at g r (- c 1)) (at g r (+ c 1)))))\n      (if (and (= (at g r c) 0)\n               (not (= (first vals) 0))\n               (all? (lambda (v) (= v (first vals))) vals))\n          (set-cell out r c (first vals))\n          out))))"
+  },
+  {
+    "id": "easy_j05",
+    "difficulty": "easy",
+    "name": "Grow each horizontal run by one cell at both ends",
+    "tags": [
+      "same_size",
+      "runs",
+      "growth",
+      "rows"
+    ],
+    "written_rule": "Extend every row segment of a non-background color by one extra cell on the left and one on the right whenever those cells are black(0).",
+    "program_function": "solve_j05_run_grow",
+    "primitive_names": [
+      "run_grow"
+    ],
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (let row-loop ([r 0] [out g])\n      (if (= r (rows g))\n          out\n          (let col-loop ([c 0] [acc out])\n            (cond [(>= c (cols g)) (row-loop (+ r 1) acc)]\n                  [(= (at g r c) 0) (col-loop (+ c 1) acc)]\n                  [else\n                   (let* ((color (at g r c))\n                          (end (let find-end ([cc c])\n                                 (if (and (< cc (cols g)) (= (at g r cc) color))\n                                     (find-end (+ cc 1))\n                                     (- cc 1))))\n                          (left (if (and (> c 0) (= (at g r (- c 1)) 0)) (set-cell acc r (- c 1) color) acc))\n                          (grown (if (and (< (+ end 1) (cols g)) (= (at g r (+ end 1)) 0))\n                                     (set-cell left r (+ end 1) color)\n                                     left)))\n                     (col-loop (+ end 1) grown))]))))))"
+  },
+  {
+    "id": "easy_j06",
+    "difficulty": "easy",
+    "name": "Dash each horizontal run",
+    "tags": [
+      "same_size",
+      "runs",
+      "rows",
+      "subsampling"
+    ],
+    "written_rule": "Replace each row segment by a dashed version that keeps every other cell, starting from the run’s leftmost cell.",
+    "program_function": "solve_j06_run_dash",
+    "primitive_names": [
+      "run_dash"
+    ],
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (let row-loop ([r 0] [out (empty-grid (rows g) (cols g) 0)])\n      (if (= r (rows g))\n          out\n          (let col-loop ([c 0] [acc out])\n            (cond [(>= c (cols g)) (row-loop (+ r 1) acc)]\n                  [(= (at g r c) 0) (col-loop (+ c 1) acc)]\n                  [else\n                   (let* ((color (at g r c))\n                          (end (let find-end ([cc c])\n                                 (if (and (< cc (cols g)) (= (at g r cc) color))\n                                     (find-end (+ cc 1))\n                                     (- cc 1))))\n                          (dashed (for/fold ([row-out acc]) ([cc (in-range c (+ end 1))] [idx (in-naturals)])\n                                    (if (= (modulo idx 2) 0) (set-cell row-out r cc color) row-out))))\n                     (col-loop (+ end 1) dashed))]))))))"
+  },
+  {
+    "id": "easy_j07",
+    "difficulty": "easy",
+    "name": "Flush each row to the right",
+    "tags": [
+      "same_size",
+      "rows",
+      "packing",
+      "order_preserving"
+    ],
+    "written_rule": "Within each row, keep the nonzero cells in their left-to-right order but slide them all the way to the right.",
+    "program_function": "solve_j07_row_flush_right",
+    "primitive_names": [
+      "row_flush_right"
+    ],
+    "program_solution": "(rule!\n  (grid-from-fn (rows g) (cols g)\n    (lambda (r c)\n      (let* ((vals (filter (lambda (v) (not (= v 0))) (row-at g r)))\n             (start (- (cols g) (length vals))))\n        (if (< c start) 0 (list-ref vals (- c start)))))))"
+  },
+  {
+    "id": "medium_j08",
+    "difficulty": "medium",
+    "name": "Recolor objects by perimeter rank",
+    "tags": [
+      "same_size",
+      "objects",
+      "ranking",
+      "perimeter"
+    ],
+    "written_rule": "Measure each object’s perimeter. The largest perimeter becomes red(2), the next becomes green(3), the next yellow(4), and so on by descending rank.",
+    "program_function": "solve_j08_perimeter_rank",
+    "primitive_names": [
+      "perimeter_rank"
+    ],
+    "program_solution": "(rule!\n  (let* ((objs (objects g 0))\n         (palette (list 2 3 4 6 8 9 1 5 7)))\n    (define (perimeter obj)\n      (for*/sum ([p (in-list (obj-cells obj))]\n                 [d (in-list cardinal-deltas)])\n        (if (member (list (+ (first p) (first d)) (+ (second p) (second d))) (obj-cells obj)) 0 1)))\n    (define perims (sort (remove-duplicates (map perimeter objs)) >))\n    (define (rank-color p)\n      (list-ref palette\n                (let loop ([xs perims] [i 0])\n                  (if (= (first xs) p) i (loop (rest xs) (+ i 1))))))\n    (for/fold ([out (empty-grid (rows g) (cols g) 0)]) ([obj (in-list objs)])\n      (paint-cells out (obj-cells obj) (rank-color (perimeter obj))))))"
+  },
+  {
+    "id": "medium_j09",
+    "difficulty": "medium",
+    "name": "Replace each object with its bounding-box frame",
+    "tags": [
+      "same_size",
+      "objects",
+      "bounding_box",
+      "frames"
+    ],
+    "written_rule": "For every connected object, ignore its internal shape and draw only the rectangular frame of its tight bbox in the same color.",
+    "program_function": "solve_j09_bbox_frame",
+    "primitive_names": [
+      "bbox_frame"
+    ],
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (border obj)\n      (append (for/list ([c (in-range (obj-c1 obj) (+ (obj-c2 obj) 1))]) (list (obj-r1 obj) c))\n              (for/list ([c (in-range (obj-c1 obj) (+ (obj-c2 obj) 1))]) (list (obj-r2 obj) c))\n              (for/list ([r (in-range (+ (obj-r1 obj) 1) (obj-r2 obj))]) (list r (obj-c1 obj)))\n              (for/list ([r (in-range (+ (obj-r1 obj) 1) (obj-r2 obj))]) (list r (obj-c2 obj)))))\n    (for/fold ([out (empty-grid (rows g) (cols g) 0)]) ([obj (in-list (objects g 0))])\n      (paint-cells out (border obj) (obj-color obj)))))"
+  },
+  {
+    "id": "medium_j10",
+    "difficulty": "medium",
+    "name": "Convert the object into a row-profile chart",
+    "tags": [
+      "resize",
+      "object",
+      "histogram",
+      "rows"
+    ],
+    "written_rule": "Crop the object, count how many colored cells appear in each cropped row, and output a left-justified bar chart of those row counts using the object’s color.",
+    "program_function": "solve_j10_row_profile",
+    "primitive_names": [
+      "row_profile"
+    ],
+    "program_solution": "(rule!\n  (let* ((obj (first (sort (objects g 0) (lambda (a b) (> (obj-size a) (obj-size b))))))\n         (crop (subgrid g (obj-r1 obj) (obj-c1 obj) (obj-r2 obj) (obj-c2 obj)))\n         (counts (for/list ([r (in-range (rows crop))])\n                   (count-where (lambda (c) (not (= (at crop r c) 0))) (range 0 (cols crop)))))\n         (w (apply max counts)))\n    (grid-from-fn (length counts) w\n      (lambda (r c)\n        (if (< c (list-ref counts r)) (obj-color obj) 0)))))"
+  },
+  {
+    "id": "medium_j11",
+    "difficulty": "medium",
+    "name": "Recolor objects by symmetry class",
+    "tags": [
+      "same_size",
+      "objects",
+      "symmetry",
+      "classification"
+    ],
+    "written_rule": "Classify each cropped object by its mirror symmetries: both vertical and horizontal → cyan(8), vertical only → red(2), horizontal only → green(3), neither → yellow(4). Preserve the shape positions.",
+    "program_function": "solve_j11_symmetry_class",
+    "primitive_names": [
+      "symmetry_class"
+    ],
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (mask obj)\n      (let ((crop (subgrid g (obj-r1 obj) (obj-c1 obj) (obj-r2 obj) (obj-c2 obj))))\n        (grid-from-fn (rows crop) (cols crop)\n          (lambda (r c) (if (not (= (at crop r c) 0)) 1 0)))))\n    (define (v-sym? m) (equal? m (flip-lr m)))\n    (define (h-sym? m) (equal? m (flip-ud m)))\n    (define (class-color obj)\n      (let* ((m (mask obj))\n             (vs (v-sym? m))\n             (hs (h-sym? m)))\n        (if (and vs hs) 8 (if vs 2 (if hs 3 4)))))\n    (for/fold ([out (empty-grid (rows g) (cols g) 0)]) ([obj (in-list (objects g 0))])\n      (paint-cells out (obj-cells obj) (class-color obj)))))"
+  },
+  {
+    "id": "medium_j12",
+    "difficulty": "medium",
+    "name": "Stack cropped objects vertically by height",
+    "tags": [
+      "resize",
+      "objects",
+      "packing",
+      "sorting"
+    ],
+    "written_rule": "Crop every object and stack the cropped shapes from tallest to shortest, with one background row between consecutive shapes. Keep original colors.",
+    "program_function": "solve_j12_stack_by_height",
+    "primitive_names": [
+      "stack_by_height"
+    ],
+    "program_solution": "(rule!\n  (let* ((items (sort (map (lambda (obj)\n                             (let ((crop (subgrid g (obj-r1 obj) (obj-c1 obj) (obj-r2 obj) (obj-c2 obj))))\n                               (list (rows crop) (obj-color obj) crop)))\n                           (objects g 0))\n                      (lambda (a b)\n                        (if (= (first a) (first b))\n                            (< (second a) (second b))\n                            (> (first a) (first b))))))\n         (shapes (map third items))\n         (out-h (+ (apply + (map rows shapes)) (max 0 (- (length shapes) 1))))\n         (out-w (apply max (map cols shapes))))\n    (let pack ([remaining shapes] [top 0] [out (empty-grid out-h out-w 0)])\n      (if (empty? remaining)\n          out\n          (let* ((shape (first remaining))\n                 (next (for*/fold ([acc out])\n                                   ([r (in-range (rows shape))]\n                                    [c (in-range (cols shape))])\n                         (let ((v (at shape r c)))\n                           (if (not (= v 0)) (set-cell acc (+ top r) c v) acc)))))\n            (pack (rest remaining) (+ top (rows shape) 1) next))))))"
+  },
+  {
+    "id": "medium_j13",
+    "difficulty": "medium",
+    "name": "Dock each object under its matching top-row marker",
+    "tags": [
+      "resize",
+      "markers",
+      "objects",
+      "alignment"
+    ],
+    "written_rule": "Each nonzero cell in the top row is a dock marker. Find the object of the same color, crop it, then place it in the output so its left edge starts in that marker’s column and its bottom edge sits on the output floor.",
+    "program_function": "solve_j13_marker_dock",
+    "primitive_names": [
+      "marker_dock"
+    ],
+    "program_solution": "(rule!\n  (let* ((markers (filter (lambda (cell) (and (= (first cell) 0) (not (= (third cell) 0)))) (grid-cells g)))\n         (body (subgrid g 1 0 (- (rows g) 1) (- (cols g) 1)))\n         (objs (objects body 0)))\n    (define (crop-for color)\n      (let* ((obj (first (filter (lambda (o) (= (obj-color o) color)) objs))))\n        (subgrid body (obj-r1 obj) (obj-c1 obj) (obj-r2 obj) (obj-c2 obj))))\n    (define crops (map (lambda (m) (list (third m) (second m) (crop-for (third m)))) markers))\n    (define out-h (apply max (map (lambda (x) (rows (third x))) crops)))\n    (for/fold ([out (empty-grid out-h (cols g) 0)]) ([item (in-list crops)])\n      (let* ((left (second item))\n             (crop (third item))\n             (top (- out-h (rows crop))))\n        (for*/fold ([acc out])\n                   ([r (in-range (rows crop))]\n                    [c (in-range (cols crop))])\n          (let ((v (at crop r c)))\n            (if (not (= v 0)) (set-cell acc (+ top r) (+ left c) v) acc)))))))"
+  },
+  {
+    "id": "medium_j14",
+    "difficulty": "medium",
+    "name": "Apply the top-row color legend",
+    "tags": [
+      "resize",
+      "legend",
+      "recolor",
+      "mapping"
+    ],
+    "written_rule": "Read the top row as adjacent old→new color pairs. Apply that recoloring to the body of the grid and drop the legend row from the output.",
+    "program_function": "solve_j14_palette_legend",
+    "primitive_names": [
+      "palette_legend"
+    ],
+    "program_solution": "(rule!\n  (let ((mapping (make-hash)))\n    (let loop ([c 0])\n      (when (< (+ c 1) (cols g))\n        (if (and (not (= (at g 0 c) 0)) (not (= (at g 0 (+ c 1)) 0)))\n            (begin (hash-set! mapping (at g 0 c) (at g 0 (+ c 1))) (loop (+ c 2)))\n            (loop (+ c 1)))))\n    (grid-from-fn (- (rows g) 1) (cols g)\n      (lambda (r c)\n        (let ((v (at g (+ r 1) c)))\n          (hash-ref mapping v v))))))"
+  },
+  {
+    "id": "hard_j15",
+    "difficulty": "hard",
+    "name": "Route a waypoint path through the maze",
+    "tags": [
+      "same_size",
+      "pathfinding",
+      "waypoint",
+      "walls"
+    ],
+    "written_rule": "Find one shortest path from red(2) to yellow(4) that must pass through the waypoint green(3), moving only orthogonally through black(0) cells and avoiding gray(5) walls. Paint the whole routed path cyan(8).",
+    "program_function": "solve_j15_waypoint_path",
+    "primitive_names": [
+      "waypoint_path"
+    ],
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define start (first (find-color g 2)))\n    (define waypoint (first (find-color g 3)))\n    (define goal (first (find-color g 4)))\n    (define (bfs src dst)\n      (define queue (list src))\n      (define prev (make-hash))\n      (hash-set! prev (cons (first src) (second src)) #f)\n      (define (search)\n        (unless (empty? queue)\n          (define cur (first queue))\n          (set! queue (rest queue))\n          (unless (equal? cur dst)\n            (for ([d (in-list cardinal-deltas)])\n              (define nr (+ (first cur) (first d)))\n              (define nc (+ (second cur) (second d)))\n              (define key (cons nr nc))\n              (when (and (in-bounds? nr nc (rows g) (cols g))\n                         (not (hash-has-key? prev key))\n                         (or (not (= (at g nr nc) 5)) (and (= nr (first dst)) (= nc (second dst)))))\n                (hash-set! prev key cur)\n                (set! queue (append queue (list (list nr nc)))))))\n          (search)))\n      (search)\n      (let rebuild ([cur dst] [acc (list)])\n        (if (not cur)\n            acc\n            (rebuild (hash-ref prev (cons (first cur) (second cur)) #f) (cons cur acc)))))\n    (let* ((p1 (bfs start waypoint))\n           (p2 (bfs waypoint goal))\n           (path (append (take p1 (- (length p1) 1)) p2)))\n      (paint-cells g path 8))))"
+  },
+  {
+    "id": "hard_j16",
+    "difficulty": "hard",
+    "name": "Take the majority overlay of three normalized shapes",
+    "tags": [
+      "resize",
+      "objects",
+      "overlay",
+      "consensus"
+    ],
+    "written_rule": "Crop the three objects, align their top-left corners on a common canvas, and keep exactly the cells occupied in at least two of the three shapes. Paint the consensus shape cyan(8) and crop it.",
+    "program_function": "solve_j16_threeway_majority",
+    "primitive_names": [
+      "threeway_majority"
+    ],
+    "program_solution": "(rule!\n  (let* ((shapes (map (lambda (obj) (subgrid g (obj-r1 obj) (obj-c1 obj) (obj-r2 obj) (obj-c2 obj))) (objects g 0)))\n         (h (apply max (map rows shapes)))\n         (w (apply max (map cols shapes)))\n         (out (grid-from-fn h w\n                (lambda (r c)\n                  (let ((cnt (count-where (lambda (shape)\n                                            (and (< r (rows shape)) (< c (cols shape)) (not (= (at shape r c) 0))))\n                                          shapes)))\n                    (if (>= cnt 2) 8 0))))))\n    (crop-to-content out)))"
+  },
+  {
+    "id": "hard_j17",
+    "difficulty": "hard",
+    "name": "Rotate inserts into matching-color frames",
+    "tags": [
+      "same_size",
+      "frames",
+      "matching",
+      "rotation"
+    ],
+    "written_rule": "Each hollow frame matches the external object of the same color. A key inside the frame says how to rotate that object before placing it into the frame interior: blue(1)=identity, red(2)=90° clockwise, green(3)=180°, yellow(4)=270° clockwise.",
+    "program_function": "solve_j17_frame_rotate_insert",
+    "primitive_names": [
+      "frame_rotate_insert"
+    ],
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (frame? obj)\n      (let* ((h (obj-h obj)) (w (obj-w obj))\n             (border-size (- (* h w) (* (max 0 (- h 2)) (max 0 (- w 2))))))\n        (and (>= h 3) (>= w 3) (= (obj-size obj) border-size)\n             (all? (lambda (p)\n                     (or (= (first p) (obj-r1 obj)) (= (first p) (obj-r2 obj))\n                         (= (second p) (obj-c1 obj)) (= (second p) (obj-c2 obj))))\n                   (obj-cells obj)))))\n    (define (transform shape key)\n      (if (= key 1) shape (if (= key 2) (rotate-cw shape) (if (= key 3) (rotate-180 shape) (rotate-ccw shape)))))\n    (define objs (objects g 0))\n    (define frames (filter frame? objs))\n    (define inserts (filter (lambda (obj) (and (not (frame? obj)) (> (obj-size obj) 1))) objs))\n    (define singles (filter (lambda (obj) (and (= (obj-size obj) 1) (member (obj-color obj) (list 1 2 3 4)))) objs))\n    (define with-frames\n      (for/fold ([out (empty-grid (rows g) (cols g) 0)]) ([fr (in-list frames)])\n        (paint-cells out (obj-cells fr) (obj-color fr))))\n    (for/fold ([out with-frames]) ([fr (in-list frames)])\n      (let* ((key-candidates (filter (lambda (s)\n                                       (let ((p (first (obj-cells s))))\n                                         (and (> (first p) (obj-r1 fr)) (< (first p) (obj-r2 fr))\n                                              (> (second p) (obj-c1 fr)) (< (second p) (obj-c2 fr)))))\n                                     singles))\n             (key (if (empty? key-candidates) 1 (obj-color (first key-candidates))))\n             (insert (first (filter (lambda (obj) (= (obj-color obj) (obj-color fr))) inserts)))\n             (shape (transform (subgrid g (obj-r1 insert) (obj-c1 insert) (obj-r2 insert) (obj-c2 insert)) key)))\n        (for*/fold ([acc out])\n                   ([r (in-range (rows shape))]\n                    [c (in-range (cols shape))])\n          (let ((v (at shape r c)))\n            (if (not (= v 0)) (set-cell acc (+ (obj-r1 fr) 1 r) (+ (obj-c1 fr) 1 c) v) acc)))))))"
+  },
+  {
+    "id": "hard_j18",
+    "difficulty": "hard",
+    "name": "Connect object anchors in x-order",
+    "tags": [
+      "same_size",
+      "objects",
+      "routing",
+      "ordering"
+    ],
+    "written_rule": "Take the top-left anchor of each object’s bbox, sort those anchors from left to right, and connect consecutive anchors with orthogonal polylines: first horizontally, then vertically. Draw the connector in cyan(8) on top of the original grid.",
+    "program_function": "solve_j18_anchor_polyline",
+    "primitive_names": [
+      "anchor_polyline"
+    ],
+    "program_solution": "(rule!\n  (let* ((objs (sort (objects g 0) (lambda (a b) (< (obj-c1 a) (obj-c1 b)))))\n         (anchors (map (lambda (obj) (list (obj-r1 obj) (obj-c1 obj))) objs)))\n    (define (step-range a b)\n      (if (<= a b) (range a (+ b 1)) (reverse (range b (+ a 1)))))\n    (let loop ([pts anchors] [out g])\n      (if (< (length pts) 2)\n          out\n          (let* ((a (first pts))\n                 (b (second pts))\n                 (hpath (map (lambda (c) (list (first a) c)) (step-range (second a) (second b))))\n                 (vpath (map (lambda (r) (list r (second b))) (step-range (first a) (first b)))))\n            (loop (rest pts) (paint-cells (paint-cells out hpath 8) vpath 8)))))))"
+  },
+  {
+    "id": "hard_j19",
+    "difficulty": "hard",
+    "name": "Use two keys to select and transform an object",
+    "tags": [
+      "resize",
+      "keys",
+      "selection",
+      "transform"
+    ],
+    "written_rule": "The top-left key names which colored object to select. The top-right key names the transform to apply to that cropped object: blue(1) → identity, red(2) → 90° clockwise, green(3) → flip horizontal, yellow(4) → transpose, gray(5) → 180°.",
+    "program_function": "solve_j19_dual_key_transform",
+    "primitive_names": [
+      "dual_key_transform"
+    ],
+    "program_solution": "(rule!\n  (let* ((sel (at g 0 0))\n         (key (at g 0 (- (cols g) 1)))\n         (body (subgrid g 1 0 (- (rows g) 1) (- (cols g) 1)))\n         (chosen (first (filter (lambda (obj) (= (obj-color obj) sel)) (objects body 0))))\n         (crop (subgrid body (obj-r1 chosen) (obj-c1 chosen) (obj-r2 chosen) (obj-c2 chosen)))\n         (tf (cond [(= key 2) (rotate-cw crop)]\n                   [(= key 3) (flip-lr crop)]\n                   [(= key 4) (transpose crop)]\n                   [(= key 5) (rotate-180 crop)]\n                   [else crop])))\n    (crop-to-content tf)))"
+  },
+  {
+    "id": "hard_j20",
+    "difficulty": "hard",
+    "name": "Build a transformation timeline gallery",
+    "tags": [
+      "resize",
+      "keys",
+      "gallery",
+      "sequential"
+    ],
+    "written_rule": "Read the top-row keys from left to right. Starting from the cropped object, apply each transform in sequence and output a horizontal gallery of every stage: the original, then after key 1, then after key 2, and so on, with one background column between stages.",
+    "program_function": "solve_j20_transform_timeline",
+    "primitive_names": [
+      "transform_timeline"
+    ],
+    "program_solution": "(rule!\n  (let* ((keys (filter (lambda (v) (not (= v 0))) (first g)))\n         (body (subgrid g 1 0 (- (rows g) 1) (- (cols g) 1)))\n         (obj (first (sort (objects body 0) (lambda (a b) (> (obj-size a) (obj-size b))))))\n         (start (crop-to-content (subgrid body (obj-r1 obj) (obj-c1 obj) (obj-r2 obj) (obj-c2 obj)))))\n    (define (apply-key shape key)\n      (crop-to-content\n        (cond [(= key 2) (rotate-cw shape)]\n              [(= key 3) (flip-lr shape)]\n              [(= key 4) (transpose shape)]\n              [(= key 5) (rotate-180 shape)]\n              [else shape])))\n    (define stages\n      (let loop ([remaining keys] [cur start] [acc (list start)])\n        (if (empty? remaining)\n            (reverse acc)\n            (let ((next (apply-key cur (first remaining))))\n              (loop (rest remaining) next (cons next acc))))))\n    (define out-h (apply max (map rows stages)))\n    (define out-w (+ (apply + (map cols stages)) (max 0 (- (length stages) 1))))\n    (let pack ([remaining stages] [left 0] [out (empty-grid out-h out-w 0)])\n      (if (empty? remaining)\n          out\n          (let* ((shape (first remaining))\n                 (next (for*/fold ([acc out])\n                                   ([r (in-range (rows shape))]\n                                    [c (in-range (cols shape))])\n                         (let ((v (at shape r c)))\n                           (if (not (= v 0)) (set-cell acc r (+ left c) v) acc)))))\n            (pack (rest remaining) (+ left (cols shape) 1) next))))))"
+  },
+  {
+    "id": "hard_j21",
+    "difficulty": "hard",
+    "name": "Pack one object from each symmetry class into a 2x2 table",
+    "tags": [
+      "resize",
+      "objects",
+      "symmetry",
+      "gallery"
+    ],
+    "written_rule": "Identify one object from each symmetry class and pack them into a 2×2 gallery: top-left = both axes symmetric, top-right = vertical-only, bottom-left = horizontal-only, bottom-right = neither. Use tight crops and separate the gallery cells with one background row and one background column.",
+    "program_function": "solve_j21_symmetry_table",
+    "primitive_names": [
+      "symmetry_table"
+    ],
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (mask crop)\n      (grid-from-fn (rows crop) (cols crop) (lambda (r c) (if (not (= (at crop r c) 0)) 1 0))))\n    (define (shape obj) (subgrid g (obj-r1 obj) (obj-c1 obj) (obj-r2 obj) (obj-c2 obj)))\n    (define both #f)\n    (define vertical #f)\n    (define horizontal #f)\n    (define neither #f)\n    (for ([obj (in-list (objects g 0))])\n      (let* ((crop (shape obj))\n             (m (mask crop))\n             (vs (equal? m (flip-lr m)))\n             (hs (equal? m (flip-ud m))))\n        (if (and vs hs)\n            (set! both crop)\n            (if vs\n                (set! vertical crop)\n                (if hs (set! horizontal crop) (set! neither crop))))))\n    (define top-h (max (rows both) (rows vertical)))\n    (define bot-h (max (rows horizontal) (rows neither)))\n    (define left-w (max (cols both) (cols horizontal)))\n    (define right-w (max (cols vertical) (cols neither)))\n    (define (paste-shape out shape top left)\n      (for*/fold ([acc out])\n                 ([r (in-range (rows shape))]\n                  [c (in-range (cols shape))])\n        (let ((v (at shape r c)))\n          (if (not (= v 0)) (set-cell acc (+ top r) (+ left c) v) acc))))\n    (paste-shape\n      (paste-shape\n        (paste-shape\n          (paste-shape (empty-grid (+ top-h 1 bot-h) (+ left-w 1 right-w) 0) both 0 0)\n          vertical 0 (+ left-w 1))\n        horizontal (+ top-h 1) 0)\n      neither (+ top-h 1) (+ left-w 1))))"
+  }
+]

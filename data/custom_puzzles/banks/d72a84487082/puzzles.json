@@ -1,0 +1,338 @@
+[
+  {
+    "id": "E71",
+    "title": "Straight Terminal Links",
+    "difficulty": "easy",
+    "skills": [
+      "path completion",
+      "endpoint pairing",
+      "same-size transform"
+    ],
+    "staged_hint": "Find the colored terminal pairs first. Then connect each same-colored pair with the shortest straight segment.",
+    "written_solution": "For each color, find its two endpoints. If they share a row, fill all cells between them horizontally; if they share a column, fill vertically.",
+    "uses_new_primitive": true,
+    "program_name": "rule_e71",
+    "program_source": "def rule_e71(g):\n    endpoints=[(r,c,v) for r,row in enumerate(g) for c,v in enumerate(row) if v!=0]\n    return link_terminals(g, endpoints, allow_bends=False)",
+    "program_solution": "(rule!\n  (let ((colors (filter (lambda (v) (not (= v 0))) (grid-colors g))))\n    (for/fold ([out g]) ([color (in-list colors)])\n      (let ((pts (find-color g color)))\n        (if (= (length pts) 2)\n            (let ((a (first pts)) (b (second pts)))\n              (cond [(= (first a) (first b))\n                     (paint-cells out (map (lambda (c) (list (first a) c))\n                                           (range (min (second a) (second b)) (+ (max (second a) (second b)) 1))) color)]\n                    [(= (second a) (second b))\n                     (paint-cells out (map (lambda (r) (list r (second a)))\n                                           (range (min (first a) (first b)) (+ (max (first a) (first b)) 1))) color)]\n                    [else out]))\n            out)))))"
+  },
+  {
+    "id": "E72",
+    "title": "Complete the Rectangle",
+    "difficulty": "easy",
+    "skills": [
+      "bounding boxes",
+      "rectangle inference",
+      "border drawing"
+    ],
+    "staged_hint": "Ignore the missing corner. Use the extreme occupied rows and columns to infer the whole rectangle.",
+    "written_solution": "For each color, take the bbox of its given corner cells and draw the full border of that axis-aligned rectangle.",
+    "uses_new_primitive": false,
+    "program_name": "rule_e72",
+    "program_source": "def rule_e72(g):\n    h,w=size(g)\n    out=blank(h,w)\n    colors=defaultdict(list)\n    for r,row in enumerate(g):\n        for c,v in enumerate(row):\n            if v!=0:\n                colors[v].append((r,c))\n    for col,cells in colors.items():\n        r0,c0,r1,c1=bbox(cells)\n        for c in range(c0,c1+1):\n            out[r0][c]=out[r1][c]=col\n        for r in range(r0,r1+1):\n            out[r][c0]=out[r][c1]=col\n    return out",
+    "program_solution": "(rule!\n  (let ((colors (filter (lambda (v) (not (= v 0))) (grid-colors g))))\n    (for/fold ([out (empty-grid (rows g) (cols g) 0)]) ([color (in-list colors)])\n      (let* ((pts (find-color g color))\n             (bb (bbox-of-cells pts)))\n        (paint-cells out\n                     (filter (lambda (p) (or (= (first p) (first bb)) (= (first p) (third bb))\n                                             (= (second p) (second bb)) (= (second p) (fourth bb))))\n                             (positions-in-rect (first bb) (second bb) (third bb) (fourth bb)))\n                     color)))))"
+  },
+  {
+    "id": "E73",
+    "title": "Left-Pack Every Row",
+    "difficulty": "easy",
+    "skills": [
+      "row-wise processing",
+      "order preservation",
+      "compression"
+    ],
+    "staged_hint": "Treat each row independently. Keep the nonzero colors in order and slide them left.",
+    "written_solution": "For every row, remove the zeros, keep the remaining colors in their original order, and place them flush to the left with zeros filling the rest.",
+    "uses_new_primitive": false,
+    "program_name": "rule_e73",
+    "program_source": "def rule_e73(g):\n    h,w=size(g)\n    out=blank(h,w)\n    for r,row in enumerate(g):\n        vals=[v for v in row if v!=0]\n        out[r][:len(vals)] = vals\n    return out",
+    "program_solution": "(rule!\n  (grid-from-fn (rows g) (cols g)\n    (lambda (r c)\n      (let ((vals (filter (lambda (v) (not (= v 0))) (row g r))))\n        (if (< c (length vals)) (list-ref vals c) 0)))))"
+  },
+  {
+    "id": "E74",
+    "title": "Mirror Across the Guide Wall",
+    "difficulty": "easy",
+    "skills": [
+      "reflection",
+      "guide detection",
+      "same-size transform"
+    ],
+    "staged_hint": "First identify the full vertical guide. Then reflect every colored cell on the left side to the same offset on the right.",
+    "written_solution": "The full column of maroon(9)s is a mirror axis. Reflect every nonzero non-maroon(9) cell across that column. Keep the original object and the maroon(9) axis.",
+    "uses_new_primitive": false,
+    "program_name": "rule_e74",
+    "program_source": "def rule_e74(g):\n    h,w=size(g)\n    out=clone(g)\n    # full vertical 9 column\n    guide_cols=[c for c in range(w) if all(g[r][c]==9 for r in range(h))]\n    gc = guide_cols[0]\n    for r in range(h):\n        for c in range(gc):\n            v=g[r][c]\n            if v!=0 and v!=9:\n                mc = 2*gc - c\n                if 0<=mc<w:\n                    out[r][mc] = v\n    return out",
+    "program_solution": "(rule!\n  (let ((gc (first (filter (lambda (c) (all? (lambda (r) (= (at g r c) 9)) (range 0 (rows g)))) (range 0 (cols g))))))\n    (for*/fold ([out g]) ([r (in-range (rows g))] [c (in-range gc)])\n      (let ((v (at g r c)) (mc (- (* 2 gc) c)))\n        (if (and (not (= v 0)) (not (= v 9)) (in-bounds? r mc (rows g) (cols g)))\n            (set-cell out r mc v)\n            out)))))"
+  },
+  {
+    "id": "E75",
+    "title": "Count to a Bar",
+    "difficulty": "easy",
+    "skills": [
+      "counting",
+      "dynamic-size output",
+      "color preservation"
+    ],
+    "staged_hint": "Only one color matters. Count how many times it appears, then output a bar of that many cells.",
+    "written_solution": "Count all nonzero marker cells and output a single row whose length equals that count, filled with the marker color.",
+    "uses_new_primitive": false,
+    "program_name": "rule_e75",
+    "program_source": "def rule_e75(g):\n    vals=[v for row in g for v in row if v!=0]\n    col=vals[0]\n    return [[col]*len(vals)]",
+    "program_solution": "(rule!\n  (let ((vals (filter (lambda (v) (not (= v 0))) (map third (grid-cells g)))))\n    (list (make-list (length vals) (first vals)))))"
+  },
+  {
+    "id": "E76",
+    "title": "Fill the Enclosed Hole",
+    "difficulty": "easy",
+    "skills": [
+      "enclosure",
+      "hole fill",
+      "region detection"
+    ],
+    "staged_hint": "Separate boundary-connected zeros from enclosed zeros. Only the interior zero region changes.",
+    "written_solution": "Find zero regions that do not touch the outside border. If such a region is enclosed by a single surrounding color, fill the whole interior with that color.",
+    "uses_new_primitive": false,
+    "program_name": "rule_e76",
+    "program_source": "def rule_e76(g):\n    h,w=size(g)\n    out=clone(g)\n    vis=[[False]*w for _ in range(h)]\n    for r in range(h):\n        for c in range(w):\n            if g[r][c]!=0 or vis[r][c]:\n                continue\n            vis[r][c]=True\n            q=[(r,c)]\n            region=[]\n            border=False\n            neigh=set()\n            while q:\n                rr,cc=q.pop()\n                region.append((rr,cc))\n                if rr==0 or cc==0 or rr==h-1 or cc==w-1:\n                    border=True\n                for dr,dc in DIR4:\n                    nr,nc=rr+dr,cc+dc\n                    if 0<=nr<h and 0<=nc<w:\n                        if g[nr][nc]==0 and not vis[nr][nc]:\n                            vis[nr][nc]=True; q.append((nr,nc))\n                        elif g[nr][nc]!=0:\n                            neigh.add(g[nr][nc])\n            if not border and len(neigh)==1:\n                col=next(iter(neigh))\n                for rr,cc in region:\n                    out[rr][cc]=col\n    return out",
+    "program_solution": "(rule!\n  (let ((seen (make-hash)) (out g))\n    (for* ([r (in-range (rows g))] [c (in-range (cols g))])\n      (when (and (= (at g r c) 0) (not (hash-has-key? seen (cons r c))))\n        (define queue (list (cons r c)))\n        (define region (list))\n        (define border #f)\n        (define neigh (list))\n        (hash-set! seen (first queue) #t)\n        (let bfs ([fuel 0])\n          (unless (empty? queue)\n            (let ((cur (first queue)))\n              (set! queue (rest queue))\n              (set! region (cons (list (car cur) (cdr cur)) region))\n              (when (or (= (car cur) 0) (= (cdr cur) 0) (= (car cur) (- (rows g) 1)) (= (cdr cur) (- (cols g) 1)))\n                (set! border #t))\n              (for ([d (in-list cardinal-deltas)])\n                (let ((nr (+ (car cur) (first d))) (nc (+ (cdr cur) (second d))))\n                  (when (in-bounds? nr nc (rows g) (cols g))\n                    (cond [(and (= (at g nr nc) 0) (not (hash-has-key? seen (cons nr nc))))\n                           (hash-set! seen (cons nr nc) #t)\n                           (set! queue (append queue (list (cons nr nc))))]\n                          [(not (= (at g nr nc) 0))\n                           (set! neigh (cons (at g nr nc) neigh))])))))\n            (bfs (+ fuel 1))))\n        (let ((colors (remove-duplicates neigh)))\n          (when (and (not border) (= (length colors) 1))\n            (set! out (paint-cells out region (first colors)))))))\n    out))"
+  },
+  {
+    "id": "E77",
+    "title": "Stamp the Corner Motif",
+    "difficulty": "easy",
+    "skills": [
+      "motif copying",
+      "marker interpretation",
+      "same-size transform"
+    ],
+    "staged_hint": "Read the 2×2 motif from the upper-left corner first. Then stamp that exact motif at every marker cell.",
+    "written_solution": "Take the top-left 2×2 block as the source motif. Remove the 9 markers and paste the motif with each marker acting as the motif's top-left anchor.",
+    "uses_new_primitive": false,
+    "program_name": "rule_e77",
+    "program_source": "def rule_e77(g):\n    h,w=size(g)\n    out=clone(g)\n    motif=[row[:2] for row in g[:2]]\n    markers=[(r,c) for r,row in enumerate(g) for c,v in enumerate(row) if v==9]\n    for r,c in markers:\n        out[r][c]=0\n    for r,c in markers:\n        for dr in range(2):\n            for dc in range(2):\n                v=motif[dr][dc]\n                if v!=0:\n                    out[r+dr][c+dc]=v\n    return out",
+    "program_solution": "(rule!\n  (let* ((motif (subgrid g 0 0 1 1))\n         (markers (find-color g 9))\n         (cleared (paint-cells g markers 0)))\n    (for/fold ([out cleared]) ([p (in-list markers)])\n      (for*/fold ([cur out]) ([dr (in-range 2)] [dc (in-range 2)])\n        (let ((v (at motif dr dc)) (r (+ (first p) dr)) (c (+ (second p) dc)))\n          (if (and (not (= v 0)) (in-bounds? r c (rows g) (cols g)))\n              (set-cell cur r c v)\n              cur))))))"
+  },
+  {
+    "id": "M71",
+    "title": "Commanded L-Links",
+    "difficulty": "medium",
+    "skills": [
+      "path routing",
+      "command decoding",
+      "paired terminals"
+    ],
+    "staged_hint": "Read the command cell before tracing any paths. Then connect each color pair with a single-bend Manhattan route that obeys that command.",
+    "written_solution": "The top-left command chooses row-first or column-first routing. Connect each same-colored terminal pair with an L-shaped Manhattan path using that bend policy.",
+    "uses_new_primitive": true,
+    "program_name": "rule_m71",
+    "program_source": "def rule_m71(g):\n    cmd=g[0][0]\n    bend='row-first' if cmd==1 else 'col-first'\n    endpoints=[(r,c,v) for r,row in enumerate(g) for c,v in enumerate(row) if v!=0 and not (r==0 and c==0)]\n    return link_terminals(g, endpoints, allow_bends=True, bend_policy=bend)",
+    "program_solution": "(rule! (let* ((cmd (at g 0 0)) (colors (filter (lambda (v) (not (= v 0))) (remove-duplicates (map third (grid-cells g)))))) (define endpoint-colors (filter (lambda (v) (not (= v cmd))) colors)) (for/fold ((out g)) ((color (in-list endpoint-colors))) (let ((pts (find-color g color))) (if (= (length pts) 2) (let ((a (first pts)) (b (second pts))) (paint-cells (paint-cells out (if (= cmd 1) (map (lambda (c) (list (first a) c)) (range (min (second a) (second b)) (+ (max (second a) (second b)) 1))) (map (lambda (r) (list r (second a))) (range (min (first a) (first b)) (+ (max (first a) (first b)) 1)))) color) (if (= cmd 1) (map (lambda (r) (list r (second b))) (range (min (first a) (first b)) (+ (max (first a) (first b)) 1))) (map (lambda (c) (list (first b) c)) (range (min (second a) (second b)) (+ (max (second a) (second b)) 1)))) color)) out)))))"
+  },
+  {
+    "id": "M72",
+    "title": "Guide-Color Crop",
+    "difficulty": "medium",
+    "skills": [
+      "object selection",
+      "color matching",
+      "cropping"
+    ],
+    "staged_hint": "The guide color is in the top row. Ignore the other objects and crop only the component whose color matches that guide.",
+    "written_solution": "Read the nonzero guide color from the top row, find the object of that color in the main grid, and output its tight bounding-box crop.",
+    "uses_new_primitive": false,
+    "program_name": "rule_m72",
+    "program_source": "def rule_m72(g):\n    guide=[v for v in g[0] if v!=0][0]\n    cells=[(r,c) for r in range(1,len(g)) for c,v in enumerate(g[r]) if v==guide]\n    return crop_bbox(g, cells)",
+    "program_solution": "(rule!\n  (let* ((guide (first (filter (lambda (v) (not (= v 0))) (first g))))\n         (cells (filter-cells g (lambda (r c v) (and (> r 0) (= v guide)))))\n         (bb (bbox-of-cells cells)))\n    (subgrid g (first bb) (second bb) (third bb) (fourth bb))))"
+  },
+  {
+    "id": "M73",
+    "title": "Checkerboard Frame Fill",
+    "difficulty": "medium",
+    "skills": [
+      "frame detection",
+      "interior filling",
+      "parity patterns"
+    ],
+    "staged_hint": "First detect each rectangular frame. Then fill only its interior, using an alternating checkerboard aligned to the interior corner.",
+    "written_solution": "For each rectangular border, keep the frame itself and fill its interior with a checkerboard of frame color and zero, starting with the frame color at the interior's top-left cell.",
+    "uses_new_primitive": false,
+    "program_name": "rule_m73",
+    "program_source": "def rule_m73(g):\n    h,w=size(g)\n    out=blank(h,w)\n    comps=components_nonzero(g, treat_colors_separately=True)\n    for col,cells in comps:\n        r0,c0,r1,c1=bbox(cells)\n        for c in range(c0,c1+1):\n            out[r0][c]=out[r1][c]=col\n        for r in range(r0,r1+1):\n            out[r][c0]=out[r][c1]=col\n        for r in range(r0+1,r1):\n            for c in range(c0+1,c1):\n                out[r][c]=col if ((r-(r0+1)) + (c-(c0+1)))%2==0 else 0\n    return out",
+    "program_solution": "(rule!\n  (let ((out (empty-grid (rows g) (cols g) 0)))\n    (for/fold ([cur out]) ([obj (in-list (objects g 0))])\n      (for*/fold ([acc cur]) ([r (in-range (obj-r1 obj) (+ (obj-r2 obj) 1))]\n                              [c (in-range (obj-c1 obj) (+ (obj-c2 obj) 1))])\n        (cond [(or (= r (obj-r1 obj)) (= r (obj-r2 obj)) (= c (obj-c1 obj)) (= c (obj-c2 obj)))\n               (set-cell acc r c (obj-color obj))]\n              [else\n               (set-cell acc r c (if (= (modulo (+ (- r (+ (obj-r1 obj) 1)) (- c (+ (obj-c1 obj) 1))) 2) 0)\n                                     (obj-color obj)\n                                     0))])))))"
+  },
+  {
+    "id": "M74",
+    "title": "Area Equality Matrix",
+    "difficulty": "medium",
+    "skills": [
+      "component measurement",
+      "reading-order sorting",
+      "relation matrices"
+    ],
+    "staged_hint": "Extract the three objects and measure their areas. The output is a matrix comparing those areas pairwise.",
+    "written_solution": "Sort the objects by row-major order. Output a 3×3 matrix with cyan(8) when two objects have the same number of cells and 0 otherwise.",
+    "uses_new_primitive": false,
+    "program_name": "rule_m74",
+    "program_source": "def rule_m74(g):\n    comps=rowcol_sort_components(components_nonzero(g, treat_colors_separately=True))\n    n=len(comps)\n    areas=[len(cells) for col,cells in comps]\n    out=blank(n,n)\n    for i in range(n):\n        for j in range(n):\n            out[i][j]=8 if areas[i]==areas[j] else 0\n    return out",
+    "program_solution": "(rule!\n  (let* ((objs (sort (objects g 0)\n                     (lambda (a b)\n                       (if (= (obj-r1 a) (obj-r1 b))\n                           (< (obj-c1 a) (obj-c1 b))\n                           (< (obj-r1 a) (obj-r1 b))))))\n         (areas (map obj-size objs))\n         (n (length objs)))\n    (grid-from-fn n n\n      (lambda (r c) (if (= (list-ref areas r) (list-ref areas c)) 8 0)))))"
+  },
+  {
+    "id": "M75",
+    "title": "Rank-by-Area Extract",
+    "difficulty": "medium",
+    "skills": [
+      "ranking",
+      "component areas",
+      "dynamic selection"
+    ],
+    "staged_hint": "The number of top-row markers tells you which ranked object to choose. Rank the objects by area, then crop the selected one.",
+    "written_solution": "Count the 9 markers in the top row to get rank k. Sort the objects below by area from smallest to largest and output the tight crop of the kth object.",
+    "uses_new_primitive": false,
+    "program_name": "rule_m75",
+    "program_source": "def rule_m75(g):\n    k=sum(1 for v in g[0] if v==9)\n    comps=rowcol_sort_components(components_nonzero(g, treat_colors_separately=True, ignore_positions={(0,c) for c in range(len(g[0]))}, ignore_colors={9}))\n    comps=sorted(comps, key=lambda comp: (len(comp[1]),) + component_key(comp))\n    sel=comps[k-1]\n    return crop_bbox(g, sel[1])",
+    "program_solution": "(rule!\n  (let* ((k (count-where (lambda (v) (= v 9)) (first g)))\n         (objs (sort (filter (lambda (o)\n                               (and (not (= (obj-color o) 9))\n                                    (all? (lambda (p) (> (first p) 0)) (obj-cells o))))\n                             (objects g 0))\n                     (lambda (a b)\n                       (cond [(not (= (obj-size a) (obj-size b))) (< (obj-size a) (obj-size b))]\n                             [(not (= (obj-r1 a) (obj-r1 b))) (< (obj-r1 a) (obj-r1 b))]\n                             [(not (= (obj-c1 a) (obj-c1 b))) (< (obj-c1 a) (obj-c1 b))]\n                             [(not (= (obj-h a) (obj-h b))) (< (obj-h a) (obj-h b))]\n                             [(not (= (obj-w a) (obj-w b))) (< (obj-w a) (obj-w b))]\n                             [else (< (obj-color a) (obj-color b))]))))\n         (obj (list-ref objs (- k 1))))\n    (grid-from-fn (obj-h obj) (obj-w obj)\n      (lambda (r c)\n        (let ((rr (+ (obj-r1 obj) r)) (cc (+ (obj-c1 obj) c)))\n          (if (member? (list rr cc) (obj-cells obj)) (at g rr cc) 0))))))"
+  },
+  {
+    "id": "M76",
+    "title": "Normalized Shape XOR",
+    "difficulty": "medium",
+    "skills": [
+      "normalization",
+      "shape comparison",
+      "binary overlays"
+    ],
+    "staged_hint": "Ignore the colors after locating the two objects. Normalize each object to its own crop, then compare occupancy cell by cell.",
+    "written_solution": "Crop the two objects to their own bounding boxes, align both crops to the top-left of a shared canvas, and output 8 exactly where one occupancy mask is on and the other is off.",
+    "uses_new_primitive": false,
+    "program_name": "rule_m76",
+    "program_source": "def rule_m76(g):\n    comps=rowcol_sort_components(components_nonzero(g, treat_colors_separately=True))\n    # pick first two non-divider colors with largest components? We'll design only 2\n    crops=[crop_bbox(g,cells) for col,cells in comps[:2]]\n    h=max(len(crops[0]), len(crops[1]))\n    w=max(len(crops[0][0]), len(crops[1][0]))\n    a=pad_to([[1 if v!=0 else 0 for v in row] for row in crops[0]], h,w)\n    b=pad_to([[1 if v!=0 else 0 for v in row] for row in crops[1]], h,w)\n    out=blank(h,w)\n    for r in range(h):\n        for c in range(w):\n            out[r][c]=8 if a[r][c] != b[r][c] else 0\n    return out",
+    "program_solution": "(rule!\n  (let* ((objs (sort (objects g 0)\n                     (lambda (a b)\n                       (if (= (obj-r1 a) (obj-r1 b))\n                           (< (obj-c1 a) (obj-c1 b))\n                           (< (obj-r1 a) (obj-r1 b))))))\n         (a (first objs))\n         (b (second objs))\n         (h (max (obj-h a) (obj-h b)))\n         (w (max (obj-w a) (obj-w b))))\n    (define (occupied? obj r c)\n      (member? (list (+ (obj-r1 obj) r) (+ (obj-c1 obj) c)) (obj-cells obj)))\n    (grid-from-fn h w\n      (lambda (r c)\n        (if (not (equal? (occupied? a r c) (occupied? b r c))) 8 0)))))"
+  },
+  {
+    "id": "M77",
+    "title": "Legend-Ordered Assembly",
+    "difficulty": "medium",
+    "skills": [
+      "legend decoding",
+      "component extraction",
+      "packing"
+    ],
+    "staged_hint": "Read the top-row legend left to right. Then find those colored objects and pack their crops in that same order.",
+    "written_solution": "Treat the nonzero top row as an ordering legend. Crop the matching objects and concatenate them left to right in legend order with one background separator column.",
+    "uses_new_primitive": false,
+    "program_name": "rule_m77",
+    "program_source": "def rule_m77(g):\n    legend=[v for v in g[0] if v!=0]\n    comps=rowcol_sort_components(components_nonzero(g, treat_colors_separately=True, ignore_positions={(0,c) for c in range(len(g[0]))}))\n    by_color={}\n    for col,cells in comps:\n        by_color[col]=crop_bbox(g,cells)\n    crops=[by_color[col] for col in legend]\n    H=max(len(c) for c in crops)\n    W=sum(len(c[0]) for c in crops)+(len(crops)-1)\n    out=blank(H,W)\n    x=0\n    for i,crop in enumerate(crops):\n        for r,row in enumerate(crop):\n            for c,v in enumerate(row):\n                out[r][x+c]=v\n        x += len(crop[0])\n        if i!=len(crops)-1:\n            x += 1\n    return out",
+    "program_solution": "(rule!\n  (let* ((legend (filter (lambda (v) (not (= v 0))) (first g)))\n         (objs (filter (lambda (o) (all? (lambda (p) (> (first p) 0)) (obj-cells o))) (objects g 0))))\n    (define (find-obj color) (first (filter (lambda (o) (= (obj-color o) color)) objs)))\n    (define crops (map find-obj legend))\n    (define H (apply max (map obj-h crops)))\n    (define W (+ (apply + (map obj-w crops)) (- (length crops) 1)))\n    (grid-from-fn H W\n      (lambda (r c)\n        (let loop ([remaining crops] [offset 0])\n          (cond [(empty? remaining) 0]\n                [(and (>= c offset) (< c (+ offset (obj-w (first remaining)))))\n                 (let* ((obj (first remaining))\n                        (rr (+ (obj-r1 obj) r))\n                        (cc (+ (obj-c1 obj) (- c offset))))\n                   (if (and (< r (obj-h obj)) (member? (list rr cc) (obj-cells obj))) (at g rr cc) 0))]\n                [else (loop (rest remaining) (+ offset (obj-w (first remaining)) 1))]))))))"
+  },
+  {
+    "id": "H71",
+    "title": "Overlapping Routed Links",
+    "difficulty": "hard",
+    "skills": [
+      "path routing",
+      "overlap handling",
+      "terminal pairing"
+    ],
+    "staged_hint": "Decode the routing command first. Then route every terminal pair, and only after that handle cells claimed by more than one path.",
+    "written_solution": "Use the command-selected bend policy to connect every same-colored terminal pair. Any cell traversed by multiple routed paths becomes overlap cyan(8).",
+    "uses_new_primitive": true,
+    "program_name": "rule_h71",
+    "program_source": "def rule_h71(g):\n    cmd=g[0][0]\n    bend='row-first' if cmd==1 else 'col-first'\n    endpoints=[(r,c,v) for r,row in enumerate(g) for c,v in enumerate(row) if v!=0 and not (r==0 and c==0)]\n    return link_terminals(g, endpoints, allow_bends=True, bend_policy=bend, overlap_color=8)",
+    "program_solution": "(rule!\n  (let* ((cmd (at g 0 0))\n         (colors (filter (lambda (v) (not (= v 0))) (remove-duplicates (map third (grid-cells g)))))\n         (endpoint-colors (filter (lambda (v) (not (= v cmd))) colors)))\n    (define counts (make-hash))\n    (define paints (make-hash))\n    (define (mark! p color)\n      (hash-update! counts (cons (first p) (second p)) add1 0)\n      (hash-set! paints (cons (first p) (second p)) (if (> (hash-ref counts (cons (first p) (second p))) 1) 8 color)))\n    (define (range-between a b)\n      (if (<= a b) (range a (+ b 1)) (reverse (range b (+ a 1)))))\n    (for ([color (in-list endpoint-colors)])\n      (define pts (find-color g color))\n      (when (= (length pts) 2)\n        (define a (first pts))\n        (define b (second pts))\n        (define first-leg\n          (if (= cmd 1)\n              (map (lambda (c) (list (first a) c)) (range-between (second a) (second b)))\n              (map (lambda (r) (list r (second a))) (range-between (first a) (first b)))))\n        (define second-leg\n          (if (= cmd 1)\n              (map (lambda (r) (list r (second b))) (range-between (first a) (first b)))\n              (map (lambda (c) (list (first b) c)) (range-between (second a) (second b)))))\n        (for ([p (in-list (append first-leg (rest second-leg)))])\n          (mark! p color))))\n    (for/fold ([out g]) ([key (in-list (hash-keys paints))])\n      (set-cell out (car key) (cdr key) (hash-ref paints key)))))"
+  },
+  {
+    "id": "H72",
+    "title": "Translation Analogy",
+    "difficulty": "hard",
+    "skills": [
+      "relational analogy",
+      "translation vectors",
+      "object transfer"
+    ],
+    "staged_hint": "Compare the 2-object pair before touching the target object. The shift from color 2 to color 3 is the only transformation that matters.",
+    "written_solution": "Colors 2 and 3 show the same shape before and after a translation. Compute that translation vector and apply it to the yellow(4) object on a background output grid.",
+    "uses_new_primitive": false,
+    "program_name": "rule_h72",
+    "program_source": "def rule_h72(g):\n    # colors 2,3 define translation; color 4 target\n    by_color=defaultdict(list)\n    for r,row in enumerate(g):\n        for c,v in enumerate(row):\n            if v in (2,3,4):\n                by_color[v].append((r,c))\n    r20,c20,_,_ = bbox(by_color[2])\n    r30,c30,_,_ = bbox(by_color[3])\n    dr,dc = r30-r20, c30-c20\n    h,w=size(g)\n    out=blank(h,w)\n    for r,c in by_color[4]:\n        nr,nc=r+dr,c+dc\n        out[nr][nc]=4\n    return out",
+    "program_solution": "(rule!\n  (let* ((bb2 (bbox-of-cells (find-color g 2)))\n         (bb3 (bbox-of-cells (find-color g 3)))\n         (dr (- (first bb3) (first bb2)))\n         (dc (- (second bb3) (second bb2))))\n    (for/fold ([out (empty-grid (rows g) (cols g) 0)]) ([p (in-list (find-color g 4))])\n      (set-cell out (+ (first p) dr) (+ (second p) dc) 4))))"
+  },
+  {
+    "id": "H73",
+    "title": "Nested Frame Depth Map",
+    "difficulty": "hard",
+    "skills": [
+      "containment depth",
+      "nested rectangles",
+      "count-based recoloring"
+    ],
+    "staged_hint": "Ignore the original colors once you identify the frames. What matters is how many nested rectangles contain each cell.",
+    "written_solution": "Find the rectangular frames and count, for every grid cell, how many frame bounding boxes contain it. Output that containment depth as the new color, leaving outside cells at 0.",
+    "uses_new_primitive": false,
+    "program_name": "rule_h73",
+    "program_source": "def rule_h73(g):\n    h,w=size(g)\n    comps=components_nonzero(g, treat_colors_separately=True)\n    rects=[]\n    for col,cells in comps:\n        r0,c0,r1,c1=bbox(cells)\n        rects.append((r0,c0,r1,c1))\n    out=blank(h,w)\n    for r in range(h):\n        for c in range(w):\n            depth=sum(1 for r0,c0,r1,c1 in rects if r0<=r<=r1 and c0<=c<=c1)\n            out[r][c]=depth\n    return out",
+    "program_solution": "(rule!\n  (let ((objs (objects g 0)))\n    (grid-from-fn (rows g) (cols g)\n      (lambda (r c)\n        (count-where (lambda (o) (and (>= r (obj-r1 o)) (<= r (obj-r2 o))\n                                      (>= c (obj-c1 o)) (<= c (obj-c2 o))))\n                     objs)))))"
+  },
+  {
+    "id": "H74",
+    "title": "Symmetry Equivalence Matrix",
+    "difficulty": "hard",
+    "skills": [
+      "dihedral symmetry",
+      "shape normalization",
+      "relation matrices"
+    ],
+    "staged_hint": "Normalize the objects before comparing them. Two shapes match if one can be rotated or reflected into the other.",
+    "written_solution": "Crop the three objects, ignore their colors, and compare their binary shapes up to any rotation or reflection. Output 8 where two objects are dihedrally equivalent and 0 otherwise.",
+    "uses_new_primitive": false,
+    "program_name": "rule_h74",
+    "program_source": "def rule_h74(g):\n    comps=rowcol_sort_components(components_nonzero(g, treat_colors_separately=True))\n    bins=[]\n    for col,cells in comps:\n        crop=crop_bbox(g,cells)\n        bins.append(normalize_binary(crop))\n    n=len(bins)\n    vars=[set(dihedral_variants(b)) for b in bins]\n    out=blank(n,n)\n    for i in range(n):\n        for j in range(n):\n            out[i][j]=8 if bins[j] in vars[i] else 0\n    return out",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define objs (sort (objects g 0)\n                       (lambda (a b)\n                         (if (= (obj-r1 a) (obj-r1 b))\n                             (< (obj-c1 a) (obj-c1 b))\n                             (< (obj-r1 a) (obj-r1 b))))))\n    (define (shape-key cells)\n      (format \"~a\" (sort (normalize-cells cells)\n                         (lambda (a b) (if (= (first a) (first b)) (< (second a) (second b)) (< (first a) (first b)))))))\n    (define (rot90 cells)\n      (let ((h (+ 1 (apply max (map first cells)))))\n        (normalize-cells (map (lambda (p) (list (second p) (- h 1 (first p)))) cells))))\n    (define (rotate cells k)\n      (let loop ([i 0] [cur (normalize-cells cells)])\n        (if (= i (modulo k 4)) cur (loop (+ i 1) (rot90 cur)))))\n    (define (reflect-lr cells)\n      (let* ((norm (normalize-cells cells))\n             (w (+ 1 (apply max (map second norm)))))\n        (normalize-cells (map (lambda (p) (list (first p) (- w 1 (second p)))) norm))))\n    (define keys\n      (map (lambda (o)\n             (remove-duplicates\n              (append* (map (lambda (k)\n                              (let ((rot (rotate (obj-cells o) k)))\n                                (list (shape-key rot) (shape-key (rotate (reflect-lr (obj-cells o)) k)))))\n                            (list 0 1 2 3)))))\n           objs))\n    (define base-keys (map (lambda (o) (shape-key (normalize-cells (obj-cells o)))) objs))\n    (define n (length objs))\n    (grid-from-fn n n\n      (lambda (r c) (if (member? (list-ref base-keys c) (list-ref keys r)) 8 0)))))"
+  },
+  {
+    "id": "H75",
+    "title": "Command Composition Transform",
+    "difficulty": "hard",
+    "skills": [
+      "sequential transforms",
+      "command execution",
+      "cropped outputs"
+    ],
+    "staged_hint": "Do not collapse the commands into one guess. Apply them in the given order to the cropped template.",
+    "written_solution": "Read the nonzero command strip from the top row left to right, crop the lower object, and apply the listed transforms in sequence: rotate, flip, or transpose.",
+    "uses_new_primitive": false,
+    "program_name": "rule_h75",
+    "program_source": "def rule_h75(g):\n    cmds=[]\n    for v in g[0]:\n        if v==0: break\n        cmds.append(v)\n    cells=[(r,c) for r in range(1,len(g)) for c,v in enumerate(g[r]) if v!=0]\n    obj=crop_bbox(g,cells)\n    cur=obj\n    for cmd in cmds:\n        if cmd==1:\n            cur=rotate_cw(cur)\n        elif cmd==2:\n            cur=flip_h(cur)\n        elif cmd==3:\n            cur=flip_v(cur)\n        elif cmd==4:\n            cur=transpose(cur)\n        else:\n            raise ValueError(cmd)\n    return cur",
+    "program_solution": "(rule!\n  (let ((cmds (let loop ([cs (first g)] [out (list)])\n                (cond [(empty? cs) (reverse out)]\n                      [(= (first cs) 0) (reverse out)]\n                      [else (loop (rest cs) (cons (first cs) out))]))))\n    (define cells (filter-cells g (lambda (r c v) (and (> r 0) (not (= v 0))))))\n    (define bb (bbox-of-cells cells))\n    (define cur (subgrid g (first bb) (second bb) (third bb) (fourth bb)))\n    (for ([cmd (in-list cmds)])\n      (set! cur (cond [(= cmd 1) (rotate-cw cur)]\n                      [(= cmd 2) (flip-lr cur)]\n                      [(= cmd 3) (flip-ud cur)]\n                      [else (transpose cur)])))\n    cur))"
+  },
+  {
+    "id": "H76",
+    "title": "Chamber Ownership Fill",
+    "difficulty": "hard",
+    "skills": [
+      "flood fill",
+      "wall topology",
+      "region ownership"
+    ],
+    "staged_hint": "Use the 9s only as walls. Flood the open chambers, identify which chamber contains which marker, and then fill chamber interiors accordingly.",
+    "written_solution": "Treat 9 as an impassable wall. For each open chamber, if it contains exactly one marker color, fill the whole chamber with that color while keeping walls unchanged.",
+    "uses_new_primitive": false,
+    "program_name": "rule_h76",
+    "program_source": "def rule_h76(g):\n    h,w=size(g)\n    out=blank(h,w)\n    for r in range(h):\n        for c in range(w):\n            if g[r][c]==9:\n                out[r][c]=9\n    vis=[[False]*w for _ in range(h)]\n    for r in range(h):\n        for c in range(w):\n            if g[r][c]==9 or vis[r][c]:\n                continue\n            vis[r][c]=True\n            q=[(r,c)]\n            region=[]\n            colors=set()\n            while q:\n                rr,cc=q.pop()\n                region.append((rr,cc))\n                if g[rr][cc] not in (0,9):\n                    colors.add(g[rr][cc])\n                for dr,dc in DIR4:\n                    nr,nc=rr+dr,cc+dc\n                    if 0<=nr<h and 0<=nc<w and not vis[nr][nc] and g[nr][nc]!=9:\n                        vis[nr][nc]=True; q.append((nr,nc))\n            fill = next(iter(colors)) if len(colors)==1 else 0\n            for rr,cc in region:\n                if fill and g[rr][cc]==0:\n                    out[rr][cc]=fill\n                elif g[rr][cc]!=0 and g[rr][cc]!=9:\n                    out[rr][cc]=g[rr][cc]\n    return out",
+    "program_solution": "(rule!\n  (let ((seen (make-hash)) (out (grid-from-fn (rows g) (cols g) (lambda (r c) (if (= (at g r c) 9) 9 0)))))\n    (for* ([r (in-range (rows g))] [c (in-range (cols g))])\n      (unless (or (= (at g r c) 9) (hash-has-key? seen (cons r c)))\n        (define queue (list (cons r c)))\n        (define region (list))\n        (define colors (list))\n        (hash-set! seen (first queue) #t)\n        (let bfs ([fuel 0])\n          (unless (empty? queue)\n            (let ((cur (first queue)))\n              (set! queue (rest queue))\n              (set! region (cons (list (car cur) (cdr cur)) region))\n              (when (not (= (at g (car cur) (cdr cur)) 0))\n                (set! colors (cons (at g (car cur) (cdr cur)) colors)))\n              (for ([d (in-list cardinal-deltas)])\n                (let ((nr (+ (car cur) (first d))) (nc (+ (cdr cur) (second d))))\n                  (when (and (in-bounds? nr nc (rows g) (cols g))\n                             (not (= (at g nr nc) 9))\n                             (not (hash-has-key? seen (cons nr nc))))\n                    (hash-set! seen (cons nr nc) #t)\n                    (set! queue (append queue (list (cons nr nc))))))))\n            (bfs (+ fuel 1))))\n        (define fill-colors (remove-duplicates colors))\n        (for ([p (in-list region)])\n          (cond [(and (= (length fill-colors) 1) (= (at g (first p) (second p)) 0))\n                 (set! out (set-cell out (first p) (second p) (first fill-colors)))]\n                [(not (= (at g (first p) (second p)) 0))\n                 (set! out (set-cell out (first p) (second p) (at g (first p) (second p))))]))))\n    out))"
+  },
+  {
+    "id": "H77",
+    "title": "Hole-Count Packing",
+    "difficulty": "hard",
+    "skills": [
+      "hole counting",
+      "object ranking",
+      "normalized packing"
+    ],
+    "staged_hint": "Measure each object's holes before packing anything. Once ranked, just crop and place them side by side.",
+    "written_solution": "Count the enclosed holes in each object's tight crop, sort the objects by hole count from fewest to most, and pack the cropped shapes left to right with one background separator column.",
+    "uses_new_primitive": false,
+    "program_name": "rule_h77",
+    "program_source": "def rule_h77(g):\n    comps=rowcol_sort_components(components_nonzero(g, treat_colors_separately=True))\n    items=[]\n    for idx,(col,cells) in enumerate(comps):\n        crop=crop_bbox(g,cells)\n        items.append((count_holes(crop), idx, crop))\n    items.sort(key=lambda x:(x[0],x[1]))\n    crops=[crop for _,_,crop in items]\n    H=max(len(c) for c in crops)\n    W=sum(len(c[0]) for c in crops)+(len(crops)-1)\n    out=blank(H,W)\n    x=0\n    for i,crop in enumerate(crops):\n        for r,row in enumerate(crop):\n            for c,v in enumerate(row):\n                out[r][x+c]=v\n        x += len(crop[0])\n        if i!=len(crops)-1:\n            x += 1\n    return out",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define objs (sort (objects g 0)\n                       (lambda (a b)\n                         (if (= (obj-r1 a) (obj-r1 b))\n                             (< (obj-c1 a) (obj-c1 b))\n                             (< (obj-r1 a) (obj-r1 b))))))\n    (define (crop-object obj)\n      (grid-from-fn (obj-h obj) (obj-w obj)\n        (lambda (r c)\n          (let ((rr (+ (obj-r1 obj) r)) (cc (+ (obj-c1 obj) c)))\n            (if (member? (list rr cc) (obj-cells obj)) (at g rr cc) 0)))))\n    (define (hole-count crop)\n      (define seen (make-hash))\n      (define holes 0)\n      (for* ([r (in-range (rows crop))] [c (in-range (cols crop))])\n        (when (and (= (at crop r c) 0) (not (hash-has-key? seen (cons r c))))\n          (define queue (list (cons r c)))\n          (define touches #f)\n          (hash-set! seen (first queue) #t)\n          (let bfs ([fuel 0])\n            (unless (empty? queue)\n              (let ((cur (first queue)))\n                (set! queue (rest queue))\n                (when (or (= (car cur) 0) (= (cdr cur) 0) (= (car cur) (- (rows crop) 1)) (= (cdr cur) (- (cols crop) 1)))\n                  (set! touches #t))\n                (for ([d (in-list cardinal-deltas)])\n                  (let ((nr (+ (car cur) (first d))) (nc (+ (cdr cur) (second d))))\n                    (when (and (in-bounds? nr nc (rows crop) (cols crop))\n                               (= (at crop nr nc) 0)\n                               (not (hash-has-key? seen (cons nr nc))))\n                      (hash-set! seen (cons nr nc) #t)\n                      (set! queue (append queue (list (cons nr nc))))))))\n              (bfs (+ fuel 1))))\n          (unless touches (set! holes (+ holes 1)))))\n      holes)\n    (define items (sort (map (lambda (o idx) (list (hole-count (crop-object o)) idx o)) objs (range 0 (length objs)))\n                        (lambda (a b) (if (= (first a) (first b)) (< (second a) (second b)) (< (first a) (first b))))))\n    (define crops (map (lambda (x) (crop-object (third x))) items))\n    (define H (apply max (map rows crops)))\n    (define W (+ (apply + (map cols crops)) (- (length crops) 1)))\n    (grid-from-fn H W\n      (lambda (r c)\n        (let loop ([remaining crops] [offset 0])\n          (cond [(empty? remaining) 0]\n                [(and (>= c offset) (< c (+ offset (cols (first remaining)))))\n                 (if (< r (rows (first remaining))) (at (first remaining) r (- c offset)) 0)]\n                [else (loop (rest remaining) (+ offset (cols (first remaining)) 1))]))))))"
+  }
+]

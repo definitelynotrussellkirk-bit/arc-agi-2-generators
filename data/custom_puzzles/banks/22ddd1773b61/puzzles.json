@@ -1,0 +1,1771 @@
+{
+  "meta": {
+    "title": "ARC-style Puzzle Bank — 21 more puzzles (set 6)",
+    "set": 6,
+    "description": "A sixth bank of 21 ARC-style puzzles, organized into 7 easy, 7 medium, and 7 hard tasks. This set leans harder into wire/path logic, enclosure depth, perimeter ranking, room filling, pathfinding, and normalized-shape comparisons.",
+    "new_primitive": {
+      "name": "follow_wire",
+      "signature": "follow_wire(grid, start, path_colors={1})",
+      "description": "Starting from a marker cell, follow the unique non-branching 4-connected path attached to it and return the ordered path cells.",
+      "used_in": [
+        "S6_E1",
+        "S6_E6",
+        "S6_M1",
+        "S6_H2",
+        "S6_H4"
+      ]
+    }
+  },
+  "puzzles": [
+    {
+      "id": "S6_E1",
+      "difficulty": "easy",
+      "title": "Start-Marked Wire Recolor",
+      "skills": [
+        "path following",
+        "component selection",
+        "same-size recolor"
+      ],
+      "scaffold": [
+        "Find the unique start marker color 2.",
+        "Follow the attached blue(1) wire from that start only.",
+        "Recolor that wire to green(3) and leave everything else alone."
+      ],
+      "written_solution": "Locate the red(2) start marker. Only the blue(1) wire attached to that marker matters. Follow that non-branching wire and recolor its wire cells from blue(1) to green(3), leaving stray blue(1) pieces unchanged.",
+      "primitive_note": "Uses the new follow_wire primitive.",
+      "train": [
+        {
+          "input": [
+            "0000000000",
+            "0211000000",
+            "0001000000",
+            "0001110000",
+            "0000000000",
+            "0000000110",
+            "0000000110",
+            "0000000000"
+          ],
+          "output": [
+            "0000000000",
+            "0233000000",
+            "0003000000",
+            "0003330000",
+            "0000000000",
+            "0000000110",
+            "0000000110",
+            "0000000000"
+          ]
+        },
+        {
+          "input": [
+            "000000000",
+            "021110000",
+            "000010000",
+            "000011100",
+            "000000100",
+            "000000000",
+            "000001100",
+            "000001100"
+          ],
+          "output": [
+            "000000000",
+            "023330000",
+            "000030000",
+            "000033300",
+            "000000300",
+            "000000000",
+            "000001100",
+            "000001100"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000000000",
+          "0021110000",
+          "0000010000",
+          "0000011100",
+          "0000000100",
+          "0000000000",
+          "0001100000",
+          "0001100000"
+        ],
+        "output": [
+          "0000000000",
+          "0023330000",
+          "0000030000",
+          "0000033300",
+          "0000000300",
+          "0000000000",
+          "0001100000",
+          "0001100000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out=copyg(grid)\n    starts=[(r,c) for r,row in enumerate(grid) for c,v in enumerate(row) if v==2]\n    start=starts[0]\n    for r,c in follow_wire(grid,start,{1}):\n        out[r][c]=3\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define dirs4-ordered (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (define (follow-wire grid start) (let* ((adjs (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (= (at grid (first p) (second p)) 1))) (map (lambda (d) (list (+ (first start) (first d)) (+ (second start) (second d)))) dirs4-ordered)))) (if (empty? adjs) (list) (let loop ((cur (first adjs)) (prev start) (seen (list start)) (path (list))) (let* ((path2 (append path (list cur))) (seen2 (append seen (list cur))) (nxts (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (not (equal? p prev)) (= (at grid (first p) (second p)) 1) (not (member? p seen2)))) (map (lambda (d) (list (+ (first cur) (first d)) (+ (second cur) (second d)))) dirs4-ordered)))) (if (empty? nxts) path2 (loop (first nxts) cur seen2 path2))))))) (let* ((start (first (find-color g 2))) (path (follow-wire g start))) (paint-cells g path 3))))"
+    },
+    {
+      "id": "S6_E2",
+      "difficulty": "easy",
+      "title": "Object Outline Only",
+      "skills": [
+        "boundary extraction",
+        "4-neighbor reasoning",
+        "same-size mask"
+      ],
+      "scaffold": [
+        "Identify the single large nonzero object.",
+        "Keep only cells that touch the outside in the 4-neighborhood.",
+        "Remove all strictly interior cells."
+      ],
+      "written_solution": "Take the large solid object and erase its interior. A cell stays iff at least one of its four neighbors lies outside the object. The output is the object outline in the original grid size.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "000000000",
+            "004444000",
+            "004444000",
+            "004444000",
+            "004444000",
+            "000000000"
+          ],
+          "output": [
+            "000000000",
+            "004444000",
+            "004004000",
+            "004004000",
+            "004444000",
+            "000000000"
+          ]
+        },
+        {
+          "input": [
+            "0000000",
+            "0444000",
+            "0444000",
+            "0444400",
+            "0004400",
+            "0000000"
+          ],
+          "output": [
+            "0000000",
+            "0444000",
+            "0404000",
+            "0440400",
+            "0004400",
+            "0000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "000000000",
+          "000440000",
+          "004444400",
+          "004444400",
+          "000440000",
+          "000000000"
+        ],
+        "output": [
+          "000000000",
+          "000440000",
+          "004004400",
+          "004004400",
+          "000440000",
+          "000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    h,w=dims(grid)\n    out=blank(h,w,0)\n    comps=components(grid,None,4)\n    comp=max(comps,key=lambda c:len(c['cells']))\n    s=set(comp['cells']); col=comp['color']\n    for r,c in s:\n        if any((r+dr,c+dc) not in s for dr,dc in dirs4):\n            out[r][c]=col\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (let* ((comp (first (sort (objects g 0) (lambda (a b) (> (obj-size a) (obj-size b)))))) (cells (obj-cells comp)) (boundary (filter (lambda (p) (any? (lambda (d) (not (member? (list (+ (first p) (first d)) (+ (second p) (second d))) cells))) cardinal-deltas)) cells))) (paint-cells (empty-grid (rows g) (cols g) 0) boundary (obj-color comp)))))"
+    },
+    {
+      "id": "S6_E3",
+      "difficulty": "easy",
+      "title": "Swap Two Object Colors",
+      "skills": [
+        "component extraction",
+        "left-right ordering",
+        "color substitution"
+      ],
+      "scaffold": [
+        "There are exactly two objects.",
+        "Order them by horizontal position.",
+        "Swap their colors while keeping the shapes fixed."
+      ],
+      "written_solution": "Find the two connected nonzero objects, determine which one is leftmost and which is rightmost, and exchange their colors. Their shapes and positions do not move.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "0000000000",
+            "0330000000",
+            "0300000000",
+            "0330000000",
+            "0000007700",
+            "0000007000",
+            "0000007700"
+          ],
+          "output": [
+            "0000000000",
+            "0770000000",
+            "0700000000",
+            "0770000000",
+            "0000003300",
+            "0000003000",
+            "0000003300"
+          ]
+        },
+        {
+          "input": [
+            "000000000",
+            "044400000",
+            "000400000",
+            "000000008",
+            "000000088",
+            "000000008",
+            "000000000"
+          ],
+          "output": [
+            "000000000",
+            "088800000",
+            "000800000",
+            "000000004",
+            "000000044",
+            "000000004",
+            "000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000000000",
+          "0011000000",
+          "0001000000",
+          "0000000000",
+          "0000000770",
+          "0000000070",
+          "0000000770"
+        ],
+        "output": [
+          "0000000000",
+          "0077000000",
+          "0007000000",
+          "0000000000",
+          "0000000110",
+          "0000000010",
+          "0000000110"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    comps=components(grid,None,4)\n    comps=sorted(comps,key=lambda c:min(cc for rr,cc in c['cells']))\n    a,b=comps[:2]\n    out=copyg(grid)\n    ca,cb=a['color'],b['color']\n    for r,c in a['cells']:\n        out[r][c]=cb\n    for r,c in b['cells']:\n        out[r][c]=ca\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (let* ((comps (sort (objects g 0) (lambda (a b) (< (obj-c1 a) (obj-c1 b))))) (a (first comps)) (b (second comps))) (paint-cells (paint-cells g (obj-cells a) (obj-color b)) (obj-cells b) (obj-color a)))))"
+    },
+    {
+      "id": "S6_E4",
+      "difficulty": "easy",
+      "title": "Complete the Rectangle Corner",
+      "skills": [
+        "axis-aligned geometry",
+        "same-size completion"
+      ],
+      "scaffold": [
+        "Treat the three colored cells as three corners of a rectangle.",
+        "Read off the two used rows and two used columns.",
+        "Place the missing fourth corner."
+      ],
+      "written_solution": "The three colored cells are three corners of one axis-aligned rectangle. Use the two distinct row indices and the two distinct column indices, then add the missing row-column combination.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "00000000",
+            "00200200",
+            "00000000",
+            "00000000",
+            "00200000",
+            "00000000"
+          ],
+          "output": [
+            "00000000",
+            "00200200",
+            "00000000",
+            "00000000",
+            "00200200",
+            "00000000"
+          ]
+        },
+        {
+          "input": [
+            "0000000",
+            "0700070",
+            "0000000",
+            "0000000",
+            "0000070",
+            "0000000"
+          ],
+          "output": [
+            "0000000",
+            "0700070",
+            "0000000",
+            "0000000",
+            "0700070",
+            "0000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "000000000",
+          "000040040",
+          "000000000",
+          "000000000",
+          "000040000",
+          "000000000"
+        ],
+        "output": [
+          "000000000",
+          "000040040",
+          "000000000",
+          "000000000",
+          "000040040",
+          "000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out=copyg(grid)\n    cells=[(r,c,v) for r,row in enumerate(grid) for c,v in enumerate(row) if v!=0]\n    # assume 3 same-color cells\n    color=cells[0][2]\n    pts=[(r,c) for r,c,v in cells if v==color]\n    rs=sorted(set(r for r,c in pts)); cs=sorted(set(c for r,c in pts))\n    if len(rs)==2 and len(cs)==2:\n        for r in rs:\n            for c in cs:\n                if out[r][c]==0:\n                    out[r][c]=color\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (let* ((cells (filter (lambda (p) (not (= (at g (first p) (second p)) 0))) (grid-positions g))) (color (at g (first (first cells)) (second (first cells)))) (pts (filter (lambda (p) (= (at g (first p) (second p)) color)) cells)) (rs (sort (remove-duplicates (map first pts)) <)) (cs (sort (remove-duplicates (map second pts)) <))) (if (and (= (length rs) 2) (= (length cs) 2)) (for*/fold ((out g)) ((r (in-list rs)) (c (in-list cs))) (if (= (at out r c) 0) (set-cell out r c color) out)) g))))"
+    },
+    {
+      "id": "S6_E5",
+      "difficulty": "easy",
+      "title": "Odd-Area Object Recolor",
+      "skills": [
+        "component sizing",
+        "parity test",
+        "object selection"
+      ],
+      "scaffold": [
+        "Split the green objects into connected components.",
+        "Compute each area.",
+        "Recolor only the odd-sized object."
+      ],
+      "written_solution": "Among the green(3) components, exactly one has odd area. Recolor that component to blue(1) and leave the even-sized green(3) components unchanged.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "3300000000",
+            "3300000000",
+            "0003330000",
+            "0003000000",
+            "0003000000",
+            "0000003330",
+            "0000003330",
+            "0000000000"
+          ],
+          "output": [
+            "3300000000",
+            "3300000000",
+            "0001110000",
+            "0001000000",
+            "0001000000",
+            "0000003330",
+            "0000003330",
+            "0000000000"
+          ]
+        },
+        {
+          "input": [
+            "000333000",
+            "000000000",
+            "033000000",
+            "033000000",
+            "000000000",
+            "000000333",
+            "000000333"
+          ],
+          "output": [
+            "000111000",
+            "000000000",
+            "033000000",
+            "033000000",
+            "000000000",
+            "000000333",
+            "000000333"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "3300000000",
+          "3300333000",
+          "0000030000",
+          "0000030000",
+          "0000000000",
+          "0000003333",
+          "0000003333"
+        ],
+        "output": [
+          "3300000000",
+          "3300111000",
+          "0000010000",
+          "0000010000",
+          "0000000000",
+          "0000003333",
+          "0000003333"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    comps=components(grid,{3},4)\n    target=[comp for comp in comps if len(comp['cells'])%2==1][0]\n    out=copyg(grid)\n    for r,c in target['cells']:\n        out[r][c]=1\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (let ((target (first (filter (lambda (obj) (= (modulo (obj-size obj) 2) 1)) (filter (lambda (obj) (= (obj-color obj) 3)) (objects g 0)))))) (paint-cells g (obj-cells target) 1))))"
+    },
+    {
+      "id": "S6_E6",
+      "difficulty": "easy",
+      "title": "Wire Length Strip",
+      "skills": [
+        "path following",
+        "counting",
+        "output-size change"
+      ],
+      "scaffold": [
+        "Start from the marker cell.",
+        "Follow its attached wire and count the wire cells.",
+        "Output a one-row strip of that length in color 6."
+      ],
+      "written_solution": "Find the unique wire attached to the start marker, count how many blue(1) wire cells it contains, and output a 1×N strip of magenta(6) where N is that wire length.",
+      "primitive_note": "Uses the new follow_wire primitive.",
+      "train": [
+        {
+          "input": [
+            "0000000000",
+            "0211000000",
+            "0001000000",
+            "0001110000",
+            "0000000000",
+            "0000000110",
+            "0000000110",
+            "0000000000"
+          ],
+          "output": [
+            "666666"
+          ]
+        },
+        {
+          "input": [
+            "00000000",
+            "02100000",
+            "00111000",
+            "00001000",
+            "00000000"
+          ],
+          "output": [
+            "66666"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000000000",
+          "0211110000",
+          "0000010000",
+          "0000011110",
+          "0000000000"
+        ],
+        "output": [
+          "666666666"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    start=[(r,c) for r,row in enumerate(grid) for c,v in enumerate(row) if v==2][0]\n    n=len(follow_wire(grid,start,{1}))\n    return [[6]*n] if n>0 else [[0]]",
+      "program_solution": "(rule! (let ((dummy 0)) (define dirs4-ordered (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (define (follow-wire grid start) (let* ((adjs (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (= (at grid (first p) (second p)) 1))) (map (lambda (d) (list (+ (first start) (first d)) (+ (second start) (second d)))) dirs4-ordered)))) (if (empty? adjs) (list) (let loop ((cur (first adjs)) (prev start) (seen (list start)) (path (list))) (let* ((path2 (append path (list cur))) (seen2 (append seen (list cur))) (nxts (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (not (equal? p prev)) (= (at grid (first p) (second p)) 1) (not (member? p seen2)))) (map (lambda (d) (list (+ (first cur) (first d)) (+ (second cur) (second d)))) dirs4-ordered)))) (if (empty? nxts) path2 (loop (first nxts) cur seen2 path2))))))) (let* ((n (length (follow-wire g (first (find-color g 2)))))) (if (> n 0) (list (make-list n 6)) (list (list 0))))))"
+    },
+    {
+      "id": "S6_E7",
+      "difficulty": "easy",
+      "title": "Path Endpoints Only",
+      "skills": [
+        "local degree counting",
+        "endpoint detection"
+      ],
+      "scaffold": [
+        "Look only at the path cells.",
+        "For each one, count same-color 4-neighbors.",
+        "Keep cells of degree 1 and erase the rest."
+      ],
+      "written_solution": "A path endpoint is a path cell with exactly one same-color orthogonal neighbor. Output only those endpoints and zero out all internal path cells.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "00000000",
+            "05550000",
+            "00050000",
+            "00050000",
+            "00000000",
+            "00550000",
+            "00000000"
+          ],
+          "output": [
+            "00000000",
+            "05000000",
+            "00000000",
+            "00050000",
+            "00000000",
+            "00550000",
+            "00000000"
+          ]
+        },
+        {
+          "input": [
+            "000000000",
+            "005000000",
+            "005000000",
+            "005550000",
+            "000050000",
+            "000050000",
+            "000000000"
+          ],
+          "output": [
+            "000000000",
+            "005000000",
+            "000000000",
+            "000000000",
+            "000000000",
+            "000050000",
+            "000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000000000",
+          "0550000000",
+          "0050000000",
+          "0055550000",
+          "0000050000",
+          "0000050000",
+          "0000000000"
+        ],
+        "output": [
+          "0000000000",
+          "0500000000",
+          "0000000000",
+          "0000000000",
+          "0000000000",
+          "0000050000",
+          "0000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    h,w=dims(grid)\n    out=blank(h,w,0)\n    for r,row in enumerate(grid):\n        for c,v in enumerate(row):\n            if v==5:\n                deg=sum(inb(grid,r+dr,c+dc) and grid[r+dr][c+dc]==5 for dr,dc in dirs4)\n                if deg==1:\n                    out[r][c]=5\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((p (in-list (find-color g 5)))) (let ((deg (length (filter (lambda (d) (let ((rr (+ (first p) (first d))) (cc (+ (second p) (second d)))) (and (in-bounds? rr cc (rows g) (cols g)) (= (at g rr cc) 5)))) cardinal-deltas)))) (if (= deg 1) (set-cell out (first p) (second p) 5) out)))))"
+    },
+    {
+      "id": "S6_M1",
+      "difficulty": "medium",
+      "title": "Longest Marked Wire",
+      "skills": [
+        "multiple path tracking",
+        "comparison by length",
+        "same-size recolor"
+      ],
+      "scaffold": [
+        "Each start marker has its own attached wire.",
+        "Follow every marked wire separately.",
+        "Recolor only the longest one."
+      ],
+      "written_solution": "Trace each blue(1) wire that begins at a red(2) start marker, compare their lengths, and recolor only the longest such wire to green(3). Markers and shorter wires remain unchanged.",
+      "primitive_note": "Uses the new follow_wire primitive.",
+      "train": [
+        {
+          "input": [
+            "00000000000000",
+            "02110000021000",
+            "00010000001000",
+            "00010000001110",
+            "00000000000010",
+            "00000000000000",
+            "00000000000000",
+            "00000000000000"
+          ],
+          "output": [
+            "00000000000000",
+            "02110000023000",
+            "00010000003000",
+            "00010000003330",
+            "00000000000030",
+            "00000000000000",
+            "00000000000000",
+            "00000000000000"
+          ]
+        },
+        {
+          "input": [
+            "000000000000000",
+            "021000021100000",
+            "001000000100000",
+            "001110000111000",
+            "000000000001000",
+            "000000000000000",
+            "021100000000000",
+            "000110000000000",
+            "000000000000000"
+          ],
+          "output": [
+            "000000000000000",
+            "021000023300000",
+            "001000000300000",
+            "001110000333000",
+            "000000000003000",
+            "000000000000000",
+            "021100000000000",
+            "000110000000000",
+            "000000000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "000000000000000",
+          "021100000000000",
+          "000100000000000",
+          "000110000000000",
+          "000000000021000",
+          "000000000001000",
+          "000000000111000",
+          "000000011100000",
+          "000000000000000"
+        ],
+        "output": [
+          "000000000000000",
+          "021100000000000",
+          "000100000000000",
+          "000110000000000",
+          "000000000023000",
+          "000000000003000",
+          "000000000333000",
+          "000000033300000",
+          "000000000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out=copyg(grid)\n    starts=[(r,c) for r,row in enumerate(grid) for c,v in enumerate(row) if v==2]\n    best=None; best_path=[]\n    for st in starts:\n        path=follow_wire(grid,st,{1})\n        if len(path)>len(best_path):\n            best_path=path; best=st\n    for r,c in best_path:\n        out[r][c]=3\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define dirs4-ordered (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (define (follow-wire grid start) (let* ((adjs (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (= (at grid (first p) (second p)) 1))) (map (lambda (d) (list (+ (first start) (first d)) (+ (second start) (second d)))) dirs4-ordered)))) (if (empty? adjs) (list) (let loop ((cur (first adjs)) (prev start) (seen (list start)) (path (list))) (let* ((path2 (append path (list cur))) (seen2 (append seen (list cur))) (nxts (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (not (equal? p prev)) (= (at grid (first p) (second p)) 1) (not (member? p seen2)))) (map (lambda (d) (list (+ (first cur) (first d)) (+ (second cur) (second d)))) dirs4-ordered)))) (if (empty? nxts) path2 (loop (first nxts) cur seen2 path2))))))) (let* ((starts (find-color g 2)) (scored (map (lambda (st) (list (follow-wire g st) st)) starts)) (best (first (sort scored (lambda (a b) (> (length (first a)) (length (first b)))))))) (paint-cells g (first best) 3))))"
+    },
+    {
+      "id": "S6_M2",
+      "difficulty": "medium",
+      "title": "Bounding-Box Intersection Fill",
+      "skills": [
+        "bounding boxes",
+        "geometric overlap",
+        "same-size construction"
+      ],
+      "scaffold": [
+        "Compute the bbox of each of the two objects.",
+        "Intersect those rectangles.",
+        "Fill the overlap rectangle with color 8 on a blank grid."
+      ],
+      "written_solution": "Ignore the detailed shapes and use only their axis-aligned bounding boxes. Compute the rectangle where those two bboxes overlap, and output that overlap region filled with cyan(8) on an otherwise background grid.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "0000000000",
+            "0300000000",
+            "0300000000",
+            "0344440000",
+            "0333400000",
+            "0000400000",
+            "0000000000",
+            "0000000000"
+          ],
+          "output": [
+            "0000000000",
+            "0000000000",
+            "0000000000",
+            "0088000000",
+            "0088000000",
+            "0000000000",
+            "0000000000",
+            "0000000000"
+          ]
+        },
+        {
+          "input": [
+            "000000000000",
+            "000044444000",
+            "003000400000",
+            "003000400000",
+            "003000400000",
+            "003000400000",
+            "003333000000",
+            "000000000000",
+            "000000000000"
+          ],
+          "output": [
+            "000000000000",
+            "000000000000",
+            "000088000000",
+            "000088000000",
+            "000088000000",
+            "000088000000",
+            "000000000000",
+            "000000000000",
+            "000000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "00000000000",
+          "03330000000",
+          "03444400000",
+          "03000400000",
+          "03000400000",
+          "00000400000",
+          "00000400000",
+          "00000000000"
+        ],
+        "output": [
+          "00000000000",
+          "00000000000",
+          "00880000000",
+          "00880000000",
+          "00880000000",
+          "00000000000",
+          "00000000000",
+          "00000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    h,w=dims(grid)\n    out=blank(h,w,0)\n    comps=components(grid,None,4)\n    comps=sorted(comps,key=lambda c:c['color'])[:2]  # assume two objects\n    (a,b)=comps[:2]\n    r1a,c1a,r2a,c2a=bbox(a['cells']); r1b,c1b,r2b,c2b=bbox(b['cells'])\n    rr1=max(r1a,r1b); cc1=max(c1a,c1b); rr2=min(r2a,r2b); cc2=min(c2a,c2b)\n    if rr1<=rr2 and cc1<=cc2:\n        for r in range(rr1,rr2+1):\n            for c in range(cc1,cc2+1):\n                out[r][c]=8\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (let* ((comps (sort (objects g 0) (lambda (a b) (< (obj-color a) (obj-color b))))) (a (first comps)) (b (second comps)) (r0 (max (obj-r1 a) (obj-r1 b))) (r1 (min (obj-r2 a) (obj-r2 b))) (c0 (max (obj-c1 a) (obj-c1 b))) (c1 (min (obj-c2 a) (obj-c2 b)))) (if (and (<= r0 r1) (<= c0 c1)) (for*/fold ((out (empty-grid (rows g) (cols g) 0))) ((r (in-range r0 (+ r1 1))) (c (in-range c0 (+ c1 1)))) (set-cell out r c 8)) (empty-grid (rows g) (cols g) 0)))))"
+    },
+    {
+      "id": "S6_M3",
+      "difficulty": "medium",
+      "title": "Deepest Enclosing Frame Color",
+      "skills": [
+        "frame detection",
+        "enclosure depth",
+        "dot recolor"
+      ],
+      "scaffold": [
+        "Detect the hollow rectangular frames.",
+        "For each dot, list which frames contain it.",
+        "Use the smallest enclosing frame color."
+      ],
+      "written_solution": "Each black(0)/white dot sits inside one or more nested rectangular frames. Recolor the dot to the color of the smallest frame that still encloses it, leaving the frames unchanged.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "00000000000",
+            "03333333330",
+            "03100000030",
+            "03066666030",
+            "03061006030",
+            "03066666030",
+            "03000000130",
+            "03333333330",
+            "00000000000"
+          ],
+          "output": [
+            "00000000000",
+            "03333333330",
+            "03300000030",
+            "03066666030",
+            "03066006030",
+            "03066666030",
+            "03000000330",
+            "03333333330",
+            "00000000000"
+          ]
+        },
+        {
+          "input": [
+            "0000000000000",
+            "0222222222220",
+            "0204444444020",
+            "0214100004020",
+            "0204077704020",
+            "0204071704020",
+            "0204077704020",
+            "0204000004020",
+            "0204444444120",
+            "0222222222220",
+            "0000000000000"
+          ],
+          "output": [
+            "0000000000000",
+            "0222222222220",
+            "0204444444020",
+            "0224400004020",
+            "0204077704020",
+            "0204077704020",
+            "0204077704020",
+            "0204000004020",
+            "0204444444220",
+            "0222222222220",
+            "0000000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "000000000000",
+          "055555555550",
+          "053333333350",
+          "053100000350",
+          "053077770350",
+          "053071070350",
+          "053077770350",
+          "053333331350",
+          "055555555550",
+          "000000000000"
+        ],
+        "output": [
+          "000000000000",
+          "055555555550",
+          "053333333350",
+          "053500000350",
+          "053077770350",
+          "053077070350",
+          "053077770350",
+          "053333335350",
+          "055555555550",
+          "000000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out=copyg(grid)\n    frames=detect_frames(grid)\n    dots=[(r,c) for r,row in enumerate(grid) for c,v in enumerate(row) if v==1]\n    for r,c in dots:\n        enclosing=[]\n        for fr in frames:\n            r1,c1,r2,c2=fr['bbox']\n            if r1<r<r2 and c1<c<c2:\n                enclosing.append(fr)\n        if enclosing:\n            fr=min(enclosing,key=lambda f:(f['bbox'][2]-f['bbox'][0])*(f['bbox'][3]-f['bbox'][1]))\n            out[r][c]=fr['color']\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define (outline-cells r1 c1 r2 c2) (remove-duplicates (append (for/list ((c (in-range c1 (+ c2 1)))) (list r1 c)) (for/list ((c (in-range c1 (+ c2 1)))) (list r2 c)) (for/list ((r (in-range r1 (+ r2 1)))) (list r c1)) (for/list ((r (in-range r1 (+ r2 1)))) (list r c2))))) (define (frame? obj) (let* ((expected (outline-cells (obj-r1 obj) (obj-c1 obj) (obj-r2 obj) (obj-c2 obj))) (cells (obj-cells obj))) (and (= (length cells) (length expected)) (all? (lambda (p) (member? p cells)) expected)))) (define (frame-area-key fr) (* (- (obj-r2 fr) (obj-r1 fr)) (- (obj-c2 fr) (obj-c1 fr)))) (define (detect-frames grid) (filter frame? (objects grid 0))) (let* ((frames (detect-frames g)) (dots (find-color g 1))) (for/fold ((out g)) ((p (in-list dots))) (let* ((enclosing (filter (lambda (fr) (and (< (obj-r1 fr) (first p)) (< (first p) (obj-r2 fr)) (< (obj-c1 fr) (second p)) (< (second p) (obj-c2 fr)))) frames))) (if (empty? enclosing) out (let ((fr (first (sort enclosing (lambda (a b) (< (frame-area-key a) (frame-area-key b))))))) (set-cell out (first p) (second p) (obj-color fr)))))))))"
+    },
+    {
+      "id": "S6_M4",
+      "difficulty": "medium",
+      "title": "Seeded Checker Fill",
+      "skills": [
+        "frame interior",
+        "parity reasoning",
+        "same-size fill"
+      ],
+      "scaffold": [
+        "Find the frame and the single seed inside it.",
+        "Compute the seed’s checkerboard parity.",
+        "Fill interior cells of matching parity with the seed color."
+      ],
+      "written_solution": "Inside the frame, paint every empty cell whose row+column parity matches the seed dot’s parity. Leave the opposite-parity cells black(0), and keep the frame and seed in place.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "000000000",
+            "077777770",
+            "070200070",
+            "070000070",
+            "070000070",
+            "077777770",
+            "000000000"
+          ],
+          "output": [
+            "000000000",
+            "077777770",
+            "070202070",
+            "072020270",
+            "070202070",
+            "077777770",
+            "000000000"
+          ]
+        },
+        {
+          "input": [
+            "0000000000",
+            "0777777770",
+            "0700000070",
+            "0700000070",
+            "0700030070",
+            "0700000070",
+            "0777777770",
+            "0000000000"
+          ],
+          "output": [
+            "0000000000",
+            "0777777770",
+            "0703030370",
+            "0730303070",
+            "0703030370",
+            "0730303070",
+            "0777777770",
+            "0000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "00000000000",
+          "07777777770",
+          "07000000070",
+          "07000000070",
+          "07000000070",
+          "07002000070",
+          "07000000070",
+          "07777777770",
+          "00000000000"
+        ],
+        "output": [
+          "00000000000",
+          "07777777770",
+          "07020202070",
+          "07202020270",
+          "07020202070",
+          "07202020270",
+          "07020202070",
+          "07777777770",
+          "00000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out=copyg(grid)\n    frames=detect_frames(grid)\n    fr=max(frames,key=lambda f:(f['bbox'][2]-f['bbox'][0])*(f['bbox'][3]-f['bbox'][1]))\n    r1,c1,r2,c2=fr['bbox']\n    seeds=[(r,c,grid[r][c]) for r in range(r1+1,r2) for c in range(c1+1,c2) if grid[r][c] not in (0,fr['color'])]\n    sr,sc,color=seeds[0]\n    parity=(sr+sc)%2\n    for r in range(r1+1,r2):\n        for c in range(c1+1,c2):\n            if grid[r][c]==0 and (r+c)%2==parity:\n                out[r][c]=color\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define (outline-cells r1 c1 r2 c2) (remove-duplicates (append (for/list ((c (in-range c1 (+ c2 1)))) (list r1 c)) (for/list ((c (in-range c1 (+ c2 1)))) (list r2 c)) (for/list ((r (in-range r1 (+ r2 1)))) (list r c1)) (for/list ((r (in-range r1 (+ r2 1)))) (list r c2))))) (define (frame? obj) (let* ((expected (outline-cells (obj-r1 obj) (obj-c1 obj) (obj-r2 obj) (obj-c2 obj))) (cells (obj-cells obj))) (and (= (length cells) (length expected)) (all? (lambda (p) (member? p cells)) expected)))) (define (frame-area-key fr) (* (- (obj-r2 fr) (obj-r1 fr)) (- (obj-c2 fr) (obj-c1 fr)))) (define (detect-frames grid) (filter frame? (objects grid 0))) (let* ((frames (detect-frames g)) (fr (first (sort frames (lambda (a b) (> (frame-area-key a) (frame-area-key b)))))) (seeds (filter values (for*/list ((r (in-range (+ (obj-r1 fr) 1) (obj-r2 fr))) (c (in-range (+ (obj-c1 fr) 1) (obj-c2 fr)))) (let ((v (at g r c))) (if (not (member? v (list 0 (obj-color fr)))) (list r c v) #f))))) (seed (first seeds)) (parity (modulo (+ (first seed) (second seed)) 2)) (color (third seed))) (for*/fold ((out g)) ((r (in-range (+ (obj-r1 fr) 1) (obj-r2 fr))) (c (in-range (+ (obj-c1 fr) 1) (obj-c2 fr)))) (if (and (= (at g r c) 0) (= (modulo (+ r c) 2) parity)) (set-cell out r c color) out)))))"
+    },
+    {
+      "id": "S6_M5",
+      "difficulty": "medium",
+      "title": "Mirror Pair Selector",
+      "skills": [
+        "shape normalization",
+        "reflection matching",
+        "pair selection"
+      ],
+      "scaffold": [
+        "Normalize the three objects.",
+        "Check which two become equal after a horizontal reflection.",
+        "Output only that mirrored pair."
+      ],
+      "written_solution": "Among the three same-colored objects, exactly two are mirror images of each other. Identify that reflected pair by normalized shape and output just those two objects, recolored to red(2) on a background background.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "00000000000000",
+            "06000060006660",
+            "06000060000600",
+            "06600660000000",
+            "00000000000000",
+            "00000000000000",
+            "00000000000000"
+          ],
+          "output": [
+            "00000000000000",
+            "02000020000000",
+            "02000020000000",
+            "02200220000000",
+            "00000000000000",
+            "00000000000000",
+            "00000000000000"
+          ]
+        },
+        {
+          "input": [
+            "000000000000000",
+            "066000006600000",
+            "006000006000000",
+            "006600066000000",
+            "000000000000000",
+            "000000000000660",
+            "000000000000660",
+            "000000000000000"
+          ],
+          "output": [
+            "000000000000000",
+            "022000002200000",
+            "002000002000000",
+            "002200022000000",
+            "000000000000000",
+            "000000000000000",
+            "000000000000000",
+            "000000000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000000000000000",
+          "0600000060000000",
+          "0666006660000000",
+          "0000000000000000",
+          "0000000000000000",
+          "0000000000006000",
+          "0000000000006600",
+          "0000000000000000"
+        ],
+        "output": [
+          "0000000000000000",
+          "0200000020000000",
+          "0222002220000000",
+          "0000000000000000",
+          "0000000000000000",
+          "0000000000000000",
+          "0000000000000000",
+          "0000000000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    comps=components(grid,{6},4)\n    norms=[normalize(c['cells']) for c in comps]\n    # find pair where one equals reflected other\n    pair=[]\n    for i in range(len(comps)):\n        for j in range(i+1,len(comps)):\n            ni=norms[i]; nj=norms[j]\n            if sorted(ni)==sorted(reflect_h(nj)) or sorted(nj)==sorted(reflect_h(ni)):\n                pair=[i,j]\n    h,w=dims(grid); out=blank(h,w,0)\n    for idx in pair:\n        for r,c in comps[idx]['cells']:\n            out[r][c]=2\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define (norm-cells cells) (sort (normalize-cells cells) cell<)) (define (reflect-h cells) (let ((maxc (apply max (map second cells)))) (sort (map (lambda (p) (list (first p) (- maxc (second p)))) cells) cell<))) (let* ((comps (filter (lambda (obj) (= (obj-color obj) 6)) (objects g 0))) (pairs (filter values (for*/list ((i (in-range (length comps))) (j (in-range (+ i 1) (length comps)))) (let ((ni (norm-cells (obj-cells (list-ref comps i)))) (nj (norm-cells (obj-cells (list-ref comps j))))) (if (or (equal? ni (reflect-h nj)) (equal? nj (reflect-h ni))) (list i j) #f))))) (pair (if (empty? pairs) (list) (last pairs)))) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((idx (in-list pair))) (paint-cells out (obj-cells (list-ref comps idx)) 2)))))"
+    },
+    {
+      "id": "S6_M6",
+      "difficulty": "medium",
+      "title": "Perimeter-Sorted Palette Row",
+      "skills": [
+        "perimeter computation",
+        "ranking",
+        "summary output"
+      ],
+      "scaffold": [
+        "Compute each object’s exposed-edge perimeter.",
+        "Sort the objects by perimeter from largest to smallest.",
+        "Output a single row of their colors in that order."
+      ],
+      "written_solution": "Measure each object by its 4-neighbor perimeter, not its area. Sort the objects from largest perimeter to smallest, then output a one-row color sequence listing their colors in that order.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "000000000000",
+            "020003300000",
+            "000003300000",
+            "000000000000",
+            "000000004000",
+            "000000004000",
+            "000000004400",
+            "000000000000"
+          ],
+          "output": [
+            "432"
+          ]
+        },
+        {
+          "input": [
+            "000000000000",
+            "007000110000",
+            "000000110000",
+            "000000000000",
+            "000000000555",
+            "000000000050",
+            "000000000000",
+            "000000000000"
+          ],
+          "output": [
+            "517"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000000000000",
+          "0200088800000",
+          "0200080000000",
+          "0000080000000",
+          "0000000000000",
+          "0000000000400",
+          "0000000000000",
+          "0000000000000",
+          "0000000000000"
+        ],
+        "output": [
+          "824"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    comps=components(grid,None,4)\n    ranked=sorted(comps,key=lambda c:(-perimeter(grid,c), c['color']))\n    return [[c['color'] for c in ranked]]",
+      "program_solution": "(rule! (let ((dummy 0)) (define (perimeter obj) (for/sum ((p (in-list (obj-cells obj)))) (length (filter (lambda (d) (not (member? (list (+ (first p) (first d)) (+ (second p) (second d))) (obj-cells obj)))) cardinal-deltas)))) (let ((ranked (sort (objects g 0) (lambda (a b) (if (= (perimeter a) (perimeter b)) (< (obj-color a) (obj-color b)) (> (perimeter a) (perimeter b))))))) (list (map obj-color ranked)))))"
+    },
+    {
+      "id": "S6_M7",
+      "difficulty": "medium",
+      "title": "Color-Matched Relocation",
+      "skills": [
+        "color pairing",
+        "translation",
+        "object stamping"
+      ],
+      "scaffold": [
+        "For each color, distinguish the singleton anchor from the larger object.",
+        "Use the object’s top-left as its local origin.",
+        "Translate the object so that origin lands on the matching anchor."
+      ],
+      "written_solution": "Each color appears once as a single-cell anchor and once as a larger object. Move each larger object so that its own top-left cell aligns with its same-colored anchor, and output the relocated objects on a background grid.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "000000000000",
+            "020000003000",
+            "000000000000",
+            "000000000000",
+            "000000000000",
+            "020000033000",
+            "022000033000",
+            "000000000000"
+          ],
+          "output": [
+            "000000000000",
+            "020000003300",
+            "022000003300",
+            "000000000000",
+            "000000000000",
+            "000000000000",
+            "000000000000",
+            "000000000000"
+          ]
+        },
+        {
+          "input": [
+            "0000000000000",
+            "0040000000000",
+            "0000000006000",
+            "0000000000000",
+            "0000000000000",
+            "0000000000000",
+            "0444000006000",
+            "0040000006600",
+            "0000000000000"
+          ],
+          "output": [
+            "0000000000000",
+            "0044400000000",
+            "0004000006000",
+            "0000000006600",
+            "0000000000000",
+            "0000000000000",
+            "0000000000000",
+            "0000000000000",
+            "0000000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "00000000000000",
+          "05000000070000",
+          "00000000000000",
+          "00000000000000",
+          "00000000000000",
+          "00000000007700",
+          "00500000000700",
+          "00555000000000",
+          "00000000000000"
+        ],
+        "output": [
+          "00000000000000",
+          "05000000077000",
+          "05550000007000",
+          "00000000000000",
+          "00000000000000",
+          "00000000000000",
+          "00000000000000",
+          "00000000000000",
+          "00000000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    h,w=dims(grid)\n    # anchors are singleton cells whose color also appears in a larger comp.\n    comps=components(grid,None,4)\n    by_color={}\n    for comp in comps:\n        by_color.setdefault(comp['color'],[]).append(comp)\n    out=blank(h,w,0)\n    for color, lst in by_color.items():\n        anchors=[c for c in lst if len(c['cells'])==1]\n        objs=[c for c in lst if len(c['cells'])>1]\n        if anchors and objs:\n            ar,ac=anchors[0]['cells'][0]\n            obj=max(objs,key=lambda c:len(c['cells']))\n            nr0=min(r for r,c in obj['cells']); nc0=min(c for r,c in obj['cells'])\n            for r,c in obj['cells']:\n                rr=ar+(r-nr0); cc=ac+(c-nc0)\n                if 0<=rr<h and 0<=cc<w:\n                    out[rr][cc]=color\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (let ((colors (remove-duplicates (map obj-color (objects g 0))))) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((color (in-list colors))) (let* ((lst (filter (lambda (obj) (= (obj-color obj) color)) (objects g 0))) (anchors (filter (lambda (obj) (= (obj-size obj) 1)) lst)) (objs (filter (lambda (obj) (> (obj-size obj) 1)) lst))) (if (and (not (empty? anchors)) (not (empty? objs))) (let* ((anchor (first (obj-cells (first anchors)))) (obj (first (sort objs (lambda (a b) (> (obj-size a) (obj-size b)))))) (r0 (obj-r1 obj)) (c0 (obj-c1 obj))) (for/fold ((acc out)) ((p (in-list (obj-cells obj)))) (let ((rr (+ (first anchor) (- (first p) r0))) (cc (+ (second anchor) (- (second p) c0)))) (if (in-bounds? rr cc (rows g) (cols g)) (set-cell acc rr cc color) acc)))) out))))))"
+    },
+    {
+      "id": "S6_H1",
+      "difficulty": "hard",
+      "title": "Room Fill by Seeds",
+      "skills": [
+        "region segmentation",
+        "flood fill",
+        "wall-respecting fill"
+      ],
+      "scaffold": [
+        "Treat color 8 as walls that partition the board into rooms.",
+        "Find the zero-cells belonging to each room.",
+        "Fill each room with the color of its unique seed."
+      ],
+      "written_solution": "The cyan(8)s are walls. They divide the interior into separate rooms, and each chamber has exactly one colored seed cell touching it. Flood-fill each chamber with that seed color while preserving the walls and seed cells.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "0000000000000",
+            "0888888888880",
+            "0800080030080",
+            "0802080000080",
+            "0800088888880",
+            "0800080000080",
+            "0800080004080",
+            "0888888888880",
+            "0000000000000"
+          ],
+          "output": [
+            "0000000000000",
+            "0888888888880",
+            "0822283333380",
+            "0822283333380",
+            "0822288888880",
+            "0822284444480",
+            "0822284444480",
+            "0888888888880",
+            "0000000000000"
+          ]
+        },
+        {
+          "input": [
+            "00000000000000",
+            "08888888888880",
+            "08008000800080",
+            "08208000800080",
+            "08008030800080",
+            "08008000800080",
+            "08008000804080",
+            "08008000800080",
+            "08888888888880",
+            "00000000000000"
+          ],
+          "output": [
+            "00000000000000",
+            "08888888888880",
+            "08228333844480",
+            "08228333844480",
+            "08228333844480",
+            "08228333844480",
+            "08228333844480",
+            "08228333844480",
+            "08888888888880",
+            "00000000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "00000000000000",
+          "08888888888880",
+          "08200080000080",
+          "08888880030080",
+          "08000080000080",
+          "08000088888880",
+          "08050080000080",
+          "08000080004080",
+          "08888888888880",
+          "00000000000000"
+        ],
+        "output": [
+          "00000000000000",
+          "08888888888880",
+          "08222283333380",
+          "08888883333380",
+          "08555583333380",
+          "08555588888880",
+          "08555584444480",
+          "08555584444480",
+          "08888888888880",
+          "00000000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    return fill_room_by_seed(grid,8)",
+      "program_solution": "(rule! (let ((dummy 0)) (define (fill-room-by-seed grid) (for/fold ((out grid)) ((region (in-list (find-0-regions grid 0)))) (let* ((colors (remove-duplicates (filter (lambda (v) (not (member? v (list 0 8)))) (apply append (map (lambda (p) (filter values (map (lambda (d) (let ((rr (+ (first p) (first d))) (cc (+ (second p) (second d)))) (if (in-bounds? rr cc (rows grid) (cols grid)) (at grid rr cc) #f))) cardinal-deltas))) region)))))) (if (= (length colors) 1) (paint-cells out region (first colors)) out)))) (fill-room-by-seed g)))"
+    },
+    {
+      "id": "S6_H2",
+      "difficulty": "hard",
+      "title": "Most-Turns Wire",
+      "skills": [
+        "ordered path following",
+        "turn counting",
+        "comparative selection"
+      ],
+      "scaffold": [
+        "Trace each wire in order from its marker.",
+        "Count direction changes along the path.",
+        "Recolor the wire with the most turns."
+      ],
+      "written_solution": "For every marked wire, follow the path cell by cell and count how often the direction changes. Recolor the wire with the greatest turn count to green(3); if needed, break ties by the longer wire.",
+      "primitive_note": "Uses the new follow_wire primitive.",
+      "train": [
+        {
+          "input": [
+            "000000000000000",
+            "021111102100000",
+            "000000000110000",
+            "000000000011000",
+            "000000000001000",
+            "000000000000000",
+            "000000000000000",
+            "000000000000000"
+          ],
+          "output": [
+            "000000000000000",
+            "021111102300000",
+            "000000000330000",
+            "000000000033000",
+            "000000000003000",
+            "000000000000000",
+            "000000000000000",
+            "000000000000000"
+          ]
+        },
+        {
+          "input": [
+            "0000000000000000",
+            "0211100210000000",
+            "0000100011100000",
+            "0000100000100000",
+            "0000000000100000",
+            "0000000000000000",
+            "0211110000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "output": [
+            "0000000000000000",
+            "0211100230000000",
+            "0000100033300000",
+            "0000100000300000",
+            "0000000000300000",
+            "0000000000000000",
+            "0211110000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "00000000000000000",
+          "02110000000000000",
+          "00010000002100000",
+          "00011100000110000",
+          "00000000000011000",
+          "00000000000001100",
+          "00000000000000000",
+          "00000000000000000",
+          "00000000000000000",
+          "00000000000000000"
+        ],
+        "output": [
+          "00000000000000000",
+          "02110000000000000",
+          "00010000002300000",
+          "00011100000330000",
+          "00000000000033000",
+          "00000000000003300",
+          "00000000000000000",
+          "00000000000000000",
+          "00000000000000000",
+          "00000000000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    out=copyg(grid)\n    starts=[(r,c) for r,row in enumerate(grid) for c,v in enumerate(row) if v==2]\n    best_path=[]; best_turns=-1\n    for st in starts:\n        path=follow_wire(grid,st,{1})\n        turns=turns_in_path(path)\n        if turns>best_turns or (turns==best_turns and len(path)>len(best_path)):\n            best_turns=turns; best_path=path\n    for r,c in best_path:\n        out[r][c]=3\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define dirs4-ordered (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (define (follow-wire grid start) (let* ((adjs (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (= (at grid (first p) (second p)) 1))) (map (lambda (d) (list (+ (first start) (first d)) (+ (second start) (second d)))) dirs4-ordered)))) (if (empty? adjs) (list) (let loop ((cur (first adjs)) (prev start) (seen (list start)) (path (list))) (let* ((path2 (append path (list cur))) (seen2 (append seen (list cur))) (nxts (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (not (equal? p prev)) (= (at grid (first p) (second p)) 1) (not (member? p seen2)))) (map (lambda (d) (list (+ (first cur) (first d)) (+ (second cur) (second d)))) dirs4-ordered)))) (if (empty? nxts) path2 (loop (first nxts) cur seen2 path2))))))) (define (turn-count path) (if (< (length path) 3) 0 (let* ((dirs (for/list ((i (in-range (- (length path) 1)))) (let ((a (list-ref path i)) (b (list-ref path (+ i 1)))) (list (- (first b) (first a)) (- (second b) (second a))))))) (for/sum ((i (in-range (- (length dirs) 1)))) (if (equal? (list-ref dirs i) (list-ref dirs (+ i 1))) 0 1))))) (let* ((scored (map (lambda (st) (let ((path (follow-wire g st))) (list path (turn-count path)))) (find-color g 2))) (best (first (sort scored (lambda (a b) (if (= (second a) (second b)) (> (length (first a)) (length (first b))) (> (second a) (second b)))))))) (paint-cells g (first best) 3))))"
+    },
+    {
+      "id": "S6_H3",
+      "difficulty": "hard",
+      "title": "Normalized Shape XOR",
+      "skills": [
+        "shape alignment",
+        "symmetric difference",
+        "output crop"
+      ],
+      "scaffold": [
+        "Crop each object to its own bbox and normalize to top-left.",
+        "Compare the normalized cell sets.",
+        "Output the cells that belong to exactly one of the two shapes."
+      ],
+      "written_solution": "Ignore colors and positions, normalize both objects to their own top-left corners, and compute the symmetric difference of those two cell sets. Output that XOR shape as a cropped grid in cyan(8).",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "000000000000",
+            "020000033300",
+            "020000003000",
+            "022000000000",
+            "000000000000",
+            "000000000000",
+            "000000000000"
+          ],
+          "output": [
+            "088",
+            "880",
+            "880"
+          ]
+        },
+        {
+          "input": [
+            "0000000000000",
+            "0220000030000",
+            "0022000030000",
+            "0000000033000",
+            "0000000000000",
+            "0000000000000",
+            "0000000000000"
+          ],
+          "output": [
+            "080",
+            "888",
+            "880"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "00000000000000",
+          "02200000000000",
+          "02200000333000",
+          "00000000030000",
+          "00000000000000",
+          "00000000000000",
+          "00000000000000",
+          "00000000000000"
+        ],
+        "output": [
+          "008",
+          "800"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    comps=components(grid,None,4)\n    # assume exactly two objects\n    comps=sorted(comps,key=lambda c:c['color'])[:2]\n    n1=set(normalize(comps[0]['cells']))\n    n2=set(normalize(comps[1]['cells']))\n    cells=sorted(n1.symmetric_difference(n2))\n    if not cells:\n        return [[0]]\n    maxr=max(r for r,c in cells); maxc=max(c for r,c in cells)\n    out=blank(maxr+1,maxc+1,0)\n    for r,c in cells: out[r][c]=8\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define (norm-cells cells) (sort (normalize-cells cells) cell<)) (define (shape->grid cells color) (if (empty? cells) (list (list 0)) (let ((maxr (apply max (map first cells))) (maxc (apply max (map second cells)))) (for/fold ((out (empty-grid (+ maxr 1) (+ maxc 1) 0))) ((p (in-list cells))) (set-cell out (first p) (second p) color))))) (let* ((comps (sort (objects g 0) (lambda (a b) (< (obj-color a) (obj-color b))))) (a (norm-cells (obj-cells (first comps)))) (b (norm-cells (obj-cells (second comps)))) (cells (sort (append (filter (lambda (p) (not (member? p b))) a) (filter (lambda (p) (not (member? p a))) b)) cell<))) (shape->grid cells 8))))"
+    },
+    {
+      "id": "S6_H4",
+      "difficulty": "hard",
+      "title": "Stamp Template at Wire Turns",
+      "skills": [
+        "template extraction",
+        "ordered path analysis",
+        "event-based stamping"
+      ],
+      "scaffold": [
+        "Extract the separate template object.",
+        "Follow the marked wire and identify every turn cell.",
+        "Stamp the template with its top-left aligned to each turn."
+      ],
+      "written_solution": "The yellow(4) object is a template. Follow the start-marked wire, record every cell where the path changes direction, and stamp a copy of the template at each such turn with top-left alignment. Output only the stamped result.",
+      "primitive_note": "Uses the new follow_wire primitive.",
+      "train": [
+        {
+          "input": [
+            "00000000000000",
+            "04000000710000",
+            "04400000010000",
+            "00000000011100",
+            "00000000000100",
+            "00000000000000",
+            "00000000000000"
+          ],
+          "output": [
+            "00000000000000",
+            "00000000000000",
+            "00000000000000",
+            "00000000040400",
+            "00000000044440",
+            "00000000000000",
+            "00000000000000"
+          ]
+        },
+        {
+          "input": [
+            "000000000000000",
+            "044400000000000",
+            "000000007100000",
+            "000000000100000",
+            "000000000111000",
+            "000000000001000",
+            "000000000001000",
+            "000000000000000",
+            "000000000000000"
+          ],
+          "output": [
+            "000000000000000",
+            "000000000000000",
+            "000000000000000",
+            "000000000000000",
+            "000000000444440",
+            "000000000000000",
+            "000000000000000",
+            "000000000000000",
+            "000000000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000000000000000",
+          "0400000000710000",
+          "0400000000011100",
+          "0000000000000100",
+          "0000000000011100",
+          "0000000000000000",
+          "0000000000000000",
+          "0000000000000000",
+          "0000000000000000",
+          "0000000000000000"
+        ],
+        "output": [
+          "0000000000000000",
+          "0000000000000000",
+          "0000000000040400",
+          "0000000000040400",
+          "0000000000000400",
+          "0000000000000400",
+          "0000000000000000",
+          "0000000000000000",
+          "0000000000000000",
+          "0000000000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    # color 4 template, color 2 marker, color 1 wire, color 7 start marker\n    comps=components(grid,{4},4)\n    template=max(comps,key=lambda c:len(c['cells']))\n    temp_norm=normalize(template['cells'])\n    start=[(r,c) for r,row in enumerate(grid) for c,v in enumerate(row) if v==7][0]\n    path=follow_wire(grid,start,{1})\n    turns=[]\n    for idx in range(1,len(path)-1):\n        a=path[idx-1]; b=path[idx]; c=path[idx+1]\n        if (b[0]-a[0],b[1]-a[1]) != (c[0]-b[0],c[1]-b[1]):\n            turns.append(b)\n    h,w=dims(grid)\n    out=blank(h,w,0)\n    # stamp template with template's top-left aligned at each turn\n    for tr,tc in turns:\n        for dr,dc in temp_norm:\n            rr,cc=tr+dr, tc+dc\n            if 0<=rr<h and 0<=cc<w:\n                out[rr][cc]=4\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define dirs4-ordered (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (define (norm-cells cells) (sort (normalize-cells cells) cell<)) (define (follow-wire grid start) (let* ((adjs (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (= (at grid (first p) (second p)) 1))) (map (lambda (d) (list (+ (first start) (first d)) (+ (second start) (second d)))) dirs4-ordered)))) (if (empty? adjs) (list) (let loop ((cur (first adjs)) (prev start) (seen (list start)) (path (list))) (let* ((path2 (append path (list cur))) (seen2 (append seen (list cur))) (nxts (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (not (equal? p prev)) (= (at grid (first p) (second p)) 1) (not (member? p seen2)))) (map (lambda (d) (list (+ (first cur) (first d)) (+ (second cur) (second d)))) dirs4-ordered)))) (if (empty? nxts) path2 (loop (first nxts) cur seen2 path2))))))) (let* ((template (first (sort (filter (lambda (obj) (= (obj-color obj) 4)) (objects g 0)) (lambda (a b) (> (obj-size a) (obj-size b)))))) (temp-norm (norm-cells (obj-cells template))) (path (follow-wire g (first (find-color g 7)))) (turns (filter values (for/list ((i (in-range 1 (- (length path) 1)))) (let ((a (list-ref path (- i 1))) (b (list-ref path i)) (c (list-ref path (+ i 1)))) (if (equal? (list (- (first b) (first a)) (- (second b) (second a))) (list (- (first c) (first b)) (- (second c) (second b)))) #f b)))))) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((turn (in-list turns))) (for/fold ((acc out)) ((p (in-list temp-norm))) (let ((rr (+ (first turn) (first p))) (cc (+ (second turn) (second p)))) (if (in-bounds? rr cc (rows g) (cols g)) (set-cell acc rr cc 4) acc)))))))"
+    },
+    {
+      "id": "S6_H5",
+      "difficulty": "hard",
+      "title": "Two-Seed Voronoi Fill",
+      "skills": [
+        "distance reasoning",
+        "frame interior fill",
+        "tie handling"
+      ],
+      "scaffold": [
+        "Work only inside the outer frame.",
+        "For each empty cell, compare Manhattan distances to the two seeds.",
+        "Fill with the nearer seed color; ties stay black."
+      ],
+      "written_solution": "Inside the frame, every empty cell chooses the nearer of the two colored seeds by Manhattan distance. Paint that cell with the nearer seed’s color, and leave exact ties black(0). Keep the frame and seeds visible.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "00000000000",
+            "08888888880",
+            "08020000080",
+            "08000000080",
+            "08000003080",
+            "08888888880",
+            "00000000000"
+          ],
+          "output": [
+            "00000000000",
+            "08888888880",
+            "08222203380",
+            "08222033380",
+            "08220333380",
+            "08888888880",
+            "00000000000"
+          ]
+        },
+        {
+          "input": [
+            "0000000000000",
+            "0888888888880",
+            "0840000000080",
+            "0800000000080",
+            "0800000000080",
+            "0800000000080",
+            "0800000005080",
+            "0888888888880",
+            "0000000000000"
+          ],
+          "output": [
+            "0000000000000",
+            "0888888888880",
+            "0844444455580",
+            "0844444555580",
+            "0844445555580",
+            "0844455555580",
+            "0844555555580",
+            "0888888888880",
+            "0000000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "000000000000",
+          "088888888880",
+          "080000000080",
+          "080200006080",
+          "080000000080",
+          "080000000080",
+          "088888888880",
+          "000000000000"
+        ],
+        "output": [
+          "000000000000",
+          "088888888880",
+          "082222666680",
+          "082222666680",
+          "082222666680",
+          "082222666680",
+          "088888888880",
+          "000000000000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    # outer frame color 8, two seeds nonzero non-wall. fill interior by nearest seed (Manhattan), no ties in examples.\n    out=copyg(grid)\n    frames=detect_frames(grid)\n    fr=max(frames,key=lambda f:(f['bbox'][2]-f['bbox'][0])*(f['bbox'][3]-f['bbox'][1]))\n    r1,c1,r2,c2=fr['bbox']\n    seeds=[(r,c,grid[r][c]) for r in range(r1+1,r2) for c in range(c1+1,c2) if grid[r][c] not in (0,fr['color'])]\n    for r in range(r1+1,r2):\n        for c in range(c1+1,c2):\n            if grid[r][c]==0:\n                dists=sorted(((abs(r-sr)+abs(c-sc), color) for sr,sc,color in seeds))\n                if dists[0][0] != dists[1][0]:\n                    out[r][c]=dists[0][1]\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define (outline-cells r1 c1 r2 c2) (remove-duplicates (append (for/list ((c (in-range c1 (+ c2 1)))) (list r1 c)) (for/list ((c (in-range c1 (+ c2 1)))) (list r2 c)) (for/list ((r (in-range r1 (+ r2 1)))) (list r c1)) (for/list ((r (in-range r1 (+ r2 1)))) (list r c2))))) (define (frame? obj) (let* ((expected (outline-cells (obj-r1 obj) (obj-c1 obj) (obj-r2 obj) (obj-c2 obj))) (cells (obj-cells obj))) (and (= (length cells) (length expected)) (all? (lambda (p) (member? p cells)) expected)))) (define (frame-area-key fr) (* (- (obj-r2 fr) (obj-r1 fr)) (- (obj-c2 fr) (obj-c1 fr)))) (define (detect-frames grid) (filter frame? (objects grid 0))) (let* ((frames (detect-frames g)) (fr (first (sort frames (lambda (a b) (> (frame-area-key a) (frame-area-key b)))))) (seeds (filter values (for*/list ((r (in-range (+ (obj-r1 fr) 1) (obj-r2 fr))) (c (in-range (+ (obj-c1 fr) 1) (obj-c2 fr)))) (let ((v (at g r c))) (if (not (member? v (list 0 (obj-color fr)))) (list r c v) #f)))))) (for*/fold ((out g)) ((r (in-range (+ (obj-r1 fr) 1) (obj-r2 fr))) (c (in-range (+ (obj-c1 fr) 1) (obj-c2 fr)))) (if (= (at g r c) 0) (let* ((dists (sort (map (lambda (s) (list (+ (abs (- r (first s))) (abs (- c (second s)))) (third s))) seeds) (lambda (a b) (if (= (first a) (first b)) (< (second a) (second b)) (< (first a) (first b))))))) (if (not (= (first (first dists)) (first (second dists)))) (set-cell out r c (second (first dists))) out)) out)))))"
+    },
+    {
+      "id": "S6_H6",
+      "difficulty": "hard",
+      "title": "Consensus Shape from Rotated Copies",
+      "skills": [
+        "canonical rotation",
+        "majority vote over objects",
+        "prototype output"
+      ],
+      "scaffold": [
+        "Normalize every object and reduce it to a rotation-canonical form.",
+        "Find the canonical shape that appears most often.",
+        "Output that consensus prototype as a cropped shape."
+      ],
+      "written_solution": "Several objects are rotated copies of the same underlying shape, while one is an outlier. Convert every object to a canonical rotation, find the majority exemplar, and output that canonical shape alone in red(2).",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "000000000000000",
+            "060000666000000",
+            "060000600000000",
+            "066000000000000",
+            "000000000066000",
+            "000660000006000",
+            "000660000006000",
+            "000000000000000"
+          ],
+          "output": [
+            "222",
+            "200"
+          ]
+        },
+        {
+          "input": [
+            "0000000000000000",
+            "0660000600000000",
+            "0066000660000000",
+            "0000000060000000",
+            "0000000000000000",
+            "0600000000660000",
+            "0600000000066000",
+            "0660000000000000",
+            "0000000000000000"
+          ],
+          "output": [
+            "220",
+            "022"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000000000000000",
+          "0666000060000000",
+          "0060000660000000",
+          "0000000060000000",
+          "0000000000000000",
+          "0066000000060000",
+          "0066000000666000",
+          "0000000000000000",
+          "0000000000000000"
+        ],
+        "output": [
+          "222",
+          "020"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    comps=components(grid,{6},4)\n    # choose majority canonical shape under rotation\n    from collections import Counter\n    cans=[]\n    for comp in comps:\n        n=normalize(comp['cells'])\n        rots=[tuple(rotate(n,k)) for k in range(4)]\n        cans.append(min(rots))\n    ctr=Counter(cans)\n    target=ctr.most_common(1)[0][0]\n    cells=list(target)\n    maxr=max(r for r,c in cells); maxc=max(c for r,c in cells)\n    out=blank(maxr+1,maxc+1,0)\n    for r,c in cells: out[r][c]=2\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define (norm-cells cells) (sort (normalize-cells cells) cell<)) (define (rotate-norm cells times) (if (= (modulo times 4) 0) cells (let* ((maxr (apply max (map first cells))) (rotated (map (lambda (p) (list (second p) (- maxr (first p)))) cells))) (rotate-norm (norm-cells rotated) (- times 1))))) (define (lex-list< a b) (cond ((empty? a) (not (empty? b))) ((empty? b) #f) ((not (= (first a) (first b))) (< (first a) (first b))) (else (lex-list< (rest a) (rest b))))) (define (canonical-rot cells) (first (sort (map (lambda (k) (rotate-norm cells k)) (range 0 4)) (lambda (a b) (lex-list< (apply append a) (apply append b)))))) (define (count-equal xs value) (length (filter (lambda (x) (equal? x value)) xs))) (define (shape->grid cells color) (if (empty? cells) (list (list 0)) (let ((maxr (apply max (map first cells))) (maxc (apply max (map second cells)))) (for/fold ((out (empty-grid (+ maxr 1) (+ maxc 1) 0))) ((p (in-list cells))) (set-cell out (first p) (second p) color))))) (let* ((comps (filter (lambda (obj) (= (obj-color obj) 6)) (objects g 0))) (canons (map (lambda (obj) (canonical-rot (norm-cells (obj-cells obj)))) comps)) (max-count (apply max (map (lambda (canon) (count-equal canons canon)) canons))) (target (first (filter (lambda (canon) (= (count-equal canons canon) max-count)) canons)))) (shape->grid target 2))))"
+    },
+    {
+      "id": "S6_H7",
+      "difficulty": "hard",
+      "title": "Shortest Path Through the Maze",
+      "skills": [
+        "grid pathfinding",
+        "obstacle avoidance",
+        "same-size overlay"
+      ],
+      "scaffold": [
+        "Treat 9 as walls and 0 as open floor.",
+        "Find the shortest 4-connected path between the two markers.",
+        "Overlay that path in color 8 without moving the markers."
+      ],
+      "written_solution": "Find the shortest orthogonal path through the zero cells from one marker to the other, avoiding the maroon(9) walls. Draw that route in cyan(8) while leaving the walls and endpoints in place.",
+      "primitive_note": null,
+      "train": [
+        {
+          "input": [
+            "000009000000",
+            "030009000000",
+            "000000009000",
+            "000009009000",
+            "000009009000",
+            "000009000000",
+            "000000009030",
+            "000000009000"
+          ],
+          "output": [
+            "000009000000",
+            "030009000000",
+            "088888809000",
+            "000009809000",
+            "000009809000",
+            "000009888800",
+            "000000009830",
+            "000000009000"
+          ]
+        },
+        {
+          "input": [
+            "0000000009000",
+            "0300000000000",
+            "0000000009000",
+            "0099099999900",
+            "0000000009000",
+            "0000000000000",
+            "0999999099000",
+            "0000000000030",
+            "0000000000000"
+          ],
+          "output": [
+            "0000000009000",
+            "0300000000000",
+            "0800000009000",
+            "0899099999900",
+            "0800000009000",
+            "0888888800000",
+            "0999999899000",
+            "0000000888830",
+            "0000000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "00009000000000",
+          "03009000090000",
+          "00009000090000",
+          "00000000090000",
+          "00009000090000",
+          "00009000090000",
+          "00009990990000",
+          "00009000090000",
+          "00009000090030",
+          "00000000090000"
+        ],
+        "output": [
+          "00009888888000",
+          "03009800098000",
+          "08009800098000",
+          "08888800098000",
+          "00009000098000",
+          "00009000098000",
+          "00009990998000",
+          "00009000098000",
+          "00009000098830",
+          "00000000090000"
+        ]
+      },
+      "reference_program": "def solve(grid):\n    # walls 9, markers 3, fill shortest path with 8 through zeros, keep markers/walls\n    out=copyg(grid)\n    pts=[(r,c) for r,row in enumerate(grid) for c,v in enumerate(row) if v==3]\n    start,goal=pts[0],pts[1]\n    path=shortest_path(grid,start,goal,{0})\n    for r,c in path[1:-1]:\n        if out[r][c]==0:\n            out[r][c]=8\n    return out",
+      "program_solution": "(rule! (let ((dummy 0)) (define dirs4-ordered (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (define (shortest-path grid start goal) (let ((prev (make-hash)) (seen (make-hash))) (define (rebuild cur acc) (if (equal? cur #f) acc (rebuild (hash-ref prev cur #f) (cons cur acc)))) (hash-set! prev start #f) (hash-set! seen start #t) (let bfs ((queue (list start))) (cond ((empty? queue) (list)) ((equal? (first queue) goal) (rebuild goal (list))) (else (let* ((cur (first queue)) (next-queue (for/fold ((q (rest queue))) ((d (in-list dirs4-ordered))) (let ((nr (+ (first cur) (first d))) (nc (+ (second cur) (second d)))) (if (and (in-bounds? nr nc (rows grid) (cols grid)) (not (hash-has-key? seen (list nr nc))) (or (= (at grid nr nc) 0) (equal? (list nr nc) goal))) (begin (hash-set! seen (list nr nc) #t) (hash-set! prev (list nr nc) cur) (append q (list (list nr nc)))) q))))) (bfs next-queue))))))) (define (drop-first-last xs) (if (or (empty? xs) (empty? (rest xs))) (list) (let loop ((remaining (rest xs)) (acc (list))) (if (empty? (rest remaining)) acc (loop (rest remaining) (append acc (list (first remaining)))))))) (let* ((pts (find-color g 3)) (path (shortest-path g (first pts) (second pts)))) (for/fold ((out g)) ((p (in-list (drop-first-last path)))) (if (= (at out (first p) (second p)) 0) (set-cell out (first p) (second p) 8) out)))))"
+    }
+  ]
+}

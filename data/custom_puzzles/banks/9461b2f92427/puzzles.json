@@ -1,0 +1,315 @@
+[
+  {
+    "id": "easy_e01",
+    "difficulty": "easy",
+    "name": "Cast each seed right until the gray blocker",
+    "tags": [
+      "same_size",
+      "beamcast",
+      "blockers",
+      "propagation"
+    ],
+    "written_rule": "Treat gray(5) cells as blockers. Every other nonzero seed keeps its own cell and paints to the right across zeros until the cell just before the first gray(5) blocker or the border.",
+    "program_function": "solve_e_e01_beam_right_to_gray",
+    "primitive_names": [
+      "beamcast"
+    ],
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range (cols g)))) (let ((v (at g r c))) (if (member? v (list 0 5)) out (let ray ((cc (+ c 1)) (acc out)) (if (and (< cc (cols g)) (not (= (at g r cc) 5))) (ray (+ cc 1) (set-cell acc r cc v)) acc)))))))"
+  },
+  {
+    "id": "easy_e02",
+    "difficulty": "easy",
+    "name": "Fill horizontal A-0-A gaps",
+    "tags": [
+      "same_size_local",
+      "pattern_completion",
+      "rows"
+    ],
+    "written_rule": "Whenever three consecutive cells in a row look like color, zero, same color, fill the middle zero with that color. Leave everything else unchanged.",
+    "program_function": "solve_e_e02_fill_horizontal_a0a",
+    "primitive_names": [],
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range 0 (- (cols g) 2)))) (let ((a (at g r c)) (b (at g r (+ c 1))) (d (at g r (+ c 2)))) (if (and (not (= a 0)) (= a d) (= b 0)) (set-cell out r (+ c 1) a) out)))))"
+  },
+  {
+    "id": "easy_e03",
+    "difficulty": "easy",
+    "name": "Keep only colors that appear exactly twice",
+    "tags": [
+      "global_counting",
+      "color_filter"
+    ],
+    "written_rule": "Count how many times each non-background color appears in the whole grid. Keep the cells of colors that appear exactly twice, and erase all other colors.",
+    "program_function": "solve_e_e03_keep_exactly_two_occurrence_colors",
+    "primitive_names": [],
+    "program_solution": "(rule! (let ((dummy 0)) (let ((colors (grid-colors g 0))) (grid-from-fn (rows g) (cols g) (lambda (r c) (let ((v (at g r c))) (if (and (not (= v 0)) (= (length (find-color g v)) 2)) v 0)))))))"
+  },
+  {
+    "id": "easy_e04",
+    "difficulty": "easy",
+    "name": "Reflect across the anti-diagonal",
+    "tags": [
+      "global_transform",
+      "symmetry",
+      "square"
+    ],
+    "written_rule": "Reflect the whole square grid across the anti-diagonal (the diagonal from top-right to bottom-left).",
+    "program_function": "solve_e_e04_reflect_anti_diagonal",
+    "primitive_names": [],
+    "program_solution": "(rule! (let ((dummy 0)) (define (anti-diag-reflect grid) (grid-from-fn (rows grid) (cols grid) (lambda (r c) (at grid (- (rows grid) 1 c) (- (rows grid) 1 r))))) (anti-diag-reflect g)))"
+  },
+  {
+    "id": "easy_e05",
+    "difficulty": "easy",
+    "name": "Keep only the endpoints of each horizontal run",
+    "tags": [
+      "row_segments",
+      "selection",
+      "same_size"
+    ],
+    "written_rule": "Look at each maximal row segment of the same non-background color. If the run has length 1, keep it. If it is longer, keep only its left endpoint and right endpoint and erase the cells in between.",
+    "program_function": "solve_e_e05_keep_horizontal_run_endpoints",
+    "primitive_names": [],
+    "program_solution": "(rule! (let ((dummy 0)) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((r (in-range (rows g)))) (let row-loop ((c 0) (acc out)) (if (>= c (cols g)) acc (let ((v (at g r c))) (if (= v 0) (row-loop (+ c 1) acc) (let run ((j c)) (if (and (< (+ j 1) (cols g)) (= (at g r (+ j 1)) v)) (run (+ j 1)) (row-loop (+ j 1) (if (= c j) (set-cell acc r c v) (set-cell (set-cell acc r c v) r j v))))))))))))"
+  },
+  {
+    "id": "easy_e06",
+    "difficulty": "easy",
+    "name": "Union the pattern with its horizontal mirror",
+    "tags": [
+      "same_size",
+      "mirror",
+      "union"
+    ],
+    "written_rule": "Reflect every nonzero cell across the vertical midline of the grid. Keep the original cells; add the mirrored copies.",
+    "program_function": "solve_e_e06_union_with_horizontal_mirror",
+    "primitive_names": [],
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range (cols g)))) (let ((v (at g r c))) (if (= v 0) out (set-cell out r (- (cols g) 1 c) v))))))"
+  },
+  {
+    "id": "easy_e07",
+    "difficulty": "easy",
+    "name": "Left-compress inside blocker-separated row segments",
+    "tags": [
+      "same_size",
+      "compression",
+      "blockers",
+      "rows"
+    ],
+    "written_rule": "Gray(5) cells stay fixed and split each row into segments. Within each non-blocker segment, move all other nonzero cells as far left as possible while preserving their left-to-right order.",
+    "program_function": "solve_e_e07_left_compress_with_row_blockers",
+    "primitive_names": [],
+    "program_solution": "(rule! (let ((dummy 0)) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((r (in-range (rows g)))) (let segment-loop ((c 0) (acc out)) (cond ((>= c (cols g)) acc) ((= (at g r c) 5) (segment-loop (+ c 1) (set-cell acc r c 5))) (else (let find-end ((j c)) (if (and (< j (cols g)) (not (= (at g r j) 5))) (find-end (+ j 1)) (let* ((vals (filter (lambda (v) (not (member? v (list 0 5)))) (map (lambda (cc) (at g r cc)) (range c j)))) (packed (for/fold ((a acc)) ((v (in-list vals)) (cc (in-range c (+ c (length vals))))) (set-cell a r cc v)))) (segment-loop j packed))))))))))"
+  },
+  {
+    "id": "medium_e01",
+    "difficulty": "medium",
+    "name": "Corner marker chooses the beam direction",
+    "tags": [
+      "beamcast",
+      "marker_control",
+      "blockers",
+      "same_size"
+    ],
+    "written_rule": "Read the unique corner marker: 1 → cast beams up, 2 right, 3 down, 4 left. Every nonzero non-gray(5) seed then paints in that direction until the first gray(5) blocker or the border. Keep the marker and blockers.",
+    "program_function": "solve_e_m01_marker_directed_beams",
+    "primitive_names": [
+      "beamcast"
+    ],
+    "program_solution": "(rule! (let ((dummy 0)) (define (beamcast start dr dc blockers) (let loop ((r (+ (first start) dr)) (c (+ (second start) dc)) (acc (list))) (cond ((not (in-bounds? r c (rows g) (cols g))) acc) ((member? (list r c) blockers) acc) (else (loop (+ r dr) (+ c dc) (append acc (list (list r c)))))))) (let* ((corner-candidates (filter values (map (lambda (p) (let ((v (at g (first p) (second p)))) (if (member? v (list 1 2 3 4)) (list (first p) (second p) v) #f))) (list (list 0 0) (list 0 (- (cols g) 1)) (list (- (rows g) 1) 0) (list (- (rows g) 1) (- (cols g) 1)))))) (marker (first corner-candidates)) (dir (cond ((= (third marker) 1) (list -1 0)) ((= (third marker) 2) (list 0 1)) ((= (third marker) 3) (list 1 0)) (else (list 0 -1)))) (blockers (find-color g 5))) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range (cols g)))) (let ((v (at g r c))) (if (and (not (= v 0)) (not (= v 5)) (not (and (= r (first marker)) (= c (second marker))))) (paint-cells out (beamcast (list r c) (first dir) (second dir) blockers) v) out))))))"
+  },
+  {
+    "id": "medium_e02",
+    "difficulty": "medium",
+    "name": "Column gravity inside blocker-separated segments",
+    "tags": [
+      "physics",
+      "blockers",
+      "columns",
+      "same_size"
+    ],
+    "written_rule": "Gray(5) cells are fixed blockers. In each column segment between blockers, let the other nonzero cells fall to the bottom of that segment while preserving their top-to-bottom order.",
+    "program_function": "solve_e_m02_segmented_column_gravity",
+    "primitive_names": [],
+    "program_solution": "(rule! (let ((dummy 0)) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((c (in-range (cols g)))) (let col-loop ((r 0) (acc out)) (cond ((>= r (rows g)) acc) ((= (at g r c) 5) (col-loop (+ r 1) (set-cell acc r c 5))) (else (let find-end ((j r)) (if (and (< j (rows g)) (not (= (at g j c) 5))) (find-end (+ j 1)) (let* ((vals (filter (lambda (v) (not (member? v (list 0 5)))) (map (lambda (rr) (at g rr c)) (range r j)))) (packed (for/fold ((a acc)) ((v (in-list (reverse vals))) (rr (in-range (- j 1) (- j 1 (length vals)) -1))) (set-cell a rr c v)))) (col-loop j packed))))))))))"
+  },
+  {
+    "id": "medium_e03",
+    "difficulty": "medium",
+    "name": "Output only the enclosed holes",
+    "tags": [
+      "topology",
+      "holes",
+      "extraction"
+    ],
+    "written_rule": "Treat every nonzero cell as a wall. Find the zero-cells that are fully enclosed and not connected to the border. Output a background grid with just those enclosed hole cells colored cyan(8).",
+    "program_function": "solve_e_m03_output_holes_only",
+    "primitive_names": [],
+    "program_solution": "(rule! (let ((dummy 0)) (define (touches-border? cells grid) (any? (lambda (p) (or (= (first p) 0) (= (first p) (- (rows grid) 1)) (= (second p) 0) (= (second p) (- (cols grid) 1)))) cells)) (define (hole-regions grid) (filter (lambda (cells) (not (touches-border? cells grid))) (find-0-regions grid 0))) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((region (in-list (hole-regions g)))) (paint-cells out region 8))))"
+  },
+  {
+    "id": "medium_e04",
+    "difficulty": "medium",
+    "name": "Extract the exact odd-one-out shape",
+    "tags": [
+      "object_reasoning",
+      "shape_match",
+      "extraction"
+    ],
+    "written_rule": "There are several separated objects. Two or more share exactly the same normalized shape, while one object has a different normalized shape. Output the odd object cropped to its own bbox, keeping its original color and orientation.",
+    "program_function": "solve_e_m04_extract_exact_odd_shape",
+    "primitive_names": [],
+    "program_solution": "(rule! (let ((dummy 0)) (define (component-grid obj) (for/fold ((out (empty-grid (+ 1 (- (obj-r2 obj) (obj-r1 obj))) (+ 1 (- (obj-c2 obj) (obj-c1 obj))) 0))) ((p (in-list (obj-cells obj)))) (set-cell out (- (first p) (obj-r1 obj)) (- (second p) (obj-c1 obj)) (obj-color obj)))) (define (binary-shape grid) (grid-from-fn (rows grid) (cols grid) (lambda (r c) (if (= (at grid r c) 0) 0 1)))) (define (count-equal xs value) (length (filter (lambda (x) (equal? x value)) xs))) (let* ((comps (objects g 0)) (shapes (map (lambda (obj) (binary-shape (component-grid obj))) comps)) (odd (first (filter values (map (lambda (obj shape) (if (= (count-equal shapes shape) 1) obj #f)) comps shapes))))) (component-grid odd))))"
+  },
+  {
+    "id": "medium_e05",
+    "difficulty": "medium",
+    "name": "Repeat the motif by the marker vector",
+    "tags": [
+      "translation",
+      "marker_control",
+      "repetition",
+      "output_union"
+    ],
+    "written_rule": "There is one object plus a 1-marker and a 2-marker. Compute the translation vector from 1 to red(2). Keep the original object and keep adding translated copies shifted by that vector again and again for as long as the whole copy stays inside the grid. Remove the markers in the output.",
+    "program_function": "solve_e_m05_repeat_motif_by_vector",
+    "primitive_names": [],
+    "program_solution": "(rule! (let ((dummy 0)) (let* ((p1 (first (find-color g 1))) (p2 (first (find-color g 2))) (dr (- (first p2) (first p1))) (dc (- (second p2) (second p1))) (cells (filter values (map (lambda (p) (let ((v (at g (first p) (second p)))) (if (and (not (= v 0)) (not (= v 1)) (not (= v 2))) (list (first p) (second p) v) #f))) (grid-positions g))))) (let loop ((k 0) (out (empty-grid (rows g) (cols g) 0))) (let ((shifted (map (lambda (p) (list (+ (first p) (* k dr)) (+ (second p) (* k dc)) (third p))) cells))) (if (all? (lambda (p) (in-bounds? (first p) (second p) (rows g) (cols g))) shifted) (loop (+ k 1) (for/fold ((acc out)) ((p (in-list shifted))) (set-cell acc (first p) (second p) (third p)))) out))))))",
+    "written_solution": "There is one object plus a blue(1) marker and a red(2) marker. Compute the translation vector from blue(1) to red(2). Keep the original object and keep adding translated copies shifted by that vector again and again for as long as the whole copy stays inside the grid. Remove the markers in the output."
+  },
+  {
+    "id": "medium_e06",
+    "difficulty": "medium",
+    "name": "Rows and columns combine into an intersection mask",
+    "tags": [
+      "global_layout",
+      "markers",
+      "intersection"
+    ],
+    "written_rule": "Blue(1) markers on the left border choose rows. Red(2) markers on the top border choose columns. Output a background grid with cyan(8) at every intersection of a chosen row and a chosen column.",
+    "program_function": "solve_e_m06_row_col_intersections",
+    "primitive_names": [],
+    "program_solution": "(rule! (let ((dummy 0)) (let ((rs (filter (lambda (r) (= (at g r 0) 1)) (range 0 (rows g)))) (cs (filter (lambda (c) (= (at g 0 c) 2)) (range 0 (cols g))))) (for*/fold ((out (empty-grid (rows g) (cols g) 0))) ((r (in-list rs)) (c (in-list cs))) (set-cell out r c 8)))))"
+  },
+  {
+    "id": "medium_e07",
+    "difficulty": "medium",
+    "name": "Fill the overlap of the two color bounding boxes",
+    "tags": [
+      "geometry",
+      "bounding_box",
+      "global"
+    ],
+    "written_rule": "The input uses exactly two nonzero colors. Compute the tight bbox of each color. Output a background grid and fill the cells that lie inside both bounding boxes with cyan(8).",
+    "program_function": "solve_e_m07_bbox_overlap",
+    "primitive_names": [],
+    "program_solution": "(rule! (let ((dummy 0)) (let* ((colors (grid-colors g 0)) (a (bbox-of-cells (find-color g (first colors)))) (b (bbox-of-cells (find-color g (second colors)))) (r0 (max (first a) (first b))) (r1 (min (third a) (third b))) (c0 (max (second a) (second b))) (c1 (min (fourth a) (fourth b)))) (if (and (<= r0 r1) (<= c0 c1)) (for*/fold ((out (empty-grid (rows g) (cols g) 0))) ((r (in-range r0 (+ r1 1))) (c (in-range c0 (+ c1 1)))) (set-cell out r c 8)) (empty-grid (rows g) (cols g) 0)))))"
+  },
+  {
+    "id": "hard_e01",
+    "difficulty": "hard",
+    "name": "Cast the object's shadow away from the border light",
+    "tags": [
+      "beamcast",
+      "projection",
+      "object_reasoning",
+      "same_size"
+    ],
+    "written_rule": "A yellow(4) light sits on one border. The nonzero object keeps its own cells. Every object cell also casts a straight shadow away from the light all the way to the opposite border, painted in yellow(4).",
+    "program_function": "solve_e_h01_shadow_from_border_light",
+    "primitive_names": [
+      "beamcast"
+    ],
+    "program_solution": "(rule! (let ((dummy 0)) (let* ((light (first (filter (lambda (p) (and (= (at g (first p) (second p)) 4) (or (= (first p) 0) (= (first p) (- (rows g) 1)) (= (second p) 0) (= (second p) (- (cols g) 1))))) (grid-positions g)))) (lr (first light)) (lc (second light)) (dir (cond ((= lc 0) (list 0 1)) ((= lc (- (cols g) 1)) (list 0 -1)) ((= lr 0) (list 1 0)) (else (list -1 0)))) (obj-cells (filter values (map (lambda (p) (let ((v (at g (first p) (second p)))) (if (and (not (= v 0)) (not (equal? p light))) (list (first p) (second p) v) #f))) (grid-positions g))))) (let* ((shadowed (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((p (in-list obj-cells))) (let ray ((r (+ (first p) (first dir))) (c (+ (second p) (second dir))) (acc out)) (if (in-bounds? r c (rows g) (cols g)) (ray (+ r (first dir)) (+ c (second dir)) (set-cell acc r c 4)) acc))))) (for/fold ((out shadowed)) ((p (in-list obj-cells))) (set-cell out (first p) (second p) (third p)))))))"
+  },
+  {
+    "id": "hard_e02",
+    "difficulty": "hard",
+    "name": "Extract the odd shape under rotation/flip equivalence",
+    "tags": [
+      "object_reasoning",
+      "dihedral_symmetry",
+      "shape_match",
+      "extraction"
+    ],
+    "written_rule": "Several separated objects are present. All but one are the same shape up to rotation or mirror reflection. Output the odd object cropped to its bbox in its original color and orientation.",
+    "program_function": "solve_e_h02_extract_dihedral_odd_shape",
+    "primitive_names": [],
+    "program_solution": "(rule! (let ((dummy 0)) (define (flat grid) (apply append grid)) (define (component-grid obj) (for/fold ((out (empty-grid (+ 1 (- (obj-r2 obj) (obj-r1 obj))) (+ 1 (- (obj-c2 obj) (obj-c1 obj))) 0))) ((p (in-list (obj-cells obj)))) (set-cell out (- (first p) (obj-r1 obj)) (- (second p) (obj-c1 obj)) (obj-color obj)))) (define (binary-shape grid) (grid-from-fn (rows grid) (cols grid) (lambda (r c) (if (= (at grid r c) 0) 0 1)))) (define (shape-key grid) (append (list (rows grid) (cols grid)) (flat grid))) (define (lex-list< a b) (cond ((empty? a) (not (empty? b))) ((empty? b) #f) ((not (= (first a) (first b))) (< (first a) (first b))) (else (lex-list< (rest a) (rest b))))) (define (shape< a b) (lex-list< (shape-key a) (shape-key b))) (define (unique-grids grids) (let loop ((remaining grids) (acc (list))) (cond ((empty? remaining) acc) ((any? (lambda (g2) (equal? g2 (first remaining))) acc) (loop (rest remaining) acc)) (else (loop (rest remaining) (append acc (list (first remaining)))))))) (define (all-dihedral-forms shape) (let* ((r0 shape) (r1 (rotate-cw r0)) (r2 (rotate-cw r1)) (r3 (rotate-cw r2))) (unique-grids (list r0 (flip-lr r0) r1 (flip-lr r1) r2 (flip-lr r2) r3 (flip-lr r3))))) (define (canonical-dihedral shape) (first (sort (all-dihedral-forms shape) shape<))) (define (count-equal xs value) (length (filter (lambda (x) (equal? x value)) xs))) (let* ((comps (objects g 0)) (canons (map (lambda (obj) (canonical-dihedral (binary-shape (component-grid obj)))) comps)) (odd (first (filter values (map (lambda (obj canon) (if (= (count-equal canons canon) 1) obj #f)) comps canons))))) (component-grid odd))))"
+  },
+  {
+    "id": "hard_e03",
+    "difficulty": "hard",
+    "name": "Build a gallery of hole shapes sorted by area",
+    "tags": [
+      "topology",
+      "holes",
+      "sorting",
+      "gallery"
+    ],
+    "written_rule": "Find every enclosed hole region. For each hole, crop its shape tightly and color it with the color of the enclosing object. Then sort the hole-shapes by area from largest to smallest and place them left-to-right with one background column between them.",
+    "program_function": "solve_e_h03_hole_gallery_sorted",
+    "primitive_names": [],
+    "program_solution": "(rule! (let ((dummy 0)) (define (paste-crop grid shape top left) (for*/fold ((out grid)) ((r (in-range (rows shape))) (c (in-range (cols shape)))) (let ((v (at shape r c)) (rr (+ top r)) (cc (+ left c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows grid) (cols grid))) (set-cell out rr cc v) out)))) (define (touches-border? cells grid) (any? (lambda (p) (or (= (first p) 0) (= (first p) (- (rows grid) 1)) (= (second p) 0) (= (second p) (- (cols grid) 1)))) cells)) (define (hole-regions grid) (filter (lambda (cells) (not (touches-border? cells grid))) (find-0-regions grid 0))) (define (gallery-bottom shapes) (let* ((h (apply max (map rows shapes))) (w (+ (apply + (map cols shapes)) (max 0 (- (length shapes) 1))))) (let loop ((remaining shapes) (left 0) (out (empty-grid h w 0))) (if (empty? remaining) out (let ((shape (first remaining))) (loop (rest remaining) (+ left (cols shape) 1) (paste-crop out shape (- h (rows shape)) left))))))) (define (region-shape cells color) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb))) (for/fold ((out (empty-grid (+ 1 (- r1 r0)) (+ 1 (- c1 c0)) 0))) ((p (in-list cells))) (set-cell out (- (first p) r0) (- (second p) c0) color)))) (define (adjacent-colors grid cells) (remove-duplicates (filter (lambda (v) (not (= v 0))) (apply append (map (lambda (p) (filter values (map (lambda (d) (let ((rr (+ (first p) (first d))) (cc (+ (second p) (second d)))) (if (in-bounds? rr cc (rows grid) (cols grid)) (at grid rr cc) #f))) cardinal-deltas))) cells))))) (let* ((regions (hole-regions g)) (items (map (lambda (cells) (let* ((colors (adjacent-colors g cells)) (color (if (empty? colors) 8 (apply min colors))) (shape (region-shape cells color))) (list cells shape))) regions)) (sorted (sort items (lambda (a b) (let ((aa (length (first a))) (ab (length (first b))) (ha (rows (second a))) (hb (rows (second b))) (wa (cols (second a))) (wb (cols (second b)))) (cond ((not (= aa ab)) (> aa ab)) ((not (= ha hb)) (< ha hb)) (else (< wa wb)))))))) (if (empty? sorted) (list (list 0)) (gallery-bottom (map second sorted))))))"
+  },
+  {
+    "id": "hard_e04",
+    "difficulty": "hard",
+    "name": "Apply the whole transformation script from the key row",
+    "tags": [
+      "control_signal",
+      "sequential_reasoning",
+      "rotation",
+      "reflection"
+    ],
+    "written_rule": "Ignore the top key row's zeros and read its nonzero cells left to right. 1 → rotate the object 90° clockwise, 2 → flip it horizontally, and 3 → flip it vertically. Apply the entire script to the cropped object below the background separator row, then output the transformed cropped object.",
+    "program_function": "solve_e_h04_apply_key_row_transform_sequence",
+    "primitive_names": [],
+    "program_solution": "(rule! (let ((dummy 0)) (define (crop-nonzero grid) (let ((cells (filter (lambda (p) (not (= (at grid (first p) (second p)) 0))) (grid-positions grid)))) (if (empty? cells) (list (list 0)) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb))) (subgrid grid r0 c0 r1 c1))))) (let* ((key (filter (lambda (v) (member? v (list 1 2 3))) (first g))) (body (if (>= (rows g) 2) (subgrid g 2 0 (- (rows g) 1) (- (cols g) 1)) (list (list 0)))) (obj (crop-nonzero body))) (for/fold ((cur obj)) ((k (in-list key))) (cond ((= k 1) (rotate-cw cur)) ((= k 2) (flip-lr cur)) (else (flip-ud cur)))))))"
+  },
+  {
+    "id": "hard_e05",
+    "difficulty": "hard",
+    "name": "Keep only cells reached by both horizontal and vertical beams",
+    "tags": [
+      "beamcast",
+      "intersection",
+      "blockers",
+      "signals"
+    ],
+    "written_rule": "Red(2) emitters on the left border cast right beams. Blue(1) emitters on the top border cast down beams. Gray(5) cells block beams. Output only the cells reached by both kinds of beams, colored cyan(8), and keep the blockers.",
+    "program_function": "solve_e_h05_beam_intersections_with_blockers",
+    "primitive_names": [
+      "beamcast"
+    ],
+    "program_solution": "(rule! (let ((dummy 0)) (define (beamcast start dr dc blockers) (let loop ((r (+ (first start) dr)) (c (+ (second start) dc)) (acc (list))) (cond ((not (in-bounds? r c (rows g) (cols g))) acc) ((member? (list r c) blockers) acc) (else (loop (+ r dr) (+ c dc) (append acc (list (list r c)))))))) (let* ((blockers (find-color g 5)) (horiz (apply append (map (lambda (r) (beamcast (list r 0) 0 1 blockers)) (filter (lambda (r) (= (at g r 0) 2)) (range 0 (rows g)))))) (vert (apply append (map (lambda (c) (beamcast (list 0 c) 1 0 blockers)) (filter (lambda (c) (= (at g 0 c) 1)) (range 0 (cols g)))))) (intersections (filter (lambda (p) (member? p vert)) horiz)) (with-blockers (paint-cells (empty-grid (rows g) (cols g) 0) blockers 5))) (paint-cells with-blockers intersections 8))))"
+  },
+  {
+    "id": "hard_e06",
+    "difficulty": "hard",
+    "name": "Orbit four rotated copies around the center marker",
+    "tags": [
+      "object_reasoning",
+      "rotation",
+      "relayout",
+      "centering"
+    ],
+    "written_rule": "Crop the nonzero object (ignoring the maroon(9) center marker). Place four copies around the marker: the original above, a 90° clockwise to the right, a 180° below, and a 270° to the left. Keep the center marker.",
+    "program_function": "solve_e_h06_orbit_object_around_center",
+    "primitive_names": [],
+    "program_solution": "(rule! (let ((dummy 0)) (define (crop-nonzero grid) (let ((cells (filter (lambda (p) (not (= (at grid (first p) (second p)) 0))) (grid-positions grid)))) (if (empty? cells) (list (list 0)) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb))) (subgrid grid r0 c0 r1 c1))))) (define (paste-crop grid shape top left) (for*/fold ((out grid)) ((r (in-range (rows shape))) (c (in-range (cols shape)))) (let ((v (at shape r c)) (rr (+ top r)) (cc (+ left c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows grid) (cols grid))) (set-cell out rr cc v) out)))) (let* ((center (first (find-color g 9))) (ch (first center)) (cw (second center)) (obj-grid (grid-from-fn (rows g) (cols g) (lambda (r c) (let ((v (at g r c))) (if (and (not (= v 0)) (not (= v 9))) v 0))))) (shape (crop-nonzero obj-grid)) (r0 shape) (r1 (rotate-cw r0)) (r2 (rotate-cw r1)) (r3 (rotate-cw r2)) (a (paste-crop (empty-grid (rows g) (cols g) 0) r0 (- ch 1 (rows r0)) (- cw (quotient (cols r0) 2)))) (b (paste-crop a r1 (- ch (quotient (rows r1) 2)) (+ cw 2))) (c (paste-crop b r2 (+ ch 2) (- cw (quotient (cols r2) 2)))) (d (paste-crop c r3 (- ch (quotient (rows r3) 2)) (- cw 1 (cols r3))))) (set-cell d ch cw 9))))"
+  },
+  {
+    "id": "hard_e07",
+    "difficulty": "hard",
+    "name": "Fill the unique corridor path between the two portals",
+    "tags": [
+      "pathfinding",
+      "walls",
+      "same_size"
+    ],
+    "written_rule": "Gray(5) cells are walls. Two same-colored portal cells appear in the corridor. Fill one shortest 4-connected path through zeros between the two portals using the portal color, keeping the walls. The training examples use unique shortest paths.",
+    "program_function": "solve_e_h07_shortest_corridor_path",
+    "primitive_names": [],
+    "program_solution": "(rule! (let ((dummy 0)) (define (bfs-path start goal walls) (let ((prev (make-hash)) (seen (make-hash))) (define (rebuild cur acc) (if (equal? cur #f) acc (rebuild (hash-ref prev cur #f) (cons cur acc)))) (hash-set! prev start #f) (hash-set! seen start #t) (let bfs ((queue (list start))) (cond ((empty? queue) #f) ((equal? (first queue) goal) (rebuild goal (list))) (else (let* ((cur (first queue)) (next-queue (for/fold ((q (rest queue))) ((d (in-list (list (list 0 1) (list 1 0) (list 0 -1) (list -1 0))))) (let ((nr (+ (first cur) (first d))) (nc (+ (second cur) (second d)))) (if (and (in-bounds? nr nc (rows g) (cols g)) (not (hash-has-key? seen (list nr nc))) (not (member? (list nr nc) walls)) (or (= (at g nr nc) 0) (equal? (list nr nc) goal))) (begin (hash-set! seen (list nr nc) #t) (hash-set! prev (list nr nc) cur) (append q (list (list nr nc)))) q))))) (bfs next-queue))))))) (let* ((walls (find-color g 5)) (portals (filter values (map (lambda (p) (let ((v (at g (first p) (second p)))) (if (and (not (= v 0)) (not (= v 5))) (list (first p) (second p) v) #f))) (grid-positions g)))) (start (list (first (first portals)) (second (first portals)))) (goal (list (first (second portals)) (second (second portals)))) (color (third (first portals))) (path (bfs-path start goal walls)) (with-walls (paint-cells (empty-grid (rows g) (cols g) 0) walls 5))) (paint-cells with-walls path color))))"
+  }
+]

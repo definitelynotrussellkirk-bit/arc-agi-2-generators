@@ -1,0 +1,170 @@
+[
+  {
+    "id": "E1",
+    "name": "Recolor every full 2x2 red block",
+    "difficulty": "easy",
+    "written_solution": "Every cell that belongs to a complete 2x2 block of red(2) should become green(3). Lone red(2) cells and incomplete L-shapes stay red(2).",
+    "program_solution": "(rule!\n  (grid-from-fn h w\n    (lambda (r c)\n      (if (and (= (cell-at g r c) 2)\n               (any?\n                 (lambda (p)\n                   (let ((r0 (first p))\n                         (c0 (second p)))\n                     (and (>= r0 0) (< r0 (- h 1))\n                          (>= c0 0) (< c0 (- w 1))\n                          (= (cell-at g r0 c0) 2)\n                          (= (cell-at g (+ r0 1) c0) 2)\n                          (= (cell-at g r0 (+ c0 1)) 2)\n                          (= (cell-at g (+ r0 1) (+ c0 1)) 2))))\n                 (list (list r c)\n                       (list (- r 1) c)\n                       (list r (- c 1))\n                       (list (- r 1) (- c 1)))))\n          3\n          (cell-at g r c)))))",
+    "program_language": "racket"
+  },
+  {
+    "id": "E2",
+    "name": "Recolor blue components that touch the top border",
+    "difficulty": "easy",
+    "written_solution": "Find each blue(1) component. If any cell in that component touches the top row, recolor the entire component to yellow(4). Other blue(1) components stay blue(1).",
+    "program_solution": "(rule!\n  (paint-cells\n    g\n    (flatmap\n      obj-cells\n      (filter\n        (lambda (obj)\n          (and (= (obj-color obj) 1)\n               (any? (lambda (p) (= (fst p) 0)) (obj-cells obj))))\n        (objects g 0)))\n    4))",
+    "program_language": "racket"
+  },
+  {
+    "id": "E3",
+    "name": "Fill hollow rectangles",
+    "difficulty": "easy",
+    "written_solution": "Each component of magenta(6) is a hollow axis-aligned rectangle. Fill the rectangle’s interior with magenta(6), turning the whole box solid.",
+    "program_solution": "(rule!\n  (foldl\n    (lambda (obj acc)\n      (if (= (obj-color obj) 6)\n          (let* ((bb (obj-bbox obj))\n                 (r0 (first bb))\n                 (c0 (second bb))\n                 (r1 (third bb))\n                 (c1 (fourth bb)))\n            (if (and (< (+ r0 1) r1) (< (+ c0 1) c1))\n                (paint-cells acc (positions-in-rect (+ r0 1) (+ c0 1) (- r1 1) (- c1 1)) 6)\n                acc))\n          acc))\n    g\n    (objects g 0)))",
+    "program_language": "racket"
+  },
+  {
+    "id": "E4",
+    "name": "Mirror the left object across a vertical divider",
+    "difficulty": "easy",
+    "written_solution": "The full gray(5) column is a mirror axis. Copy every non-zero non-divider cell on the left side to its reflected position on the right side. Keep the original object too.",
+    "program_solution": "(rule!\n  (let ((divider\n          (find-first\n            (lambda (c)\n              (all? (lambda (r) (= (cell-at g r c) 5)) (range h)))\n            (range w))))\n    (grid-from-fn h w\n      (lambda (r c)\n        (cond\n          [(= c divider) 5]\n          [(< c divider) (cell-at g r c)]\n          [else\n            (let ((mc (- (* 2 divider) c)))\n              (if (and (>= mc 0) (< mc divider)\n                       (not (= (cell-at g r mc) 0))\n                       (not (= (cell-at g r mc) 5)))\n                  (cell-at g r mc)\n                  0))])))))",
+    "program_language": "racket"
+  },
+  {
+    "id": "E5",
+    "name": "Extend every horizontal line of length 3",
+    "difficulty": "easy",
+    "written_solution": "Look for connected horizontal segments of cyan(8) that have exactly length 3. Extend each such segment by one cell on the left and one on the right if those cells are empty. Other 8-components do not change.",
+    "program_solution": "(rule!\n  (foldl\n    (lambda (obj acc)\n      (if (= (obj-color obj) 8)\n          (let* ((cells (obj-cells obj))\n                 (rs (map fst cells))\n                 (cs (map snd cells))\n                 (r0 (first rs))\n                 (cmin (min-list cs))\n                 (cmax (max-list cs))\n                 (left (- cmin 1))\n                 (right (+ cmax 1)))\n            (if (and (= (obj-size obj) 3)\n                     (= (length (unique rs)) 1)\n                     (= (- cmax cmin) 2))\n                (paint-cells\n                  acc\n                  (append\n                    (if (and (>= left 0) (= (cell-at g r0 left) 0)) (list (list r0 left)) '())\n                    (if (and (< right w) (= (cell-at g r0 right) 0)) (list (list r0 right)) '()))\n                  8)\n                acc))\n          acc))\n    g\n    (objects g 0)))",
+    "program_language": "racket"
+  },
+  {
+    "id": "E6",
+    "name": "Crop to the tight non-zero bounding box",
+    "difficulty": "easy",
+    "written_solution": "Ignore the surrounding black(0) background. Output only the smallest rectangle that contains every non-zero cell.",
+    "program_solution": "(rule!\n  (let* ((cells (filter\n                  (lambda (p) (not (= (cell-at g (fst p) (snd p)) 0)))\n                  (grid-positions g)))\n         (bb (bbox-of-cells cells)))\n    (subgrid g (first bb) (second bb) (third bb) (fourth bb))))",
+    "program_language": "racket"
+  },
+  {
+    "id": "E7",
+    "name": "Recolor the largest orange component",
+    "difficulty": "easy",
+    "written_solution": "Find all orange(7) connected components. Recolor only the largest one to red(2). Smaller orange(7) components stay orange(7).",
+    "program_solution": "(rule!\n  (let* ((orange-objects (filter (lambda (obj) (= (obj-color obj) 7)) (objects g 0)))\n         (largest (first (sort orange-objects (lambda (a b) (> (obj-size a) (obj-size b)))))))\n    (paint-cells g (obj-cells largest) 2)))",
+    "program_language": "racket"
+  },
+  {
+    "id": "M1",
+    "name": "Recolor line objects by orientation",
+    "difficulty": "medium",
+    "written_solution": "Every green(3) object is a straight line. Horizontal 3-lines become blue(1); vertical 3-lines become cyan(8).",
+    "program_solution": "(rule!\n  (foldl\n    (lambda (obj acc)\n      (if (= (obj-color obj) 3)\n          (let* ((cells (obj-cells obj))\n                 (row-count (length (unique (map fst cells))))\n                 (col-count (length (unique (map snd cells)))))\n            (cond\n              [(= row-count 1) (paint-cells acc cells 1)]\n              [(= col-count 1) (paint-cells acc cells 8)]\n              [else acc]))\n          acc))\n    g\n    (objects g 0)))",
+    "program_language": "racket"
+  },
+  {
+    "id": "M2",
+    "name": "Copy the object by the marker vector",
+    "difficulty": "medium",
+    "written_solution": "There are two marker cells of maroon(9). Read the translation vector from the first marker to the second marker (top-left to bottom-right in row-major order). Copy the non-marker object by that vector. Remove the 9 markers. Keep the original object.",
+    "program_solution": "(rule!\n  (let* ((markers (find-color g 9))\n         (p1 (first markers))\n         (p2 (second markers))\n         (dr (- (fst p2) (fst p1)))\n         (dc (- (snd p2) (snd p1))))\n    (grid-from-fn h w\n      (lambda (r c)\n        (let* ((sr (- r dr))\n               (sc (- c dc))\n               (src-v (if (in-bounds? sr sc h w) (cell-at g sr sc) 0))\n               (v (cell-at g r c)))\n          (cond\n            [(and (not (= src-v 0)) (not (= src-v 9))) src-v]\n            [(and (not (= v 0)) (not (= v 9))) v]\n            [else 0]))))))",
+    "program_language": "racket"
+  },
+  {
+    "id": "M3",
+    "name": "Complete bilateral symmetry across the divider",
+    "difficulty": "medium",
+    "written_solution": "The gray(5) column is a mirror axis. Any colored cell on either side should also appear in the reflected position on the other side. So the output is the symmetric completion, not just a copy from one fixed side.",
+    "program_solution": "(rule!\n  (let ((divider\n          (find-first\n            (lambda (c)\n              (all? (lambda (r) (= (cell-at g r c) 5)) (range h)))\n            (range w))))\n    (grid-from-fn h w\n      (lambda (r c)\n        (let* ((v (cell-at g r c))\n               (mc (- (* 2 divider) c))\n               (mv (if (in-bounds? r mc h w) (cell-at g r mc) 0)))\n          (cond\n            [(= c divider) 5]\n            [(and (not (= v 0)) (not (= v 5))) v]\n            [(and (not (= mv 0)) (not (= mv 5))) mv]\n            [else 0]))))))",
+    "program_language": "racket"
+  },
+  {
+    "id": "M4",
+    "name": "Recolor hollow and solid orange objects differently",
+    "difficulty": "medium",
+    "written_solution": "For each orange(7) component, inspect its bbox. If it contains a genuine empty interior hole, recolor that component to yellow(4). If it is solid, recolor it to red(2).",
+    "program_solution": "(rule!\n  (foldl\n    (lambda (obj acc)\n      (if (= (obj-color obj) 7)\n          (let* ((bb (obj-bbox obj))\n                 (r0 (first bb))\n                 (c0 (second bb))\n                 (r1 (third bb))\n                 (c1 (fourth bb))\n                 (cells (obj-cells obj))\n                 (interior (if (and (< (+ r0 1) r1) (< (+ c0 1) c1))\n                               (positions-in-rect (+ r0 1) (+ c0 1) (- r1 1) (- c1 1))\n                               (list)))\n                 (hollow\n                   (any?\n                     (lambda (p)\n                       (and (= (cell-at g (fst p) (snd p)) 0)\n                            (not (member p cells))))\n                     interior)))\n            (paint-cells acc cells (if hollow 4 2)))\n          acc))\n    g\n    (objects g 0)))",
+    "program_language": "racket"
+  },
+  {
+    "id": "M5",
+    "name": "Connect matched markers in a row or column",
+    "difficulty": "medium",
+    "written_solution": "Markers of the same color that lie in the same row or the same column should be joined by a solid line of that color, including the endpoints.",
+    "program_solution": "(rule!\n  (let ((colors (grid-colors g 0)))\n    (grid-from-fn h w\n      (lambda (r c)\n        (let ((v (cell-at g r c)))\n          (if (not (= v 0))\n              v\n              (let ((fill-color\n                      (find-first\n                        (lambda (color)\n                          (let ((pts (find-color g color)))\n                            (or\n                              (any?\n                                (lambda (p1)\n                                  (any?\n                                    (lambda (p2)\n                                      (and (= (fst p1) r) (= (fst p2) r)\n                                           (<= (min (snd p1) (snd p2)) c)\n                                           (<= c (max (snd p1) (snd p2)))))\n                                    pts))\n                                pts)\n                              (any?\n                                (lambda (p1)\n                                  (any?\n                                    (lambda (p2)\n                                      (and (= (snd p1) c) (= (snd p2) c)\n                                           (<= (min (fst p1) (fst p2)) r)\n                                           (<= r (max (fst p1) (fst p2)))))\n                                    pts))\n                                pts))))\n                        colors)))\n                (if fill-color fill-color 0))))))))",
+    "program_language": "racket"
+  },
+  {
+    "id": "M6",
+    "name": "Compress objects into a size-sorted strip",
+    "difficulty": "medium",
+    "written_solution": "Each component becomes a run of its own color whose length equals the component’s size. Sort the runs from largest to smallest, breaking size ties by smaller color number first, and separate runs by one black(0) cell.",
+    "program_solution": "(rule!\n  (let* ((sorted-objs\n           (sort (objects g 0)\n             (lambda (a b)\n               (cond\n                 [(not (= (obj-size a) (obj-size b))) (> (obj-size a) (obj-size b))]\n                 [else (< (obj-color a) (obj-color b))]))))\n         (row\n           (cdr\n             (flatmap\n               (lambda (obj)\n                 (cons 0 (for/list ([i (range (obj-size obj))]) (obj-color obj))))\n               sorted-objs))))\n    (list row)))",
+    "program_language": "racket"
+  },
+  {
+    "id": "M7",
+    "name": "Recolor each gray frame by the marker inside it",
+    "difficulty": "medium",
+    "written_solution": "Every gray(5) hollow frame contains exactly one colored marker inside. Recolor the whole frame border to the marker’s color, then remove the marker, leaving the interior black(0).",
+    "program_solution": "(rule!\n  (foldl\n    (lambda (obj acc)\n      (if (= (obj-color obj) 5)\n          (let* ((bb (obj-bbox obj))\n                 (r0 (first bb))\n                 (c0 (second bb))\n                 (r1 (third bb))\n                 (c1 (fourth bb))\n                 (markers\n                   (filter\n                     (lambda (p)\n                       (let ((v (cell-at g (fst p) (snd p))))\n                         (and (not (= v 0)) (not (= v 5)))))\n                     (positions-in-rect (+ r0 1) (+ c0 1) (- r1 1) (- c1 1)))))\n            (if (= (length markers) 1)\n                (let* ((marker (first markers))\n                       (color (cell-at g (fst marker) (snd marker))))\n                  (set-cell (paint-cells acc (obj-cells obj) color) (fst marker) (snd marker) 0))\n                acc))\n          acc))\n    g\n    (objects g 0)))",
+    "program_language": "racket"
+  },
+  {
+    "id": "H1",
+    "name": "Control cell chooses the reflection axis",
+    "difficulty": "hard",
+    "written_solution": "The top-left control cell tells you which reflection to apply to the non-control object. If the control is 1, reflect across the vertical axis of the whole grid. If the control is 2, reflect across the horizontal axis. Keep the original object and remove the control cell.",
+    "program_solution": "(rule!\n  (let ((control (cell-at g 0 0)))\n    (grid-from-fn h w\n      (lambda (r c)\n        (let* ((src-r (if (= control 2) (- h 1 r) r))\n               (src-c (if (= control 1) (- w 1 c) c))\n               (v (cell-at g r c))\n               (mv (cell-at g src-r src-c)))\n          (cond\n            [(and (= r 0) (= c 0)) 0]\n            [(not (= v 0)) v]\n            [(and (not (and (= src-r 0) (= src-c 0)))\n                  (not (= mv 0))) mv]\n            [else 0]))))))",
+    "program_language": "racket"
+  },
+  {
+    "id": "H2",
+    "name": "Copy only the smallest object by the marker vector",
+    "difficulty": "hard",
+    "written_solution": "Two 9 markers define a translation vector. Among the ordinary objects, identify the smallest component, copy only that component by the marker vector, and remove the markers. Larger objects stay put and are not copied.",
+    "program_solution": "(rule!\n  (let* ((markers (find-color g 9))\n         (p1 (first markers))\n         (p2 (second markers))\n         (dr (- (fst p2) (fst p1)))\n         (dc (- (snd p2) (snd p1)))\n         (without-markers (map-grid g (lambda (r c v) (if (= v 9) 0 v))))\n         (objs (objects without-markers 0))\n         (smallest\n           (first\n             (sort objs\n               (lambda (a b)\n                 (let ((ba (obj-bbox a))\n                       (bb (obj-bbox b)))\n                   (cond\n                     [(not (= (obj-size a) (obj-size b))) (< (obj-size a) (obj-size b))]\n                     [(not (= (first ba) (first bb))) (< (first ba) (first bb))]\n                     [(not (= (second ba) (second bb))) (< (second ba) (second bb))]\n                     [else (< (obj-color a) (obj-color b))])))))))\n    (paint-cells\n      without-markers\n      (map (lambda (p) (list (+ (fst p) dr) (+ (snd p) dc))) (obj-cells smallest))\n      (obj-color smallest))))",
+    "program_language": "racket"
+  },
+  {
+    "id": "H3",
+    "name": "Shoot rays from seeds until walls or borders",
+    "difficulty": "hard",
+    "written_solution": "Every red(2) seed emits yellow(4) rays in the four cardinal directions. A ray continues through black(0) cells and stops just before a blue(1) wall or the grid boundary. Existing non-black(0) walls and seeds stay as they are.",
+    "program_solution": "(rule!\n  (let ((seeds (find-color g 2)))\n    (grid-from-fn h w\n      (lambda (r c)\n        (let ((v (cell-at g r c)))\n          (if (not (= v 0))\n              v\n              (if (any?\n                    (lambda (p)\n                      (let ((sr (fst p))\n                            (sc (snd p)))\n                        (cond\n                          [(= sr r)\n                           (all?\n                             (lambda (cc) (not (= (cell-at g r cc) 1)))\n                             (range (+ (min sc c) 1) (max sc c)))]\n                          [(= sc c)\n                           (all?\n                             (lambda (rr) (not (= (cell-at g rr c) 1)))\n                             (range (+ (min sr r) 1) (max sr r)))]\n                          [else #f])))\n                    seeds)\n                  4\n                  0)))))))",
+    "program_language": "racket"
+  },
+  {
+    "id": "H4",
+    "name": "Count components by color and output a histogram grid",
+    "difficulty": "hard",
+    "written_solution": "Count connected components of red(2), green(3), and yellow(4). Output a 3-row grid: the first row contains that many red(2)s, the second that many green(3)s, and the third that many yellow(4)s, all left-aligned. The output width is the largest of the three counts.",
+    "program_solution": "(rule!\n  (let* ((colors (list 2 3 4))\n         (counts\n           (map\n             (lambda (color)\n               (count-where (lambda (obj) (= (obj-color obj) color)) (objects g 0)))\n             colors))\n         (out-w (max-list counts)))\n    (grid-from-fn 3 out-w\n      (lambda (r c)\n        (let ((color (nth colors r))\n              (n (nth counts r)))\n          (if (< c n) color 0))))))",
+    "program_language": "racket"
+  },
+  {
+    "id": "H5",
+    "name": "Extract the innermost enclosing frame and fill it",
+    "difficulty": "hard",
+    "written_solution": "Several rectangular frames may enclose the marker 2. Choose the smallest frame that still contains the marker strictly inside it. Output only that frame’s bbox, but as a solid rectangle filled with the frame’s color.",
+    "program_solution": "(rule!\n  (let* ((marker (first (find-color g 2)))\n         (mr (fst marker))\n         (mc (snd marker))\n         (candidates\n           (filter\n             (lambda (obj)\n               (let* ((bb (obj-bbox obj))\n                      (r0 (first bb))\n                      (c0 (second bb))\n                      (r1 (third bb))\n                      (c1 (fourth bb))\n                      (color (obj-color obj)))\n                 (and (not (= color 2))\n                      (> mr r0) (< mr r1)\n                      (> mc c0) (< mc c1)\n                      (all?\n                        (lambda (p)\n                          (let ((r (fst p)) (c (snd p)))\n                            (= (cell-at g r c) color)))\n                        (filter\n                          (lambda (p)\n                            (let ((r (fst p)) (c (snd p)))\n                              (or (= r r0) (= r r1) (= c c0) (= c c1))))\n                          (positions-in-rect r0 c0 r1 c1))))))\n             (objects g 0)))\n         (chosen\n           (first\n             (sort candidates\n               (lambda (a b)\n                 (let* ((ba (obj-bbox a))\n                        (bb (obj-bbox b))\n                        (area-a (* (+ 1 (- (third ba) (first ba))) (+ 1 (- (fourth ba) (second ba)))))\n                        (area-b (* (+ 1 (- (third bb) (first bb))) (+ 1 (- (fourth bb) (second bb))))))\n                   (< area-a area-b))))))\n         (bb (obj-bbox chosen))\n         (out-h (+ 1 (- (third bb) (first bb))))\n         (out-w (+ 1 (- (fourth bb) (second bb)))))\n    (empty-grid out-h out-w (obj-color chosen))))",
+    "program_language": "racket"
+  },
+  {
+    "id": "H6",
+    "name": "Pack horizontal and vertical line objects into separate rows",
+    "difficulty": "hard",
+    "written_solution": "Every non-background component is a horizontal or vertical line. Output two rows: row 0 holds the horizontal-line components and row 1 holds the vertical-line components, each compressed to bars of their original color and length, sorted longest-to-shortest, separated by single background cells.",
+    "program_solution": "(rule!\n  (let* ((objs (objects g 0))\n         (horizontal\n           (sort\n             (filter (lambda (obj) (= (length (unique (map fst (obj-cells obj)))) 1)) objs)\n             (lambda (a b)\n               (cond\n                 [(not (= (obj-size a) (obj-size b))) (> (obj-size a) (obj-size b))]\n                 [else (< (obj-color a) (obj-color b))]))))\n         (vertical\n           (sort\n             (filter (lambda (obj) (= (length (unique (map snd (obj-cells obj)))) 1)) objs)\n             (lambda (a b)\n               (cond\n                 [(not (= (obj-size a) (obj-size b))) (> (obj-size a) (obj-size b))]\n                 [else (< (obj-color a) (obj-color b))]))))\n         (top\n           (if (empty? horizontal)\n               (list)\n               (cdr\n                 (flatmap\n                   (lambda (obj)\n                     (cons 0 (for/list ([i (range (obj-size obj))]) (obj-color obj))))\n                   horizontal))))\n         (bottom\n           (if (empty? vertical)\n               (list)\n               (cdr\n                 (flatmap\n                   (lambda (obj)\n                     (cons 0 (for/list ([i (range (obj-size obj))]) (obj-color obj))))\n                   vertical))))\n         (out-w (max (length top) (length bottom))))\n    (grid-from-fn 2 out-w\n      (lambda (r c)\n        (let ((row (if (= r 0) top bottom)))\n          (if (< c (length row)) (nth row c) 0))))))",
+    "program_language": "racket"
+  },
+  {
+    "id": "H7",
+    "name": "Control cell chooses whether to recolor hollow or solid objects",
+    "difficulty": "hard",
+    "written_solution": "Ignore the top-left control cell after reading it. If the control is 1, recolor only hollow orange(7) components to cyan(8). If the control is 2, recolor only solid orange(7) components to cyan(8). Objects of the other topology stay orange(7).",
+    "program_solution": "(rule!\n  (let ((control (cell-at g 0 0)))\n    (foldl\n      (lambda (obj acc)\n        (if (= (obj-color obj) 7)\n            (let* ((bb (obj-bbox obj))\n                   (r0 (first bb))\n                   (c0 (second bb))\n                   (r1 (third bb))\n                   (c1 (fourth bb))\n                   (cells (obj-cells obj))\n                   (interior (if (and (< (+ r0 1) r1) (< (+ c0 1) c1))\n                                 (positions-in-rect (+ r0 1) (+ c0 1) (- r1 1) (- c1 1))\n                                 (list)))\n                   (hollow\n                     (any?\n                       (lambda (p)\n                         (and (= (cell-at g (fst p) (snd p)) 0)\n                              (not (member p cells))))\n                       interior)))\n              (if (or (and (= control 1) hollow)\n                      (and (= control 2) (not hollow)))\n                  (paint-cells acc cells 8)\n                  acc))\n            acc))\n      (set-cell g 0 0 0)\n      (objects g 0))))",
+    "program_language": "racket"
+  }
+]

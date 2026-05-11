@@ -1,0 +1,233 @@
+[
+  {
+    "id": "E43",
+    "difficulty": "easy",
+    "title": "Horizontal midpoint bridge",
+    "what_it_tests": "Detect same-color horizontal endpoints with one missing cell between them.",
+    "staged_hint": "Work row by row. For each color, look for two matching cells exactly two columns apart and fill the middle if it is 0.",
+    "written_solution": "For each row, whenever two cells of the same non-background color sit with exactly one empty cell between them, fill that middle cell with the same color and leave everything else unchanged.",
+    "program_name": "solve_E43",
+    "program_source": "def solve_E43(g: Grid) -> Grid:\n    h,w=dims(g)\n    out=clone(g)\n    for r in range(h):\n        for c in range(w-2):\n            if g[r][c]!=0 and g[r][c]==g[r][c+2] and g[r][c+1]==0:\n                out[r][c+1]=g[r][c]\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range (- (cols g) 2)))) (if (and (not (= (at g r c) 0)) (= (at g r c) (at g r (+ c 2))) (= (at g r (+ c 1)) 0)) (set-cell out r (+ c 1) (at g r c)) out))))"
+  },
+  {
+    "id": "E44",
+    "difficulty": "easy",
+    "title": "Anti-diagonal reflection",
+    "what_it_tests": "Coordinate reflection across the anti-diagonal of a square grid.",
+    "staged_hint": "Ignore the colors at first and think in coordinates. Every cell moves from (r,c) to (n-1-c, n-1-r).",
+    "written_solution": "Reflect the whole square grid across the anti-diagonal. Each nonzero cell moves to the position mirrored through the top-right to bottom-left diagonal.",
+    "program_name": "solve_E44",
+    "program_source": "def solve_E44(g: Grid) -> Grid:\n    n=len(g)\n    out=blank(n,n)\n    for r in range(n):\n        for c in range(n):\n            out[n-1-c][n-1-r]=g[r][c]\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (define (s17-anti-transpose grid) (grid-from-fn (cols grid) (rows grid) (lambda (r c) (at grid (- (rows grid) 1 c) (- (cols grid) 1 r))))) (s17-anti-transpose g)))"
+  },
+  {
+    "id": "E45",
+    "difficulty": "easy",
+    "title": "Row-key stencil",
+    "what_it_tests": "A row-level instruction cell controlling where placeholder cells get painted.",
+    "staged_hint": "Treat the leftmost nonzero in each active row as the row's key color. Every 8 in that row is just a placeholder to be replaced.",
+    "written_solution": "In each row, the first-column color is the key. Replace every cyan(8) elsewhere in that row with the key color, and keep the rest of the row as it is.",
+    "program_name": "solve_E45",
+    "program_source": "def solve_E45(g: Grid) -> Grid:\n    h,w=dims(g)\n    out=clone(g)\n    for r in range(h):\n        key=g[r][0]\n        for c in range(1,w):\n            if g[r][c]==8 and key!=0:\n                out[r][c]=key\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range 1 (cols g)))) (let ((key (at g r 0))) (if (and (not (= key 0)) (= (at g r c) 8)) (set-cell out r c key) out)))))"
+  },
+  {
+    "id": "E46",
+    "difficulty": "easy",
+    "title": "Rightward row gravity",
+    "what_it_tests": "Per-row compaction while preserving the left-to-right order of nonzero cells.",
+    "staged_hint": "Solve one row at a time: strip out the zeros, keep the nonzero sequence in order, and slide that sequence against the right edge.",
+    "written_solution": "For each row independently, remove the zeros, keep the remaining colors in their original order, and place that sequence flush against the right side of the row.",
+    "program_name": "solve_E46",
+    "program_source": "def solve_E46(g: Grid) -> Grid:\n    h,w=dims(g)\n    out=blank(h,w)\n    for r in range(h):\n        vals=[x for x in g[r] if x!=0]\n        out[r][w-len(vals):]=vals\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (grid-from-fn (rows g) (cols g) (lambda (r c) (let* ((vals (filter (lambda (v) (not (= v 0))) (row g r))) (start (- (cols g) (length vals)))) (if (>= c start) (list-ref vals (- c start)) 0))))))"
+  },
+  {
+    "id": "E47",
+    "difficulty": "easy",
+    "title": "Square-corner completion",
+    "what_it_tests": "Local 2x2 pattern completion from three matching corners.",
+    "staged_hint": "Scan every 2x2 block. If exactly three cells are the same nonzero color and one corner is 0, fill that missing corner.",
+    "written_solution": "Look at every 2x2 block. When three corners are the same non-background color and the fourth corner is empty, fill the empty corner with that color.",
+    "program_name": "solve_E47",
+    "program_source": "def solve_E47(g: Grid) -> Grid:\n    h,w=dims(g)\n    out=clone(g)\n    for r in range(h-1):\n        for c in range(w-1):\n            cells=[g[r][c],g[r][c+1],g[r+1][c],g[r+1][c+1]]\n            nz=[x for x in cells if x!=0]\n            if len(nz)==3 and len(set(nz))==1:\n                v=nz[0]\n                if g[r][c]==0: out[r][c]=v\n                if g[r][c+1]==0: out[r][c+1]=v\n                if g[r+1][c]==0: out[r+1][c]=v\n                if g[r+1][c+1]==0: out[r+1][c+1]=v\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (- (rows g) 1))) (c (in-range (- (cols g) 1)))) (let* ((cells (list (list r c (at g r c)) (list r (+ c 1) (at g r (+ c 1))) (list (+ r 1) c (at g (+ r 1) c)) (list (+ r 1) (+ c 1) (at g (+ r 1) (+ c 1))))) (vals (map third cells)) (nz (filter (lambda (v) (not (= v 0))) vals))) (if (and (= (length nz) 3) (= (length (remove-duplicates nz)) 1)) (let ((miss (filter (lambda (cell) (= (third cell) 0)) cells))) (if (empty? miss) out (set-cell out (first (first miss)) (second (first miss)) (first nz)))) out)))))"
+  },
+  {
+    "id": "E48",
+    "difficulty": "easy",
+    "title": "Rightward ray launch",
+    "what_it_tests": "A launcher-plus-seed pair that extrudes color along a row until a blocker or edge.",
+    "staged_hint": "Every [1, color] pair starts a ray. Keep the 1, keep the first colored seed, and extend that seed color through zeros until a 9 or the edge stops it.",
+    "written_solution": "Whenever a row contains a blue(1) immediately followed by some non-background color, that color emits to the right through background cells. The ray stops at a maroon(9) or at the grid border.",
+    "program_name": "solve_E48",
+    "program_source": "def solve_E48(g: Grid) -> Grid:\n    h,w=dims(g)\n    out=clone(g)\n    for r in range(h):\n        c=0\n        while c < w-1:\n            if g[r][c]==1 and g[r][c+1] not in (0,1,9):\n                col=g[r][c+1]\n                k=c+1\n                while k < w and g[r][k] != 9:\n                    if g[r][k] in (0,col):\n                        out[r][k]=col\n                    k += 1\n                c=k\n            else:\n                c += 1\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range (- (cols g) 1)))) (let ((next (at g r (+ c 1)))) (if (and (= (at g r c) 1) (not (member? next (list 0 1 9)))) (let ((end (let walk ((k (+ c 1))) (if (or (>= k (cols g)) (= (at g r k) 9)) k (walk (+ k 1)))))) (paint-cells out (map (lambda (cc) (list r cc)) (filter (lambda (cc) (member? (at g r cc) (list 0 next))) (range (+ c 1) end))) next)) out)))))"
+  },
+  {
+    "id": "E49",
+    "difficulty": "easy",
+    "title": "Vertical mirror copy",
+    "what_it_tests": "Completing a blank half by mirroring the occupied half across a vertical axis.",
+    "staged_hint": "Only the left half carries information. Mirror every nonzero left-half cell into the symmetric position on the right half.",
+    "written_solution": "Copy the left half of the grid into the right half by vertical mirroring, preserving the original colors and positions relative to the center line.",
+    "program_name": "solve_E49",
+    "program_source": "def solve_E49(g: Grid) -> Grid:\n    h,w=dims(g)\n    out=clone(g)\n    half=w//2\n    for r in range(h):\n        for c in range(half):\n            if g[r][c]!=0:\n                out[r][w-1-c]=g[r][c]\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range (quotient (cols g) 2)))) (let ((v (at g r c))) (if (= v 0) out (set-cell out r (- (cols g) 1 c) v))))))"
+  },
+  {
+    "id": "M43",
+    "difficulty": "medium",
+    "title": "Header-count area select",
+    "what_it_tests": "Using a numeric cue in the header row to choose an object by area.",
+    "staged_hint": "Count the number of 1s in the top row first. Then measure the size of each body component and keep only the one whose area matches that count.",
+    "written_solution": "The top row encodes a number k as the count of 1s. Among all nonzero connected components below it, keep only the component whose number of cells is exactly k and erase everything else.",
+    "program_name": "solve_M43",
+    "program_source": "def solve_M43(g: Grid) -> Grid:\n    h,w=dims(g)\n    k=sum(1 for x in g[0] if x==1)\n    out=blank(h,w)\n    body=[row[:] for row in g[1:]]\n    for col,cells in same_color_components(body):\n        if len(cells)==k:\n            for r,c in cells:\n                out[r+1][c]=col\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (let* ((k (count-where (lambda (v) (= v 1)) (first g))) (body (subgrid g 1 0 (- (rows g) 1) (- (cols g) 1)))) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((obj (in-list (objects body 0)))) (if (= (obj-size obj) k) (paint-cells out (map (lambda (p) (list (+ (first p) 1) (second p))) (obj-cells obj)) (obj-color obj)) out)))))"
+  },
+  {
+    "id": "M44",
+    "difficulty": "medium",
+    "title": "In-place component rotation",
+    "what_it_tests": "Normalizing each object to its own local frame and rotating it there.",
+    "staged_hint": "Separate the components first. For each one, use its own bounding box as a local coordinate frame and rotate the shape 90 degrees clockwise inside that box.",
+    "written_solution": "Treat each connected same-color object independently. Find its bbox, interpret the shape in local coordinates, rotate it 90° clockwise, and place it back into the same box.",
+    "program_name": "solve_M44",
+    "program_source": "def solve_M44(g: Grid) -> Grid:\n    h,w=dims(g)\n    out=blank(h,w)\n    for col,cells in same_color_components(g):\n        shape,(hh,ww),(r0,c0)=normalize(cells)\n        tshape={(c,hh-1-r) for r,c in shape}\n        for dr,dc in tshape:\n            out[r0+dr][c0+dc]=col\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-paste grid pat top left) (for*/fold ((out grid)) ((r (in-range (rows pat))) (c (in-range (cols pat)))) (let ((v (at pat r c)) (rr (+ top r)) (cc (+ left c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows out) (cols out))) (set-cell out rr cc v) out)))) (define (s17b-object-crop grid obj) (let ((bb (obj-bbox obj))) (subgrid grid (first bb) (second bb) (third bb) (fourth bb)))) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((obj (in-list (objects g 0)))) (let* ((bb (obj-bbox obj)) (rot (rotate-cw (s17b-object-crop g obj)))) (e8b-paste out rot (first bb) (second bb))))))"
+  },
+  {
+    "id": "M45",
+    "difficulty": "medium",
+    "title": "Bounding-box solidify",
+    "what_it_tests": "Turning sparse objects into solid rectangles defined by their bounding boxes.",
+    "staged_hint": "Object detection matters more than local neighborhoods here. Once you know an object's min/max rows and columns, fill the whole rectangle.",
+    "written_solution": "For every nonzero component, fill its tight bbox with the component's color.",
+    "program_name": "solve_M45",
+    "program_source": "def solve_M45(g: Grid) -> Grid:\n    h,w=dims(g)\n    out=blank(h,w)\n    for col,cells in same_color_components(g):\n        r0,r1,c0,c1=bbox(cells)\n        for r in range(r0,r1+1):\n            for c in range(c0,c1+1):\n                out[r][c]=col\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((obj (in-list (objects g 0)))) (let ((bb (obj-bbox obj))) (paint-cells out (positions-in-rect (first bb) (second bb) (third bb) (fourth bb)) (obj-color obj))))))"
+  },
+  {
+    "id": "M46",
+    "difficulty": "medium",
+    "title": "Marker-vector translation",
+    "what_it_tests": "Extracting a motion vector from two markers and applying it to a shape.",
+    "staged_hint": "Find the vector from the 1 to the 2 once. Then apply that same row/column shift to every 3-cell and output only the translated shape.",
+    "written_solution": "Use the displacement from marker 1 to marker 2 as a translation vector. Move all green(3) cells by that vector and output the moved shape alone.",
+    "program_name": "solve_M46",
+    "program_source": "def solve_M46(g: Grid) -> Grid:\n    h,w=dims(g)\n    out=blank(h,w)\n    p1=p2=None\n    cells=[]\n    for r in range(h):\n        for c in range(w):\n            if g[r][c]==1:\n                p1=(r,c)\n            elif g[r][c]==2:\n                p2=(r,c)\n            elif g[r][c]==3:\n                cells.append((r,c))\n    dr,dc=p2[0]-p1[0], p2[1]-p1[1]\n    for r,c in cells:\n        nr,nc=r+dr,c+dc\n        if 0<=nr<h and 0<=nc<w:\n            out[nr][nc]=3\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (define (s7-first-pos grid color) (first (find-color grid color))) (let* ((p1 (s7-first-pos g 1)) (p2 (s7-first-pos g 2)) (dr (- (first p2) (first p1))) (dc (- (second p2) (second p1)))) (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((p (in-list (find-color g 3)))) (let ((nr (+ (first p) dr)) (nc (+ (second p) dc))) (if (in-bounds? nr nc (rows g) (cols g)) (set-cell out nr nc 3) out))))))"
+  },
+  {
+    "id": "M47",
+    "difficulty": "medium",
+    "title": "Two-row palette remap",
+    "what_it_tests": "Reading a color-to-color legend and recoloring the body accordingly.",
+    "staged_hint": "The first two rows are a lookup table: row 0 says 'from', row 1 says 'to'. Build the mapping first, then recolor the lower rows cell by cell.",
+    "written_solution": "Read each nonzero column in the first two rows as a mapping from a source color to a target color. Keep the legend rows, and recolor all matching body cells using that mapping.",
+    "program_name": "solve_M47",
+    "program_source": "def solve_M47(g: Grid) -> Grid:\n    h,w=dims(g)\n    out=clone(g)\n    mapping={}\n    for c in range(w):\n        if g[0][c]!=0:\n            mapping[g[0][c]]=g[1][c]\n    for r in range(2,h):\n        for c in range(w):\n            if g[r][c] in mapping:\n                out[r][c]=mapping[g[r][c]]\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (define (s7-lookup pairs key default) (let ((hits (filter (lambda (kv) (= (first kv) key)) pairs))) (if (empty? hits) default (second (first hits))))) (let ((mapping (filter values (for/list ((c (in-range (cols g)))) (if (= (at g 0 c) 0) #f (list (at g 0 c) (at g 1 c))))))) (grid-from-fn (rows g) (cols g) (lambda (r c) (let ((v (at g r c))) (if (< r 2) v (s7-lookup mapping v v))))))))"
+  },
+  {
+    "id": "M48",
+    "difficulty": "medium",
+    "title": "Marker-box crop",
+    "what_it_tests": "Variable-size output defined by a marker rectangle.",
+    "staged_hint": "Ignore most of the grid. The two 9s are opposite corners of the relevant rectangle, and the output is just that cropped window.",
+    "written_solution": "Find the two 9 markers, treat them as opposite corners of an axis-aligned rectangle, and output the inclusive crop bounded by those corners.",
+    "program_name": "solve_M48",
+    "program_source": "def solve_M48(g: Grid) -> Grid:\n    pts=[(r,c) for r,row in enumerate(g) for c,v in enumerate(row) if v==9]\n    (r1,c1),(r2,c2)=pts\n    r0,r3=sorted([r1,r2])\n    c0,c3=sorted([c1,c2])\n    return [row[c0:c3+1] for row in g[r0:r3+1]]",
+    "program_solution": "(rule! (let ((dummy 0)) (let ((bb (bbox-of-cells (find-color g 9)))) (subgrid g (first bb) (second bb) (third bb) (fourth bb)))))"
+  },
+  {
+    "id": "M49",
+    "difficulty": "medium",
+    "title": "Point reflection about anchor",
+    "what_it_tests": "Using a central anchor to reflect a pattern into the opposite side of the grid.",
+    "staged_hint": "Treat the 9 as the center of a point reflection. Every offset from the anchor is copied with the same magnitude in the opposite direction.",
+    "written_solution": "Reflect every nonzero non-maroon(9) cell through the maroon(9) by point symmetry: a cell at offset (dr,dc) from the anchor moves to offset (-dr,-dc). Preserve the maroon(9) itself.",
+    "program_name": "solve_M49",
+    "program_source": "def solve_M49(g: Grid) -> Grid:\n    h,w=dims(g)\n    out=blank(h,w)\n    ar,ac=[(r,c) for r,row in enumerate(g) for c,v in enumerate(row) if v==9][0]\n    out[ar][ac]=9\n    for r in range(h):\n        for c in range(w):\n            v=g[r][c]\n            if v!=0 and v!=9:\n                nr,nc=2*ar-r,2*ac-c\n                if 0<=nr<h and 0<=nc<w:\n                    out[nr][nc]=v\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (define (s7-first-pos grid color) (first (find-color grid color))) (let ((anchor (s7-first-pos g 9))) (for*/fold ((out (set-cell (empty-grid (rows g) (cols g) 0) (first anchor) (second anchor) 9))) ((r (in-range (rows g))) (c (in-range (cols g)))) (let ((v (at g r c)) (nr (- (* 2 (first anchor)) r)) (nc (- (* 2 (second anchor)) c))) (if (and (not (member? v (list 0 9))) (in-bounds? nr nc (rows g) (cols g))) (set-cell out nr nc v) out))))))"
+  },
+  {
+    "id": "H43",
+    "difficulty": "hard",
+    "title": "Panel overlay logic",
+    "what_it_tests": "Aligned panel comparison with different outputs for unique versus overlapping occupancy.",
+    "staged_hint": "Do not reason objectwise yet; reason positionwise. Compare the left and middle panels cell by cell and encode left-only, middle-only, and overlap separately in the right panel.",
+    "written_solution": "The left and middle 5x5 panels are aligned. In the right panel, copy left-only occupied cells with the left panel's color, copy middle-only occupied cells with the middle panel's color, and paint overlaps as cyan(8).",
+    "program_name": "solve_H43",
+    "program_source": "def solve_H43(g: Grid) -> Grid:\n    left,mid,right=split_h_panels(g,5)\n    out_right=blank(5,5)\n    for r in range(5):\n        for c in range(5):\n            a,b=left[r][c], mid[r][c]\n            if a!=0 and b!=0:\n                out_right[r][c]=8\n            elif a!=0:\n                out_right[r][c]=a\n            elif b!=0:\n                out_right[r][c]=b\n    return join_h_panels([left,mid,out_right])",
+    "program_solution": "(rule! (let ((dummy 0)) (define (f14-paste-all out obj r0 c0) (for*/fold ((acc out)) ((r (in-range (rows obj))) (c (in-range (cols obj)))) (let ((nr (+ r0 r)) (nc (+ c0 c))) (if (in-bounds? nr nc (rows acc) (cols acc)) (set-cell acc nr nc (at obj r c)) acc)))) (define (s7-split-h-panels grid pw) (let ((n (quotient (+ (cols grid) 1) (+ pw 1)))) (for/list ((i (in-range n))) (let ((left (* i (+ pw 1)))) (subgrid grid 0 left (- (rows grid) 1) (+ left pw -1)))))) (define (s7-join-h-panels panels (sep 9)) (let* ((h (rows (first panels))) (pw (cols (first panels))) (n (length panels)) (w (+ (* n pw) (- n 1)))) (let loop ((rest-panels panels) (idx 0) (out (empty-grid h w 0))) (if (empty? rest-panels) out (let* ((left (* idx (+ pw 1))) (with-panel (f14-paste-all out (first rest-panels) 0 left)) (with-sep (if (< idx (- n 1)) (paint-cells with-panel (map (lambda (r) (list r (+ left pw))) (range h)) sep) with-panel))) (loop (rest rest-panels) (+ idx 1) with-sep)))))) (let* ((panels (s7-split-h-panels g 5)) (left (first panels)) (mid (second panels)) (right (grid-from-fn 5 5 (lambda (r c) (let ((a (at left r c)) (b (at mid r c))) (cond ((and (not (= a 0)) (not (= b 0))) 8) ((not (= a 0)) a) ((not (= b 0)) b) (else 0))))))) (s7-join-h-panels (list left mid right)))))"
+  },
+  {
+    "id": "H44",
+    "difficulty": "hard",
+    "title": "Learn-the-rotation analogy",
+    "what_it_tests": "Transferring a transform shown in one panel pair to a second panel pair.",
+    "staged_hint": "Infer the relation from top-left to top-right first. Once that example tells you the transform, apply the same transform to the bottom-left panel and write the result into bottom-right.",
+    "written_solution": "The top pair shows the rule: the source panel is rotated 90° clockwise to make the target panel. Apply that same rotation to the bottom-left panel and place the result in the bottom-right panel, leaving the rest unchanged.",
+    "program_name": "solve_H44",
+    "program_source": "def solve_H44(g: Grid) -> Grid:\n    out=clone(g)\n    bl=[row[:5] for row in g[6:11]]\n    br=rotate_panel_cw(bl)\n    for r in range(5):\n        for c in range(5):\n            out[6+r][6+c]=br[r][c]\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (define (f14-paste-all out obj r0 c0) (for*/fold ((acc out)) ((r (in-range (rows obj))) (c (in-range (cols obj)))) (let ((nr (+ r0 r)) (nc (+ c0 c))) (if (in-bounds? nr nc (rows acc) (cols acc)) (set-cell acc nr nc (at obj r c)) acc)))) (let ((br (rotate-cw (subgrid g 6 0 10 4)))) (f14-paste-all g br 6 6))))"
+  },
+  {
+    "id": "H45",
+    "difficulty": "hard",
+    "title": "Legend prototype stamping",
+    "what_it_tests": "Retrieving small templates from a legend region and stamping them into a separate workspace.",
+    "staged_hint": "The top strip stores the prototypes; the bottom markers only tell you which one to use and where to anchor it. Clear the workspace mentally, then stamp the matching 3x3 template for each marker.",
+    "written_solution": "The top region contains a 3x3 exemplar for red(2) and a 3x3 exemplar for green(3). In the lower workspace, every marker 2 or 3 is replaced by the corresponding exemplar, anchored at the marker's position.",
+    "program_name": "solve_H45",
+    "program_source": "def solve_H45(g: Grid) -> Grid:\n    h,w=dims(g)\n    proto2=[row[0:3] for row in g[0:3]]\n    proto3=[row[4:7] for row in g[0:3]]\n    out=blank(h,w)\n    for r in range(4):\n        for c in range(w):\n            out[r][c]=g[r][c]\n    for r in range(4,h):\n        for c in range(w):\n            if g[r][c]==2:\n                for dr in range(3):\n                    for dc in range(3):\n                        if r+dr<h and c+dc<w and proto2[dr][dc]==2:\n                            out[r+dr][c+dc]=2\n            elif g[r][c]==3:\n                for dr in range(3):\n                    for dc in range(3):\n                        if r+dr<h and c+dc<w and proto3[dr][dc]==3:\n                            out[r+dr][c+dc]=3\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (let* ((proto2 (subgrid g 0 0 2 2)) (proto3 (subgrid g 0 4 2 6)) (base (grid-from-fn (rows g) (cols g) (lambda (r c) (if (< r 4) (at g r c) 0))))) (for*/fold ((out base)) ((r (in-range 4 (rows g))) (c (in-range (cols g)))) (let ((v (at g r c))) (cond ((= v 2) (for*/fold ((acc out)) ((dr (in-range 3)) (dc (in-range 3))) (let ((rr (+ r dr)) (cc (+ c dc))) (if (and (in-bounds? rr cc (rows g) (cols g)) (= (at proto2 dr dc) 2)) (set-cell acc rr cc 2) acc)))) ((= v 3) (for*/fold ((acc out)) ((dr (in-range 3)) (dc (in-range 3))) (let ((rr (+ r dr)) (cc (+ c dc))) (if (and (in-bounds? rr cc (rows g) (cols g)) (= (at proto3 dr dc) 3)) (set-cell acc rr cc 3) acc)))) (else out)))))))"
+  },
+  {
+    "id": "H46",
+    "difficulty": "hard",
+    "title": "Crossing rays with blockers",
+    "what_it_tests": "Directional propagation from border launchers with blockers and intersection handling.",
+    "staged_hint": "Horizontal rays start from left-border 2s and vertical rays start from top-border 3s. Let 9 stop both, then give intersection cells special treatment.",
+    "written_solution": "Emit horizontal rays of red(2) from every left-border red(2) and vertical rays of green(3) from every top-border green(3). Rays stop when they hit a maroon(9). Cells reached by both kinds of rays become cyan(8); cells reached by only one keep that ray's color.",
+    "program_name": "solve_H46",
+    "program_source": "def solve_H46(g: Grid) -> Grid:\n    h,w=dims(g)\n    out=clone(g)\n    horiz=set()\n    vert=set()\n    for r in range(h):\n        if g[r][0]==2:\n            c=1\n            while c < w and g[r][c] != 9:\n                horiz.add((r,c))\n                c += 1\n    for c in range(w):\n        if g[0][c]==3:\n            r=1\n            while r < h and g[r][c] != 9:\n                vert.add((r,c))\n                r += 1\n    for r,c in horiz | vert:\n        if g[r][c]==9:\n            continue\n        if (r,c) in horiz and (r,c) in vert:\n            out[r][c]=8\n        elif (r,c) in horiz:\n            out[r][c]=2\n        elif (r,c) in vert:\n            out[r][c]=3\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (define (s7-ray-clear-row? grid r c) (and (>= c 1) (= (at grid r 0) 2) (all? (lambda (cc) (not (= (at grid r cc) 9))) (range 1 (+ c 1))))) (define (s7-ray-clear-col? grid r c) (and (>= r 1) (= (at grid 0 c) 3) (all? (lambda (rr) (not (= (at grid rr c) 9))) (range 1 (+ r 1))))) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range (cols g)))) (if (= (at g r c) 9) out (let ((hh (s7-ray-clear-row? g r c)) (vv (s7-ray-clear-col? g r c))) (if (and hh vv) (set-cell out r c 8) (if hh (set-cell out r c 2) (if vv (set-cell out r c 3) out))))))))"
+  },
+  {
+    "id": "H47",
+    "difficulty": "hard",
+    "title": "Translate then fill",
+    "what_it_tests": "A composed transform that first relocates a sparse shape and then abstracts it into a solid rectangle.",
+    "staged_hint": "Break the task into two stages. First compute the same translation vector as in a marker-vector task; then forget the original sparsity and fill the moved shape's bounding box.",
+    "written_solution": "Use the vector from marker 1 to marker 2 to translate all yellow(4) cells. Then take the translated cells' bbox and fill that entire rectangle with yellow(4).",
+    "program_name": "solve_H47",
+    "program_source": "def solve_H47(g: Grid) -> Grid:\n    h,w=dims(g)\n    out=blank(h,w)\n    p1=p2=None\n    cells=[]\n    for r in range(h):\n        for c in range(w):\n            if g[r][c]==1:\n                p1=(r,c)\n            elif g[r][c]==2:\n                p2=(r,c)\n            elif g[r][c]==4:\n                cells.append((r,c))\n    dr,dc=p2[0]-p1[0], p2[1]-p1[1]\n    moved=[(r+dr,c+dc) for r,c in cells if 0<=r+dr<h and 0<=c+dc<w]\n    if not moved:\n        return out\n    rs=[r for r,c in moved]\n    cs=[c for r,c in moved]\n    for r in range(min(rs), max(rs)+1):\n        for c in range(min(cs), max(cs)+1):\n            out[r][c]=4\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (define (s7-first-pos grid color) (first (find-color grid color))) (let* ((p1 (s7-first-pos g 1)) (p2 (s7-first-pos g 2)) (dr (- (first p2) (first p1))) (dc (- (second p2) (second p1))) (moved (filter (lambda (p) (in-bounds? (first p) (second p) (rows g) (cols g))) (map (lambda (p) (list (+ (first p) dr) (+ (second p) dc))) (find-color g 4))))) (if (empty? moved) (empty-grid (rows g) (cols g) 0) (let ((bb (bbox-of-cells moved))) (paint-cells (empty-grid (rows g) (cols g) 0) (positions-in-rect (first bb) (second bb) (third bb) (fourth bb)) 4))))))"
+  },
+  {
+    "id": "H48",
+    "difficulty": "hard",
+    "title": "Three-panel majority silhouette",
+    "what_it_tests": "Voting across multiple noisy aligned panels to recover a consensus shape.",
+    "staged_hint": "Ignore colors and focus on occupancy. For each position, count in how many of the first three panels that position is filled; keep it only when at least two panels agree.",
+    "written_solution": "Compare the first three aligned panels position by position. In the fourth panel, place cyan(8) wherever at least two of the three source panels are occupied at that position.",
+    "program_name": "solve_H48",
+    "program_source": "def solve_H48(g: Grid) -> Grid:\n    p1,p2,p3,p4=split_h_panels(g,5)\n    outp=blank(5,5)\n    for r in range(5):\n        for c in range(5):\n            cnt=sum(1 for p in [p1,p2,p3] if p[r][c]!=0)\n            if cnt >= 2:\n                outp[r][c]=8\n    return join_h_panels([p1,p2,p3,outp])",
+    "program_solution": "(rule! (let ((dummy 0)) (define (f14-paste-all out obj r0 c0) (for*/fold ((acc out)) ((r (in-range (rows obj))) (c (in-range (cols obj)))) (let ((nr (+ r0 r)) (nc (+ c0 c))) (if (in-bounds? nr nc (rows acc) (cols acc)) (set-cell acc nr nc (at obj r c)) acc)))) (define (s7-split-h-panels grid pw) (let ((n (quotient (+ (cols grid) 1) (+ pw 1)))) (for/list ((i (in-range n))) (let ((left (* i (+ pw 1)))) (subgrid grid 0 left (- (rows grid) 1) (+ left pw -1)))))) (define (s7-join-h-panels panels (sep 9)) (let* ((h (rows (first panels))) (pw (cols (first panels))) (n (length panels)) (w (+ (* n pw) (- n 1)))) (let loop ((rest-panels panels) (idx 0) (out (empty-grid h w 0))) (if (empty? rest-panels) out (let* ((left (* idx (+ pw 1))) (with-panel (f14-paste-all out (first rest-panels) 0 left)) (with-sep (if (< idx (- n 1)) (paint-cells with-panel (map (lambda (r) (list r (+ left pw))) (range h)) sep) with-panel))) (loop (rest rest-panels) (+ idx 1) with-sep)))))) (let* ((panels (s7-split-h-panels g 5)) (p1 (first panels)) (p2 (second panels)) (p3 (third panels)) (outp (grid-from-fn 5 5 (lambda (r c) (if (>= (count-where (lambda (p) (not (= (at p r c) 0))) (list p1 p2 p3)) 2) 8 0))))) (s7-join-h-panels (list p1 p2 p3 outp)))))"
+  },
+  {
+    "id": "H49",
+    "difficulty": "hard",
+    "title": "Manhattan nearest-seed fill",
+    "what_it_tests": "Global distance-based partitioning with explicit tie behavior.",
+    "staged_hint": "Think of every colored seed as claiming territory by Manhattan distance. A cell inherits the nearest seed's color; ties do not belong to anyone and stay 0.",
+    "written_solution": "For every cell, compute which seed is closest in Manhattan distance. Color the cell with that seed's color if the closest seed is unique; if there is a tie for nearest, leave the cell as 0.",
+    "program_name": "solve_H49",
+    "program_source": "def solve_H49(g: Grid) -> Grid:\n    h,w=dims(g)\n    out=blank(h,w)\n    seeds=[(r,c,v) for r,row in enumerate(g) for c,v in enumerate(row) if v!=0]\n    for r in range(h):\n        for c in range(w):\n            best=None\n            colors=[]\n            for sr,sc,v in seeds:\n                d=abs(sr-r)+abs(sc-c)\n                if best is None or d < best:\n                    best=d\n                    colors=[v]\n                elif d == best:\n                    colors.append(v)\n            out[r][c]=colors[0] if len(set(colors))==1 else 0\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (let ((seeds (filter values (for*/list ((r (in-range (rows g))) (c (in-range (cols g)))) (let ((v (at g r c))) (if (= v 0) #f (list r c v))))))) (grid-from-fn (rows g) (cols g) (lambda (r c) (let* ((dists (map (lambda (s) (list (+ (abs (- (first s) r)) (abs (- (second s) c))) (third s))) seeds)) (best (apply min (map first dists))) (colors (map second (filter (lambda (item) (= (first item) best)) dists))) (unique (remove-duplicates colors))) (if (= (length unique) 1) (first unique) 0)))))))"
+  }
+]

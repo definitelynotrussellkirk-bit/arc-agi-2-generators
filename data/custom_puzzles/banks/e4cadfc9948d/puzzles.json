@@ -1,0 +1,2693 @@
+{
+  "set": 8,
+  "summary": {
+    "set": 8,
+    "puzzle_count": 21,
+    "train_pair_count": 84,
+    "avg_train_pairs": 4.0,
+    "difficulty_counts": {
+      "easy": 7,
+      "medium": 7,
+      "hard": 7
+    },
+    "new_primitive": {
+      "name": "reflect_across_guide",
+      "purpose": "Reflect colored cells across a detected horizontal or vertical guide line while optionally keeping the originals."
+    }
+  },
+  "puzzles": [
+    {
+      "id": "E50",
+      "title": "Guide Mirror Copy",
+      "difficulty": "easy",
+      "skills": [
+        "reflection",
+        "guide line",
+        "same-color symmetry"
+      ],
+      "staged_hint": "Find the full guide line first. Then mirror each nonzero cell to the opposite side at the same distance.",
+      "written_solution": "Locate the full 5-colored guide line. Keep every original nonzero cell, and add its mirror image across that guide.",
+      "uses_new_primitive": true,
+      "program_name": "rule_e50",
+      "program_source": "def rule_e50(g):\n    rows, cols = find_full_guides(g, 5)\n    out = clone(g)\n    cells=[(r,c,v) for r,row in enumerate(g) for c,v in enumerate(row) if v not in (0,5)]\n    if cols:\n        out = reflect_across_guide(out, cells, 'v', cols[0], keep_original=True)\n    elif rows:\n        out = reflect_across_guide(out, cells, 'h', rows[0], keep_original=True)\n    return out",
+      "train": [
+        {
+          "input": [
+            "000050000",
+            "020050000",
+            "003050000",
+            "000050000",
+            "000050000",
+            "700050000",
+            "000050000",
+            "000050000"
+          ],
+          "output": [
+            "000050000",
+            "020050020",
+            "003050300",
+            "000050000",
+            "000050000",
+            "700050007",
+            "000050000",
+            "000050000"
+          ]
+        },
+        {
+          "input": [
+            "0400050000",
+            "0000050000",
+            "0000050000",
+            "0060050000",
+            "0000050000",
+            "0000050000",
+            "0008050000"
+          ],
+          "output": [
+            "0400050004",
+            "0000050000",
+            "0000050000",
+            "0060050060",
+            "0000050000",
+            "0000050000",
+            "0008050800"
+          ]
+        },
+        {
+          "input": [
+            "00000050000",
+            "00000050000",
+            "09000050000",
+            "00000050000",
+            "00020050000",
+            "00000050000",
+            "00000050000",
+            "50000050000",
+            "00000050000"
+          ],
+          "output": [
+            "00000050000",
+            "00000050000",
+            "09000050000",
+            "00000050000",
+            "00020050020",
+            "00000050000",
+            "00000050000",
+            "50000050000",
+            "00000050000"
+          ]
+        },
+        {
+          "input": [
+            "00050000",
+            "40050000",
+            "00050000",
+            "00050000",
+            "07050000",
+            "00050000",
+            "00250000",
+            "00050000"
+          ],
+          "output": [
+            "00050000",
+            "40050040",
+            "00050000",
+            "00050000",
+            "07050700",
+            "00050000",
+            "00252000",
+            "00050000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000050000",
+          "0300050000",
+          "0000050000",
+          "0080050000",
+          "0000050000",
+          "0000050000",
+          "4000050000",
+          "0000050000",
+          "0000050000"
+        ],
+        "output": [
+          "0000050000",
+          "0300050003",
+          "0000050000",
+          "0080050080",
+          "0000050000",
+          "0000050000",
+          "4000050000",
+          "0000050000",
+          "0000050000"
+        ]
+      },
+      "program_solution": "(rule!\n  (let ((dummy 0))\n    (define guide-rows (filter (lambda (r) (all? (lambda (c) (= (at g r c) 5)) (range 0 (cols g)))) (range 0 (rows g))))\n    (define guide-cols (filter (lambda (c) (all? (lambda (r) (= (at g r c) 5)) (range 0 (rows g)))) (range 0 (cols g))))\n    (define cells (filter (lambda (cell) (not (member (third cell) (list 0 5)))) (grid-cells g)))\n    (define (mirror out cell axis p)\n      (let* ((r (first cell)) (c (second cell)) (v (third cell))\n             (nr (if (= axis 0) r (- (* 2 p) r)))\n             (nc (if (= axis 0) (- (* 2 p) c) c)))\n        (if (in-bounds? nr nc (rows g) (cols g)) (set-cell out nr nc v) out)))\n    (cond [(not (empty? guide-cols))\n           (for/fold ([out g]) ([cell (in-list cells)]) (mirror out cell 0 (first guide-cols)))]\n          [(not (empty? guide-rows))\n           (for/fold ([out g]) ([cell (in-list cells)]) (mirror out cell 1 (first guide-rows)))]\n          [else g])))"
+    },
+    {
+      "id": "E51",
+      "title": "Straight Segment Completion",
+      "difficulty": "easy",
+      "skills": [
+        "endpoint pairing",
+        "row/column completion",
+        "line filling"
+      ],
+      "staged_hint": "Ignore colors with only one cell. Pair identical endpoints, then fill the straight gap if they share a row or a column.",
+      "written_solution": "For each color, find its two endpoints. If they are aligned horizontally or vertically, fill every cell between them with that color.",
+      "uses_new_primitive": false,
+      "program_name": "rule_e51",
+      "program_source": "def rule_e51(g):\n    out=clone(g)\n    by=collections.defaultdict(list)\n    for r,row in enumerate(g):\n        for c,v in enumerate(row):\n            if v!=0:\n                by[v].append((r,c))\n    for color,pts in by.items():\n        if len(pts)!=2:\n            continue\n        (r1,c1),(r2,c2)=pts\n        if r1==r2:\n            a,b=sorted([c1,c2])\n            for c in range(a,b+1):\n                out[r1][c]=color\n        elif c1==c2:\n            a,b=sorted([r1,r2])\n            for r in range(a,b+1):\n                out[r][c1]=color\n    return out",
+      "train": [
+        {
+          "input": [
+            "000000000",
+            "020002000",
+            "000000000",
+            "000000040",
+            "000000000",
+            "000000000",
+            "000000040",
+            "000000000"
+          ],
+          "output": [
+            "000000000",
+            "022222000",
+            "000000000",
+            "000000040",
+            "000000040",
+            "000000040",
+            "000000040",
+            "000000000"
+          ]
+        },
+        {
+          "input": [
+            "0030000030",
+            "0000000000",
+            "0000060000",
+            "0000000000",
+            "0000000000",
+            "0000060000",
+            "0700700000"
+          ],
+          "output": [
+            "0033333330",
+            "0000000000",
+            "0000060000",
+            "0000060000",
+            "0000060000",
+            "0000060000",
+            "0777700000"
+          ]
+        },
+        {
+          "input": [
+            "000000000",
+            "000000000",
+            "800000800",
+            "000000000",
+            "000050000",
+            "000000000",
+            "000000000",
+            "000050000",
+            "000000000"
+          ],
+          "output": [
+            "000000000",
+            "000000000",
+            "888888800",
+            "000000000",
+            "000050000",
+            "000050000",
+            "000050000",
+            "000050000",
+            "000000000"
+          ]
+        },
+        {
+          "input": [
+            "00000000",
+            "00000090",
+            "00000000",
+            "00000000",
+            "00000000",
+            "00000090",
+            "02000200",
+            "00000000"
+          ],
+          "output": [
+            "00000000",
+            "00000090",
+            "00000090",
+            "00000090",
+            "00000090",
+            "00000090",
+            "02222200",
+            "00000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0400000400",
+          "0000000000",
+          "0000000060",
+          "0000000000",
+          "0000000000",
+          "0000000000",
+          "0030030000",
+          "0000000060",
+          "0000000000"
+        ],
+        "output": [
+          "0444444400",
+          "0000000000",
+          "0000000060",
+          "0000000060",
+          "0000000060",
+          "0000000060",
+          "0033330060",
+          "0000000060",
+          "0000000000"
+        ]
+      },
+      "program_solution": "(rule!\n  (let ((colors (remove-duplicates (map third (filter (lambda (cell) (not (= (third cell) 0))) (grid-cells g))))))\n    (define (seg a b color)\n      (cond [(= (first a) (first b))\n             (for/list ([c (in-range (min (second a) (second b)) (+ (max (second a) (second b)) 1))])\n               (list (first a) c color))]\n            [(= (second a) (second b))\n             (for/list ([r (in-range (min (first a) (first b)) (+ (max (first a) (first b)) 1))])\n               (list r (second a) color))]\n            [else (list)]))\n    (for/fold ([out g]) ([color (in-list colors)])\n      (let ((pts (find-color g color)))\n        (if (= (length pts) 2)\n            (paint-cells out (seg (first pts) (second pts) color))\n            out)))))"
+    },
+    {
+      "id": "E52",
+      "title": "Left Header Row Flood",
+      "difficulty": "easy",
+      "skills": [
+        "row guide",
+        "constant fill",
+        "same-size transform"
+      ],
+      "staged_hint": "Treat the first column as instructions. Each nonzero header controls its entire row.",
+      "written_solution": "Whenever the first cell of a row is nonzero, flood that whole row with the same color. Leave rows with a zero header empty.",
+      "uses_new_primitive": false,
+      "program_name": "rule_e52",
+      "program_source": "def rule_e52(g):\n    h,w=size(g)\n    out=blank(h,w)\n    for r in range(h):\n        color=g[r][0]\n        if color!=0:\n            for c in range(w):\n                out[r][c]=color\n    return out",
+      "train": [
+        {
+          "input": [
+            "00000000",
+            "20000000",
+            "00000000",
+            "00000000",
+            "50000000",
+            "00000000",
+            "00000000"
+          ],
+          "output": [
+            "00000000",
+            "22222222",
+            "00000000",
+            "00000000",
+            "55555555",
+            "00000000",
+            "00000000"
+          ]
+        },
+        {
+          "input": [
+            "6000000",
+            "0000000",
+            "0000000",
+            "4000000",
+            "0000000",
+            "0000000",
+            "9000000",
+            "0000000"
+          ],
+          "output": [
+            "6666666",
+            "0000000",
+            "0000000",
+            "4444444",
+            "0000000",
+            "0000000",
+            "9999999",
+            "0000000"
+          ]
+        },
+        {
+          "input": [
+            "000000000",
+            "000000000",
+            "300000000",
+            "000000000",
+            "000000000",
+            "700000000"
+          ],
+          "output": [
+            "000000000",
+            "000000000",
+            "333333333",
+            "000000000",
+            "000000000",
+            "777777777"
+          ]
+        },
+        {
+          "input": [
+            "000000",
+            "800000",
+            "000000",
+            "000000",
+            "000000",
+            "000000",
+            "000000",
+            "200000",
+            "000000"
+          ],
+          "output": [
+            "000000",
+            "888888",
+            "000000",
+            "000000",
+            "000000",
+            "000000",
+            "000000",
+            "222222",
+            "000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "40000000",
+          "00000000",
+          "00000000",
+          "70000000",
+          "00000000",
+          "00000000",
+          "20000000",
+          "00000000"
+        ],
+        "output": [
+          "44444444",
+          "00000000",
+          "00000000",
+          "77777777",
+          "00000000",
+          "00000000",
+          "22222222",
+          "00000000"
+        ]
+      },
+      "program_solution": "(rule!\n  (grid-from-fn (rows g) (cols g)\n    (lambda (r c)\n      (let ((color (at g r 0)))\n        (if (not (= color 0)) color 0)))))"
+    },
+    {
+      "id": "E53",
+      "title": "Row Pack Left",
+      "difficulty": "easy",
+      "skills": [
+        "compression",
+        "order preservation",
+        "row-wise transform"
+      ],
+      "staged_hint": "Work one row at a time. Keep the order of the colored cells, but remove the zeros between them.",
+      "written_solution": "For each row, read the nonzero cells from left to right and rewrite them flush against the left edge, padding the rest with zeros.",
+      "uses_new_primitive": false,
+      "program_name": "rule_e53",
+      "program_source": "def rule_e53(g):\n    h,w=size(g)\n    out=blank(h,w)\n    for r,row in enumerate(g):\n        vals=[v for v in row if v!=0]\n        for c,v in enumerate(vals):\n            out[r][c]=v\n    return out",
+      "train": [
+        {
+          "input": [
+            "000000000",
+            "040002000",
+            "000000000",
+            "001080060",
+            "000000000",
+            "000000003",
+            "000000000"
+          ],
+          "output": [
+            "000000000",
+            "420000000",
+            "000000000",
+            "186000000",
+            "000000000",
+            "300000000",
+            "000000000"
+          ]
+        },
+        {
+          "input": [
+            "00200090",
+            "00000000",
+            "00040005",
+            "00000000",
+            "00000700",
+            "00000000"
+          ],
+          "output": [
+            "29000000",
+            "00000000",
+            "45000000",
+            "00000000",
+            "70000000",
+            "00000000"
+          ]
+        },
+        {
+          "input": [
+            "0000000000",
+            "0600600003",
+            "0000000000",
+            "0000000000",
+            "0000000000",
+            "8000000020",
+            "0000001000",
+            "0000000000"
+          ],
+          "output": [
+            "0000000000",
+            "6630000000",
+            "0000000000",
+            "0000000000",
+            "0000000000",
+            "8200000000",
+            "1000000000",
+            "0000000000"
+          ]
+        },
+        {
+          "input": [
+            "0000000",
+            "0000000",
+            "0090040",
+            "0000000",
+            "0500005",
+            "0000000",
+            "0000000"
+          ],
+          "output": [
+            "0000000",
+            "0000000",
+            "9400000",
+            "0000000",
+            "5500000",
+            "0000000",
+            "0000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "000300020",
+          "000000000",
+          "010000008",
+          "000000000",
+          "000000000",
+          "700000400",
+          "000000000",
+          "000000000"
+        ],
+        "output": [
+          "320000000",
+          "000000000",
+          "180000000",
+          "000000000",
+          "000000000",
+          "740000000",
+          "000000000",
+          "000000000"
+        ]
+      },
+      "program_solution": "(rule!\n  (grid-from-fn (rows g) (cols g)\n    (lambda (r c)\n      (let ((vals (filter (lambda (v) (not (= v 0))) (row-at g r))))\n        (if (< c (length vals)) (list-ref vals c) 0)))))"
+    },
+    {
+      "id": "E54",
+      "title": "Diagonal-Corner Rectangle Fill",
+      "difficulty": "easy",
+      "skills": [
+        "rectangle inference",
+        "corner pairing",
+        "solid fill"
+      ],
+      "staged_hint": "The colored cells are not separate objects; they are opposite corners of hidden rectangles.",
+      "written_solution": "Group cells by color. Each color gives two diagonal corners of a rectangle. Fill the whole rectangle with that color.",
+      "uses_new_primitive": false,
+      "program_name": "rule_e54",
+      "program_source": "def rule_e54(g):\n    h,w=size(g)\n    out=blank(h,w)\n    by=collections.defaultdict(list)\n    for r,row in enumerate(g):\n        for c,v in enumerate(row):\n            if v!=0:\n                by[v].append((r,c))\n    for color,pts in by.items():\n        if len(pts)!=2:\n            continue\n        (r1,c1),(r2,c2)=pts\n        rr=sorted([r1,r2]); cc=sorted([c1,c2])\n        fill_rect(out, rr[0], cc[0], rr[1], cc[1], color)\n    return out",
+      "train": [
+        {
+          "input": [
+            "000000000",
+            "020000000",
+            "000000000",
+            "000020000",
+            "000000500",
+            "000000000",
+            "000000005",
+            "000000000"
+          ],
+          "output": [
+            "000000000",
+            "022220000",
+            "022220000",
+            "022220000",
+            "000000555",
+            "000000555",
+            "000000555",
+            "000000000"
+          ]
+        },
+        {
+          "input": [
+            "3000000000",
+            "0000000000",
+            "0030000000",
+            "0000000000",
+            "0000000000",
+            "0000700000",
+            "0000000000",
+            "0000000000",
+            "0000000700"
+          ],
+          "output": [
+            "3330000000",
+            "3330000000",
+            "3330000000",
+            "0000000000",
+            "0000000000",
+            "0000777700",
+            "0000777700",
+            "0000777700",
+            "0000777700"
+          ]
+        },
+        {
+          "input": [
+            "00000000",
+            "00000900",
+            "04000000",
+            "00000000",
+            "00000009",
+            "00040000",
+            "00000000"
+          ],
+          "output": [
+            "00000000",
+            "00000999",
+            "04440999",
+            "04440999",
+            "04440999",
+            "04440000",
+            "00000000"
+          ]
+        },
+        {
+          "input": [
+            "00060000",
+            "00000000",
+            "00000000",
+            "00000060",
+            "80000000",
+            "00000000",
+            "00000000",
+            "00800000"
+          ],
+          "output": [
+            "00066660",
+            "00066660",
+            "00066660",
+            "00066660",
+            "88800000",
+            "88800000",
+            "88800000",
+            "88800000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "000000000",
+          "020000000",
+          "000000000",
+          "000000000",
+          "000002000",
+          "000000700",
+          "000000000",
+          "000000000",
+          "000000007"
+        ],
+        "output": [
+          "000000000",
+          "022222000",
+          "022222000",
+          "022222000",
+          "022222000",
+          "000000777",
+          "000000777",
+          "000000777",
+          "000000777"
+        ]
+      },
+      "program_solution": "(rule!\n  (let ((colors (remove-duplicates (map third (filter (lambda (cell) (not (= (third cell) 0))) (grid-cells g))))))\n    (for/fold ([out (empty-grid (rows g) (cols g) 0)]) ([color (in-list colors)])\n      (let ((pts (find-color g color)))\n        (if (= (length pts) 2)\n            (let ((bb (bbox-of-cells pts)))\n              (paint-cells out (positions-in-rect (first bb) (second bb) (third bb) (fourth bb)) color))\n            out)))))"
+    },
+    {
+      "id": "E55",
+      "title": "Tight Bounding Crop",
+      "difficulty": "easy",
+      "skills": [
+        "cropping",
+        "bounding box",
+        "shape isolation"
+      ],
+      "staged_hint": "Do not change the pattern. Just isolate it as tightly as possible.",
+      "written_solution": "Crop the grid to the tight bbox of all non-background cells.",
+      "uses_new_primitive": false,
+      "program_name": "rule_e55",
+      "program_source": "def rule_e55(g):\n    return crop_nonzero(g)",
+      "train": [
+        {
+          "input": [
+            "0000000000",
+            "0000000000",
+            "0000220000",
+            "0000022000",
+            "0000002000",
+            "0000000000",
+            "0000000000",
+            "0000000000"
+          ],
+          "output": [
+            "220",
+            "022",
+            "002"
+          ]
+        },
+        {
+          "input": [
+            "000000000",
+            "000000000",
+            "000000000",
+            "000000000",
+            "030300000",
+            "003300000",
+            "000300000",
+            "000000000",
+            "000000000"
+          ],
+          "output": [
+            "303",
+            "033",
+            "003"
+          ]
+        },
+        {
+          "input": [
+            "00000000000",
+            "00000044000",
+            "00000044400",
+            "00000004000",
+            "00000000000",
+            "00000000000",
+            "00000000000"
+          ],
+          "output": [
+            "440",
+            "444",
+            "040"
+          ]
+        },
+        {
+          "input": [
+            "0000000000",
+            "0000000000",
+            "0000000000",
+            "0000000000",
+            "0000000000",
+            "0022000000",
+            "0002200000",
+            "0000200000",
+            "0000000000",
+            "0000000000"
+          ],
+          "output": [
+            "220",
+            "022",
+            "002"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "000000000000",
+          "000000000000",
+          "000000030300",
+          "000000003300",
+          "000000000300",
+          "000000000000",
+          "000000000000",
+          "000000000000",
+          "000000000000"
+        ],
+        "output": [
+          "303",
+          "033",
+          "003"
+        ]
+      },
+      "program_solution": "(rule!\n  (crop-to-content g))"
+    },
+    {
+      "id": "E56",
+      "title": "Singleton Multiset Strip",
+      "difficulty": "easy",
+      "skills": [
+        "counting",
+        "sorting by color",
+        "dynamic output"
+      ],
+      "staged_hint": "Ignore the positions of the dots. Only their colors and counts matter.",
+      "written_solution": "Count how many times each non-background color appears. Output a single row where colors are listed in ascending order, repeated by their counts.",
+      "uses_new_primitive": false,
+      "program_name": "rule_e56",
+      "program_source": "def rule_e56(g):\n    counts=collections.Counter(v for row in g for v in row if v!=0)\n    row=[]\n    for color in sorted(counts):\n        row.extend([color]*counts[color])\n    return [row] if row else [[0]]",
+      "train": [
+        {
+          "input": [
+            "00000000",
+            "02000000",
+            "00000200",
+            "00000000",
+            "00004000",
+            "00000000",
+            "70000000"
+          ],
+          "output": [
+            "2247"
+          ]
+        },
+        {
+          "input": [
+            "000300000",
+            "000000000",
+            "000000000",
+            "000000050",
+            "000000000",
+            "050000000",
+            "000000800",
+            "000000000"
+          ],
+          "output": [
+            "3558"
+          ]
+        },
+        {
+          "input": [
+            "0000090000",
+            "0000000001",
+            "0040000000",
+            "0000004000",
+            "0000000000",
+            "4000000000"
+          ],
+          "output": [
+            "14449"
+          ]
+        },
+        {
+          "input": [
+            "0000000",
+            "0000000",
+            "0600000",
+            "0000000",
+            "0000060",
+            "0000000",
+            "0002000",
+            "0000000",
+            "0000000"
+          ],
+          "output": [
+            "266"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "00000000",
+          "03000000",
+          "00000030",
+          "00001000",
+          "00000000",
+          "00700000",
+          "00000000",
+          "00000007"
+        ],
+        "output": [
+          "13377"
+        ]
+      },
+      "program_solution": "(rule!\n  (let* ((colors (grid-colors g 0))\n         (row (apply append\n                     (map (lambda (color) (make-list (length (find-color g color)) color)) colors))))\n    (if (empty? row) (list (list 0)) (list row))))"
+    },
+    {
+      "id": "M50",
+      "title": "Mirror Target Color Across Guide",
+      "difficulty": "medium",
+      "skills": [
+        "selector cell",
+        "reflection",
+        "guide line"
+      ],
+      "staged_hint": "The guide line matters, but only one color reacts to it. Use the top-left selector before reflecting.",
+      "written_solution": "Read the target color from the top-left cell. Keep the whole grid, and reflect only cells of that color across the gray(5) guide line.",
+      "uses_new_primitive": true,
+      "program_name": "rule_m50",
+      "program_source": "def rule_m50(g):\n    target=g[0][0]\n    rows, cols = find_full_guides(g, 5)\n    out=clone(g)\n    cells=[(r,c,v) for r,row in enumerate(g) for c,v in enumerate(row) if v==target and (r,c)!=(0,0)]\n    if cols:\n        out=reflect_across_guide(out, cells, 'v', cols[0], keep_original=True)\n    elif rows:\n        out=reflect_across_guide(out, cells, 'h', rows[0], keep_original=True)\n    return out",
+      "train": [
+        {
+          "input": [
+            "2000050000",
+            "0200050070",
+            "0020050000",
+            "0200050000",
+            "0000050000",
+            "0000050400",
+            "0000050000",
+            "0000050000"
+          ],
+          "output": [
+            "2000050000",
+            "0200050072",
+            "0020050020",
+            "0200050002",
+            "0000050000",
+            "0000050400",
+            "0000050000",
+            "0000050000"
+          ]
+        },
+        {
+          "input": [
+            "600000000",
+            "006000000",
+            "006600000",
+            "000000000",
+            "555555555",
+            "000000000",
+            "050000000",
+            "000000300",
+            "000000000"
+          ],
+          "output": [
+            "600000000",
+            "006000000",
+            "006600000",
+            "000000000",
+            "555555555",
+            "000000000",
+            "056600000",
+            "006000300",
+            "000000000"
+          ]
+        },
+        {
+          "input": [
+            "40000050000",
+            "00000050000",
+            "04000050080",
+            "04000050000",
+            "00400050000",
+            "00000050300",
+            "00000050000",
+            "00000050000"
+          ],
+          "output": [
+            "40000050000",
+            "00000050000",
+            "04000050080",
+            "04000050000",
+            "00400050004",
+            "00000050300",
+            "00000050000",
+            "00000050000"
+          ]
+        },
+        {
+          "input": [
+            "7000000000",
+            "0000700000",
+            "0000770000",
+            "0000000000",
+            "0000000000",
+            "0000000000",
+            "5555555555",
+            "0600000000",
+            "0000000020",
+            "0000000000"
+          ],
+          "output": [
+            "7000000000",
+            "0000700000",
+            "0000770000",
+            "0000000000",
+            "0000000000",
+            "0000000000",
+            "5555555555",
+            "0600000000",
+            "0000000020",
+            "0000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "30000005000",
+          "00000005060",
+          "03000005000",
+          "00300005000",
+          "03000005000",
+          "00000005000",
+          "00000005000",
+          "00000005400",
+          "00000005000"
+        ],
+        "output": [
+          "30000005000",
+          "00000005060",
+          "03000005000",
+          "00300005000",
+          "03000005000",
+          "00000005000",
+          "00000005000",
+          "00000005400",
+          "00000005000"
+        ]
+      },
+      "program_solution": "(rule!\n  (let ((target (at g 0 0)))\n    (define guide-rows (filter (lambda (r) (all? (lambda (c) (= (at g r c) 5)) (range 0 (cols g)))) (range 0 (rows g))))\n    (define guide-cols (filter (lambda (c) (all? (lambda (r) (= (at g r c) 5)) (range 0 (rows g)))) (range 0 (cols g))))\n    (define cells (filter (lambda (cell)\n                            (and (= (third cell) target)\n                                 (not (and (= (first cell) 0) (= (second cell) 0)))))\n                          (grid-cells g)))\n    (define (mirror out cell axis p)\n      (let* ((r (first cell)) (c (second cell)) (v (third cell))\n             (nr (if (= axis 0) r (- (* 2 p) r)))\n             (nc (if (= axis 0) (- (* 2 p) c) c)))\n        (if (in-bounds? nr nc (rows g) (cols g)) (set-cell out nr nc v) out)))\n    (cond [(not (empty? guide-cols))\n           (for/fold ([out g]) ([cell (in-list cells)]) (mirror out cell 0 (first guide-cols)))]\n          [(not (empty? guide-rows))\n           (for/fold ([out g]) ([cell (in-list cells)]) (mirror out cell 1 (first guide-rows)))]\n          [else g])))"
+    },
+    {
+      "id": "M51",
+      "title": "Column Packing Inside Frame",
+      "difficulty": "medium",
+      "skills": [
+        "frame reasoning",
+        "column-wise packing",
+        "order preservation"
+      ],
+      "staged_hint": "Solve the frame first, then handle each interior column independently.",
+      "written_solution": "Keep the rectangular frame. Inside it, compress each column up so the nonzero cells stack from the top of the interior while preserving top-to-bottom order.",
+      "uses_new_primitive": false,
+      "program_name": "rule_m51",
+      "program_source": "def rule_m51(g):\n    h,w=size(g)\n    frame=None\n    for color,cells in components_nonzero(g, treat_colors_separately=True):\n        if is_rect_border(cells):\n            frame=(color,cells)\n            break\n    if frame is None:\n        return g\n    fcolor,cells=frame\n    r0,c0,r1,c1=bbox(cells)\n    out=blank(h,w)\n    draw_rect_border(out,r0,c0,r1,c1,fcolor)\n    for c in range(c0+1,c1):\n        vals=[g[r][c] for r in range(r0+1,r1) if g[r][c]!=0]\n        for i,v in enumerate(vals):\n            out[r0+1+i][c]=v\n    return out",
+      "train": [
+        {
+          "input": [
+            "0000000000",
+            "0888888880",
+            "0820000080",
+            "0800600080",
+            "0800000080",
+            "0840100080",
+            "0830007080",
+            "0888888880",
+            "0000000000"
+          ],
+          "output": [
+            "0000000000",
+            "0888888880",
+            "0820607080",
+            "0840100080",
+            "0830000080",
+            "0800000080",
+            "0800000080",
+            "0888888880",
+            "0000000000"
+          ]
+        },
+        {
+          "input": [
+            "000000000",
+            "008888880",
+            "008500080",
+            "008009080",
+            "008500380",
+            "008200080",
+            "008888880",
+            "000000000"
+          ],
+          "output": [
+            "000000000",
+            "008888880",
+            "008509380",
+            "008500080",
+            "008200080",
+            "008000080",
+            "008888880",
+            "000000000"
+          ]
+        },
+        {
+          "input": [
+            "0000000000",
+            "0000000000",
+            "0888888880",
+            "0890007080",
+            "0800000080",
+            "0800200080",
+            "0800200080",
+            "0840000080",
+            "0888888880",
+            "0000000000"
+          ],
+          "output": [
+            "0000000000",
+            "0000000000",
+            "0888888880",
+            "0890207080",
+            "0840200080",
+            "0800000080",
+            "0800000080",
+            "0800000080",
+            "0888888880",
+            "0000000000"
+          ]
+        },
+        {
+          "input": [
+            "00000000000",
+            "08888888880",
+            "08060002080",
+            "08000000080",
+            "08000400080",
+            "08010000080",
+            "08070005080",
+            "08888888880",
+            "00000000000"
+          ],
+          "output": [
+            "00000000000",
+            "08888888880",
+            "08060402080",
+            "08010005080",
+            "08070000080",
+            "08000000080",
+            "08000000080",
+            "08888888880",
+            "00000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000000000",
+          "0088888800",
+          "0087000800",
+          "0080009800",
+          "0080010800",
+          "0080000800",
+          "0084000800",
+          "0080010800",
+          "0088888800",
+          "0000000000"
+        ],
+        "output": [
+          "0000000000",
+          "0088888800",
+          "0087019800",
+          "0084010800",
+          "0080000800",
+          "0080000800",
+          "0080000800",
+          "0080000800",
+          "0088888800",
+          "0000000000"
+        ]
+      },
+      "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (rect-border? obj)\n      (let* ((bb (obj-bbox obj))\n             (h (+ (- (third bb) (first bb)) 1))\n             (w (+ (- (fourth bb) (second bb)) 1))\n             (border-size (- (* h w) (* (max 0 (- h 2)) (max 0 (- w 2))))))\n        (and (>= h 3) (>= w 3) (= (obj-size obj) border-size)\n             (all? (lambda (p)\n                     (or (= (first p) (first bb)) (= (first p) (third bb))\n                         (= (second p) (second bb)) (= (second p) (fourth bb))))\n                   (obj-cells obj)))))\n    (let* ((frames (filter rect-border? (objects g 0))))\n      (if (empty? frames)\n          g\n          (let* ((frame (first frames))\n                 (bb (obj-bbox frame))\n                 (with-border (paint-cells (empty-grid (rows g) (cols g) 0) (obj-cells frame) (obj-color frame))))\n            (for/fold ([out with-border]) ([c (in-range (+ (second bb) 1) (fourth bb))])\n              (let ((vals (filter (lambda (v) (not (= v 0)))\n                                  (for/list ([r (in-range (+ (first bb) 1) (third bb))]) (at g r c)))))\n                (for/fold ([acc out]) ([v (in-list vals)] [i (in-naturals)])\n                  (set-cell acc (+ (first bb) 1 i) c v)))))))))"
+    },
+    {
+      "id": "M52",
+      "title": "Periodic Tile Fill",
+      "difficulty": "medium",
+      "skills": [
+        "motif extraction",
+        "tiling",
+        "periodicity"
+      ],
+      "staged_hint": "First crop the seed motif in the corner. Then repeat it over the whole canvas.",
+      "written_solution": "Crop the nonzero motif in the corner and tile that exact pattern periodically across the entire output grid.",
+      "uses_new_primitive": false,
+      "program_name": "rule_m52",
+      "program_source": "def rule_m52(g):\n    motif=crop_nonzero(g)\n    mh,mw=size(motif)\n    h,w=size(g)\n    out=blank(h,w)\n    for r in range(h):\n        for c in range(w):\n            out[r][c]=motif[r%mh][c%mw]\n    return out",
+      "train": [
+        {
+          "input": [
+            "120000000",
+            "012000000",
+            "000000000",
+            "000000000",
+            "000000000",
+            "000000000",
+            "000000000",
+            "000000000"
+          ],
+          "output": [
+            "120120120",
+            "012012012",
+            "120120120",
+            "012012012",
+            "120120120",
+            "012012012",
+            "120120120",
+            "012012012"
+          ]
+        },
+        {
+          "input": [
+            "330000000",
+            "303000000",
+            "033000000",
+            "000000000",
+            "000000000",
+            "000000000",
+            "000000000",
+            "000000000",
+            "000000000"
+          ],
+          "output": [
+            "330330330",
+            "303303303",
+            "033033033",
+            "330330330",
+            "303303303",
+            "033033033",
+            "330330330",
+            "303303303",
+            "033033033"
+          ]
+        },
+        {
+          "input": [
+            "4500000000",
+            "0450000000",
+            "0000000000",
+            "0000000000",
+            "0000000000",
+            "0000000000",
+            "0000000000",
+            "0000000000"
+          ],
+          "output": [
+            "4504504504",
+            "0450450450",
+            "4504504504",
+            "0450450450",
+            "4504504504",
+            "0450450450",
+            "4504504504",
+            "0450450450"
+          ]
+        },
+        {
+          "input": [
+            "120000000000",
+            "012000000000",
+            "000000000000",
+            "000000000000",
+            "000000000000",
+            "000000000000",
+            "000000000000",
+            "000000000000",
+            "000000000000",
+            "000000000000"
+          ],
+          "output": [
+            "120120120120",
+            "012012012012",
+            "120120120120",
+            "012012012012",
+            "120120120120",
+            "012012012012",
+            "120120120120",
+            "012012012012",
+            "120120120120",
+            "012012012012"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "330000000000",
+          "303000000000",
+          "033000000000",
+          "000000000000",
+          "000000000000",
+          "000000000000",
+          "000000000000",
+          "000000000000",
+          "000000000000"
+        ],
+        "output": [
+          "330330330330",
+          "303303303303",
+          "033033033033",
+          "330330330330",
+          "303303303303",
+          "033033033033",
+          "330330330330",
+          "303303303303",
+          "033033033033"
+        ]
+      },
+      "program_solution": "(rule!\n  (let* ((motif (crop-to-content g))\n         (mh (rows motif))\n         (mw (cols motif)))\n    (grid-from-fn (rows g) (cols g)\n      (lambda (r c) (at motif (modulo r mh) (modulo c mw))))))"
+    },
+    {
+      "id": "M53",
+      "title": "Command Rotate Crop",
+      "difficulty": "medium",
+      "skills": [
+        "command decoding",
+        "rotation",
+        "cropping"
+      ],
+      "staged_hint": "Separate the command cell from the object. The command tells you how to rotate the cropped object.",
+      "written_solution": "Ignore the command cell at the top-left, crop the remaining nonzero object, and rotate it according to the command: 1 → id, 2=90° clockwise, 3=180°, 4=270° clockwise.",
+      "uses_new_primitive": false,
+      "program_name": "rule_m53",
+      "program_source": "def rule_m53(g):\n    cmd=g[0][0]\n    gg=clone(g)\n    gg[0][0]=0\n    obj=crop_nonzero(gg)\n    return transform_by_code(obj, cmd)",
+      "train": [
+        {
+          "input": [
+            "2000000000",
+            "0000000000",
+            "0000000000",
+            "0000220000",
+            "0000022000",
+            "0000002000",
+            "0000000000",
+            "0000000000"
+          ],
+          "output": [
+            "002",
+            "022",
+            "220"
+          ]
+        },
+        {
+          "input": [
+            "300000000",
+            "000000000",
+            "000000000",
+            "000000000",
+            "030300000",
+            "003300000",
+            "000300000",
+            "000000000",
+            "000000000"
+          ],
+          "output": [
+            "300",
+            "330",
+            "303"
+          ]
+        },
+        {
+          "input": [
+            "40000000000",
+            "00000000000",
+            "00000044000",
+            "00000044400",
+            "00000004000",
+            "00000000000",
+            "00000000000",
+            "00000000000"
+          ],
+          "output": [
+            "040",
+            "444",
+            "440"
+          ]
+        },
+        {
+          "input": [
+            "1000000000",
+            "0000000000",
+            "0000000000",
+            "0000000000",
+            "0000000000",
+            "0000000000",
+            "0000303000",
+            "0000033000",
+            "0000003000",
+            "0000000000"
+          ],
+          "output": [
+            "303",
+            "033",
+            "003"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "200000000000",
+          "000000000000",
+          "000000000000",
+          "000000000000",
+          "000000044000",
+          "000000044400",
+          "000000004000",
+          "000000000000",
+          "000000000000"
+        ],
+        "output": [
+          "044",
+          "444",
+          "040"
+        ]
+      },
+      "program_solution": "(rule!\n  (let* ((cmd (at g 0 0))\n         (obj (crop-to-content (set-cell g 0 0 0))))\n    (cond [(= cmd 1) obj]\n          [(= cmd 2) (rotate-cw obj)]\n          [(= cmd 3) (rotate-180 obj)]\n          [else (rotate-ccw obj)])))"
+    },
+    {
+      "id": "M54",
+      "title": "Masked Submatrix Extraction",
+      "difficulty": "medium",
+      "skills": [
+        "row/column selection",
+        "matrix slicing",
+        "dynamic output"
+      ],
+      "staged_hint": "The top row selects columns and the left column selects rows. The answer is the intersection.",
+      "written_solution": "Take the interior matrix. Keep only the rows marked by cyan(8) in the first column and only the columns marked by cyan(8) in the top row, preserving their original order.",
+      "uses_new_primitive": false,
+      "program_name": "rule_m54",
+      "program_source": "def rule_m54(g):\n    rows=[r for r in range(1,len(g)) if g[r][0]==8]\n    cols=[c for c in range(1,len(g[0])) if g[0][c]==8]\n    out=[]\n    for r in rows:\n        out.append([g[r][c] for c in cols])\n    return out if out else [[0]]",
+      "train": [
+        {
+          "input": [
+            "00808",
+            "81234",
+            "05678",
+            "89123",
+            "04567"
+          ],
+          "output": [
+            "24",
+            "13"
+          ]
+        },
+        {
+          "input": [
+            "08080",
+            "02468",
+            "81357",
+            "08642",
+            "87531",
+            "81111"
+          ],
+          "output": [
+            "15",
+            "73",
+            "11"
+          ]
+        },
+        {
+          "input": [
+            "008808",
+            "812345",
+            "867891",
+            "023456",
+            "878912"
+          ],
+          "output": [
+            "235",
+            "781",
+            "892"
+          ]
+        },
+        {
+          "input": [
+            "08808",
+            "09876",
+            "05432",
+            "81098",
+            "07654"
+          ],
+          "output": [
+            "108"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "080808",
+          "832145",
+          "065432",
+          "878987",
+          "811223"
+        ],
+        "output": [
+          "315",
+          "797",
+          "123"
+        ]
+      },
+      "program_solution": "(rule!\n  (let* ((rs (filter (lambda (r) (= (at g r 0) 8)) (range 1 (rows g))))\n         (cs (filter (lambda (c) (= (at g 0 c) 8)) (range 1 (cols g)))))\n    (if (or (empty? rs) (empty? cs))\n        (list (list 0))\n        (for/list ([r (in-list rs)])\n          (for/list ([c (in-list cs)])\n            (at g r c))))))"
+    },
+    {
+      "id": "M55",
+      "title": "Area-Sorted Rectangle Strip",
+      "difficulty": "medium",
+      "skills": [
+        "component sorting",
+        "cropping",
+        "layout"
+      ],
+      "staged_hint": "Split the rectangles first. Then sort them by area before laying them out.",
+      "written_solution": "Extract the disconnected solid rectangles, crop each one tightly, sort them by area ascending, and place the crops left to right with one zero column between them.",
+      "uses_new_primitive": false,
+      "program_name": "rule_m55",
+      "program_source": "def rule_m55(g):\n    comps=[]\n    for color,cells in components_nonzero(g, treat_colors_separately=True):\n        crop=grid_from_component(g,cells)\n        h,w=size(crop)\n        comps.append((len(cells), color, crop, h, w))\n    comps.sort(key=lambda t:(t[0], t[1]))\n    H=max(h for _,_,_,h,_ in comps)\n    W=sum(w for *_,w in comps)+max(0,len(comps)-1)\n    out=blank(H,W)\n    c0=0\n    for _,_,crop,h,w in comps:\n        for r in range(h):\n            for c in range(w):\n                if crop[r][c]!=0:\n                    out[r][c0+c]=crop[r][c]\n        c0+=w+1\n    return out",
+      "train": [
+        {
+          "input": [
+            "00000000000000",
+            "03300000000000",
+            "03300000007700",
+            "00000000007700",
+            "00000555507700",
+            "00000555507700",
+            "00000555500000",
+            "00000000000000",
+            "00000000000000",
+            "00000000000000"
+          ],
+          "output": [
+            "3307705555",
+            "3307705555",
+            "0007705555",
+            "0007700000"
+          ]
+        },
+        {
+          "input": [
+            "0000000000000",
+            "0222000000000",
+            "0222000004400",
+            "0222000004400",
+            "0000000004400",
+            "0066666004400",
+            "0000000004400",
+            "0000000000000",
+            "0000000000000"
+          ],
+          "output": [
+            "666660222044",
+            "000000222044",
+            "000000222044",
+            "000000000044",
+            "000000000044"
+          ]
+        },
+        {
+          "input": [
+            "000000000000000",
+            "000000000005550",
+            "088000000000000",
+            "088000000000000",
+            "088000000000000",
+            "000000000000000",
+            "000033333000000",
+            "000033333000000",
+            "000033333000000",
+            "000000000000000",
+            "000000000000000"
+          ],
+          "output": [
+            "555088033333",
+            "000088033333",
+            "000088033333"
+          ]
+        },
+        {
+          "input": [
+            "00000000000000",
+            "00999900000000",
+            "00000000000000",
+            "00000000440000",
+            "00000000440000",
+            "07770000440000",
+            "07770000440000",
+            "07770000000000",
+            "00000000000000"
+          ],
+          "output": [
+            "99990440777",
+            "00000440777",
+            "00000440777",
+            "00000440000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "000000000000000",
+          "000000006600000",
+          "022200006600000",
+          "022200006600000",
+          "022200006600000",
+          "000000006600000",
+          "000000000004444",
+          "000000000004444",
+          "000000000000000",
+          "000000000000000"
+        ],
+        "output": [
+          "44440222066",
+          "44440222066",
+          "00000222066",
+          "00000000066",
+          "00000000066"
+        ]
+      },
+      "program_solution": "(rule!\n  (let ((dummy 0))\n    (define items\n      (sort (map (lambda (obj)\n                   (list (obj-size obj)\n                         (obj-color obj)\n                         (subgrid g (obj-r1 obj) (obj-c1 obj) (obj-r2 obj) (obj-c2 obj))))\n                 (objects g 0))\n            (lambda (a b)\n              (if (= (first a) (first b))\n                  (< (second a) (second b))\n                  (< (first a) (first b))))))\n    (define crops (map third items))\n    (define out-h (apply max (map rows crops)))\n    (define out-w (+ (apply + (map cols crops)) (max 0 (- (length crops) 1))))\n    (let pack ([remaining crops] [left 0] [out (empty-grid out-h out-w 0)])\n      (if (empty? remaining)\n          out\n          (let* ((crop (first remaining))\n                 (next (for*/fold ([acc out])\n                                   ([r (in-range (rows crop))]\n                                    [c (in-range (cols crop))])\n                         (let ((v (at crop r c)))\n                           (if (not (= v 0)) (set-cell acc r (+ left c) v) acc)))))\n            (pack (rest remaining) (+ left (cols crop) 1) next))))))"
+    },
+    {
+      "id": "M56",
+      "title": "Colorized Template Transfer",
+      "difficulty": "medium",
+      "skills": [
+        "template extraction",
+        "recoloring",
+        "component classification"
+      ],
+      "staged_hint": "Decide which object is the color source and which object is the template mask.",
+      "written_solution": "One component is a solid rectangle that supplies the target color; the other is the template shape. Crop the template and recolor every nonzero cell with the rectangle’s color.",
+      "uses_new_primitive": false,
+      "program_name": "rule_m56",
+      "program_source": "def rule_m56(g):\n    comps=components_nonzero(g, treat_colors_separately=True)\n    rect=None\n    shape=None\n    for color,cells in comps:\n        if is_solid_rect_component(cells):\n            rect=(color,cells)\n        else:\n            shape=(color,cells)\n    if rect is None or shape is None:\n        return [[0]]\n    target_color=rect[0]\n    _,cells=shape\n    out=grid_from_component(g,cells,recolor=target_color)\n    return out",
+      "train": [
+        {
+          "input": [
+            "00000000000",
+            "00000000000",
+            "02200000000",
+            "00220000000",
+            "00200007700",
+            "00000007700",
+            "00000000000",
+            "00000000000",
+            "00000000000"
+          ],
+          "output": [
+            "770",
+            "077",
+            "070"
+          ]
+        },
+        {
+          "input": [
+            "000000000000",
+            "000000004440",
+            "000000004440",
+            "000000000000",
+            "000000000000",
+            "003300000000",
+            "003330000000",
+            "000030000000",
+            "000000000000",
+            "000000000000"
+          ],
+          "output": [
+            "440",
+            "444",
+            "004"
+          ]
+        },
+        {
+          "input": [
+            "0000000000000",
+            "0000000000000",
+            "0440400000000",
+            "0004400000000",
+            "0000400000000",
+            "0000000006600",
+            "0000000006600",
+            "0000000006600",
+            "0000000000000"
+          ],
+          "output": [
+            "06",
+            "66",
+            "06"
+          ]
+        },
+        {
+          "input": [
+            "000000000000",
+            "000000000000",
+            "000000033000",
+            "000000033000",
+            "000000033000",
+            "000000000000",
+            "022000000000",
+            "002200000000",
+            "002000000000",
+            "000000000000",
+            "000000000000"
+          ],
+          "output": [
+            "330",
+            "033",
+            "030"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000000000000",
+          "0000000000000",
+          "0000000000000",
+          "0033000000000",
+          "0033300000000",
+          "0000300000000",
+          "0000000008880",
+          "0000000008880",
+          "0000000000000",
+          "0000000000000"
+        ],
+        "output": [
+          "880",
+          "888",
+          "008"
+        ]
+      },
+      "program_solution": "(rule! (let ((dummy 0)) (let* ((comps (objects g 0)) (rects (filter solid-rect? comps)) (shapes (filter (lambda (obj) (not (solid-rect? obj))) comps))) (if (or (empty? rects) (empty? shapes)) (list (list 0)) (let* ((rect (last rects)) (shape (last shapes)) (crop (subgrid g (obj-r1 shape) (obj-c1 shape) (obj-r2 shape) (obj-c2 shape)))) (grid-from-fn (rows crop) (cols crop) (lambda (r c) (if (not (= (at crop r c) 0)) (obj-color rect) 0))))))))"
+    },
+    {
+      "id": "H50",
+      "title": "Quadrant Mirror From Dual Guides",
+      "difficulty": "hard",
+      "skills": [
+        "dual-axis symmetry",
+        "guide detection",
+        "composed reflection"
+      ],
+      "staged_hint": "Find both guides before moving anything. Then use the same object to generate all reflected copies.",
+      "written_solution": "Detect the full vertical 5-guide and the full horizontal 6-guide. Keep the original object and reflect it across the vertical guide, the horizontal guide, and both guides so it appears in all symmetric quadrants.",
+      "uses_new_primitive": true,
+      "program_name": "rule_h50",
+      "program_source": "def rule_h50(g):\n    h,w=size(g)\n    hr=None\n    vc=None\n    for r in range(h):\n        vals=g[r]\n        if all(v in (5,6) for v in vals) and vals.count(6)>=w-1:\n            hr=r\n            break\n    for c in range(w):\n        vals=[g[r][c] for r in range(h)]\n        if all(v in (5,6) for v in vals) and vals.count(5)>=h-1:\n            vc=c\n            break\n    out=clone(g)\n    cells=[(r,c,v) for r,row in enumerate(g) for c,v in enumerate(row) if v not in (0,5,6)]\n    out=reflect_across_guide(out, cells, 'v', vc, keep_original=True)\n    cells2=[(r,c,v) for r,row in enumerate(out) for c,v in enumerate(row) if v not in (0,5,6)]\n    out=reflect_across_guide(out, cells2, 'h', hr, keep_original=True)\n    return out",
+      "train": [
+        {
+          "input": [
+            "0000005000000",
+            "0120005000000",
+            "0102005000000",
+            "0222005000000",
+            "0000005000000",
+            "6666665666666",
+            "0000005000000",
+            "0000005000000",
+            "0000005000000",
+            "0000005000000",
+            "0000005000000"
+          ],
+          "output": [
+            "0000005000000",
+            "0120005000210",
+            "0102005002010",
+            "0222005002220",
+            "0000005000000",
+            "6666665666666",
+            "0000005000000",
+            "0222005002220",
+            "0102005002010",
+            "0120005000210",
+            "0000005000000"
+          ]
+        },
+        {
+          "input": [
+            "000000050000",
+            "000000053400",
+            "000000050340",
+            "000000050440",
+            "666666656666",
+            "000000050000",
+            "000000050000",
+            "000000050000",
+            "000000050000",
+            "000000050000"
+          ],
+          "output": [
+            "000000050000",
+            "000004353400",
+            "000043050340",
+            "000044050440",
+            "666666656666",
+            "000044050440",
+            "000043050340",
+            "000004353400",
+            "000000050000",
+            "000000050000"
+          ]
+        },
+        {
+          "input": [
+            "00000500000000",
+            "00000500000000",
+            "00000500000000",
+            "00000500000000",
+            "00000500000000",
+            "00000500000000",
+            "66666566666666",
+            "07800500000000",
+            "07080500000000",
+            "08880500000000",
+            "00000500000000",
+            "00000500000000"
+          ],
+          "output": [
+            "00000500000000",
+            "00000500000000",
+            "00000500000000",
+            "08880508880000",
+            "07080508070000",
+            "07800500870000",
+            "66666566666666",
+            "07800500870000",
+            "07080508070000",
+            "08880508880000",
+            "00000500000000",
+            "00000500000000"
+          ]
+        },
+        {
+          "input": [
+            "00000500000",
+            "00000500000",
+            "00000500000",
+            "00000500000",
+            "00000500000",
+            "66666566666",
+            "00000500000",
+            "00000503400",
+            "00000500340",
+            "00000500440",
+            "00000500000"
+          ],
+          "output": [
+            "00000500000",
+            "04400500440",
+            "04300500340",
+            "00430503400",
+            "00000500000",
+            "66666566666",
+            "00000500000",
+            "00430503400",
+            "04300500340",
+            "04400500440",
+            "00000500000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "000000500000",
+          "000000501200",
+          "000000501020",
+          "000000502220",
+          "000000500000",
+          "000000500000",
+          "666666566666",
+          "000000500000",
+          "000000500000",
+          "000000500000",
+          "000000500000",
+          "000000500000"
+        ],
+        "output": [
+          "000000500000",
+          "000210501200",
+          "002010501020",
+          "002220502220",
+          "000000500000",
+          "000000500000",
+          "666666566666",
+          "000000500000",
+          "000000500000",
+          "002220502220",
+          "002010501020",
+          "000210501200"
+        ]
+      },
+      "program_solution": "(rule!\n  (let ((dummy 0))\n    (define guide-row\n      (first (filter (lambda (r)\n                       (let ((vals (row-at g r)))\n                         (and (all? (lambda (v) (member v (list 5 6))) vals)\n                              (>= (count-where (lambda (v) (= v 6)) vals) (- (cols g) 1)))))\n                     (range 0 (rows g)))))\n    (define guide-col\n      (first (filter (lambda (c)\n                       (let ((vals (for/list ([r (in-range (rows g))]) (at g r c))))\n                         (and (all? (lambda (v) (member v (list 5 6))) vals)\n                              (>= (count-where (lambda (v) (= v 5)) vals) (- (rows g) 1)))))\n                     (range 0 (cols g)))))\n    (define (interesting grid)\n      (filter (lambda (cell) (not (member (third cell) (list 0 5 6)))) (grid-cells grid)))\n    (define (mirror out cell axis p)\n      (let* ((r (first cell)) (c (second cell)) (v (third cell))\n             (nr (if (= axis 0) r (- (* 2 p) r)))\n             (nc (if (= axis 0) (- (* 2 p) c) c)))\n        (if (in-bounds? nr nc (rows g) (cols g)) (set-cell out nr nc v) out)))\n    (let* ((vpass (for/fold ([out g]) ([cell (in-list (interesting g))]) (mirror out cell 0 guide-col))))\n      (for/fold ([out vpass]) ([cell (in-list (interesting vpass))]) (mirror out cell 1 guide-row)))))"
+    },
+    {
+      "id": "H51",
+      "title": "Bounding-Box Projection Matrix",
+      "difficulty": "hard",
+      "skills": [
+        "relational reasoning",
+        "component analysis",
+        "dynamic matrix"
+      ],
+      "staged_hint": "Do not compare pixels directly. Compare the row ranges and column ranges of the rectangles.",
+      "written_solution": "Extract the solid rectangles in row-major order. Build an n×n matrix where each entry is 3 if the two rectangles’ bounding boxes overlap in both rows and columns, 1 if only row ranges overlap, 2 if only column ranges overlap, and 0 if neither overlaps.",
+      "uses_new_primitive": false,
+      "program_name": "rule_h51",
+      "program_source": "def rule_h51(g):\n    rects=[]\n    for color,cells in components_nonzero(g, treat_colors_separately=True):\n        rects.append((color,cells,bbox(cells)))\n    rects.sort(key=lambda t:(t[2][0], t[2][1]))\n    n=len(rects)\n    out=blank(n,n)\n    for i,(_,_,b1) in enumerate(rects):\n        for j,(_,_,b2) in enumerate(rects):\n            ro=row_overlap(b1,b2)\n            co=col_overlap(b1,b2)\n            out[i][j]=3 if ro and co else 1 if ro else 2 if co else 0\n    return out",
+      "train": [
+        {
+          "input": [
+            "00000000000000",
+            "02220000000000",
+            "02220005500000",
+            "02220005500000",
+            "00000005500000",
+            "00000000000000",
+            "00000000000000",
+            "00777700000000",
+            "00777700000000",
+            "00777700000000",
+            "00000000000000",
+            "00000000000000"
+          ],
+          "output": [
+            "312",
+            "130",
+            "203"
+          ]
+        },
+        {
+          "input": [
+            "0000000000000",
+            "0033330004440",
+            "0033330004440",
+            "0000000004440",
+            "0000000000000",
+            "0660000888800",
+            "0660000888800",
+            "0660000888800",
+            "0000000888800",
+            "0000000000000",
+            "0000000000000"
+          ],
+          "output": [
+            "3120",
+            "1302",
+            "2031",
+            "0213"
+          ]
+        },
+        {
+          "input": [
+            "099000000000",
+            "099000000000",
+            "099000000000",
+            "000002222000",
+            "000002222000",
+            "000002222000",
+            "777700000000",
+            "777700000000",
+            "777700000000",
+            "000000000000"
+          ],
+          "output": [
+            "302",
+            "030",
+            "203"
+          ]
+        },
+        {
+          "input": [
+            "000000000000000",
+            "055550000000000",
+            "055550006660000",
+            "055550006660000",
+            "055550006660000",
+            "000000006660000",
+            "000000000000000",
+            "000333300000000",
+            "000333300004440",
+            "000333300004440",
+            "000000000004440",
+            "000000000004440",
+            "000000000000000"
+          ],
+          "output": [
+            "3120",
+            "1300",
+            "2031",
+            "0013"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "0000000000000",
+          "0880002222000",
+          "0880002222000",
+          "0880002222000",
+          "0000002222000",
+          "0000000000000",
+          "0077770000000",
+          "0077770044400",
+          "0077770044400",
+          "0000000044400",
+          "0000000044400",
+          "0000000000000"
+        ],
+        "output": [
+          "3120",
+          "1302",
+          "2031",
+          "0213"
+        ]
+      },
+      "program_solution": "(rule!\n  (let ((objs (sort (objects g 0)\n                    (lambda (a b)\n                      (let ((ba (obj-bbox a)) (bb (obj-bbox b)))\n                        (if (= (first ba) (first bb))\n                            (< (second ba) (second bb))\n                            (< (first ba) (first bb))))))))\n    (define (row-overlap? a b)\n      (not (or (< (third a) (first b)) (< (third b) (first a)))))\n    (define (col-overlap? a b)\n      (not (or (< (fourth a) (second b)) (< (fourth b) (second a)))))\n    (grid-from-fn (length objs) (length objs)\n      (lambda (i j)\n        (let* ((b1 (obj-bbox (list-ref objs i)))\n               (b2 (obj-bbox (list-ref objs j)))\n               (ro (row-overlap? b1 b2))\n               (co (col-overlap? b1 b2)))\n          (if (and ro co) 3 (if ro 1 (if co 2 0))))))))"
+    },
+    {
+      "id": "H52",
+      "title": "Nested Frame Ownership Fill",
+      "difficulty": "hard",
+      "skills": [
+        "nesting",
+        "containment",
+        "region ownership"
+      ],
+      "staged_hint": "Think region by region, not frame by frame. Every empty cell belongs to the smallest frame that still contains it.",
+      "written_solution": "Keep every rectangular border. Fill each zero cell with the color of the innermost border that contains it.",
+      "uses_new_primitive": false,
+      "program_name": "rule_h52",
+      "program_source": "def rule_h52(g):\n    out=clone(g)\n    frames=[]\n    for color,cells in components_nonzero(g, treat_colors_separately=True):\n        if is_rect_border(cells):\n            r0,c0,r1,c1=bbox(cells)\n            frames.append(((r1-r0+1)*(c1-c0+1), color, (r0,c0,r1,c1)))\n    frames.sort()  # innermost first via smallest bbox area\n    h,w=size(g)\n    for r in range(h):\n        for c in range(w):\n            if out[r][c]!=0:\n                continue\n            for _,color,(r0,c0,r1,c1) in frames:\n                if r0 < r < r1 and c0 < c < c1:\n                    out[r][c]=color\n                    break\n    return out",
+      "train": [
+        {
+          "input": [
+            "00000000000",
+            "02222222220",
+            "02000000020",
+            "02044444020",
+            "02040004020",
+            "02040004020",
+            "02040004020",
+            "02044444020",
+            "02000000020",
+            "02222222220",
+            "00000000000"
+          ],
+          "output": [
+            "00000000000",
+            "02222222220",
+            "02222222220",
+            "02244444220",
+            "02244444220",
+            "02244444220",
+            "02244444220",
+            "02244444220",
+            "02222222220",
+            "02222222220",
+            "00000000000"
+          ]
+        },
+        {
+          "input": [
+            "000000000000",
+            "033333333330",
+            "030000000030",
+            "030666666030",
+            "030600006030",
+            "030609906030",
+            "030609906030",
+            "030600006030",
+            "030666666030",
+            "030000000030",
+            "033333333330",
+            "000000000000"
+          ],
+          "output": [
+            "000000000000",
+            "033333333330",
+            "033333333330",
+            "033666666330",
+            "033666666330",
+            "033669966330",
+            "033669966330",
+            "033666666330",
+            "033666666330",
+            "033333333330",
+            "033333333330",
+            "000000000000"
+          ]
+        },
+        {
+          "input": [
+            "0000000000000",
+            "0055555555500",
+            "0050000000500",
+            "0050777770500",
+            "0050700070500",
+            "0050700070500",
+            "0050777770500",
+            "0050000000500",
+            "0055555555500",
+            "0000000000000"
+          ],
+          "output": [
+            "0000000000000",
+            "0055555555500",
+            "0055555555500",
+            "0055777775500",
+            "0055777775500",
+            "0055777775500",
+            "0055777775500",
+            "0055555555500",
+            "0055555555500",
+            "0000000000000"
+          ]
+        },
+        {
+          "input": [
+            "0000000000000",
+            "0888888888880",
+            "0800000000080",
+            "0800000000080",
+            "0800222220080",
+            "0800200020080",
+            "0800200020080",
+            "0800200020080",
+            "0800222220080",
+            "0800000000080",
+            "0800000000080",
+            "0888888888880",
+            "0000000000000"
+          ],
+          "output": [
+            "0000000000000",
+            "0888888888880",
+            "0888888888880",
+            "0888888888880",
+            "0888222228880",
+            "0888222228880",
+            "0888222228880",
+            "0888222228880",
+            "0888222228880",
+            "0888888888880",
+            "0888888888880",
+            "0888888888880",
+            "0000000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "00000000000000",
+          "04444444444440",
+          "04000000000040",
+          "04077777777040",
+          "04070000007040",
+          "04070222207040",
+          "04070222207040",
+          "04070000007040",
+          "04077777777040",
+          "04000000000040",
+          "04444444444440",
+          "00000000000000"
+        ],
+        "output": [
+          "00000000000000",
+          "04444444444440",
+          "04444444444440",
+          "04477777777440",
+          "04477777777440",
+          "04477222277440",
+          "04477222277440",
+          "04477777777440",
+          "04477777777440",
+          "04444444444440",
+          "04444444444440",
+          "00000000000000"
+        ]
+      },
+      "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (rect-border? obj)\n      (let* ((bb (obj-bbox obj))\n             (h (+ (- (third bb) (first bb)) 1))\n             (w (+ (- (fourth bb) (second bb)) 1))\n             (border-size (- (* h w) (* (max 0 (- h 2)) (max 0 (- w 2))))))\n        (and (>= h 3) (>= w 3) (= (obj-size obj) border-size)\n             (all? (lambda (p)\n                     (or (= (first p) (first bb)) (= (first p) (third bb))\n                         (= (second p) (second bb)) (= (second p) (fourth bb))))\n                   (obj-cells obj)))))\n    (define frames\n      (sort (filter rect-border? (objects g 0))\n            (lambda (a b) (< (* (obj-h a) (obj-w a)) (* (obj-h b) (obj-w b))))))\n    (for*/fold ([out g])\n               ([r (in-range (rows g))]\n                [c (in-range (cols g))])\n      (if (not (= (at out r c) 0))\n          out\n          (let ((hits (filter (lambda (obj)\n                                (and (> r (obj-r1 obj)) (< r (obj-r2 obj))\n                                     (> c (obj-c1 obj)) (< c (obj-c2 obj))))\n                              frames)))\n            (if (empty? hits) out (set-cell out r c (obj-color (first hits)))))))))"
+    },
+    {
+      "id": "H53",
+      "title": "Rank-Selected Transform In Frame",
+      "difficulty": "hard",
+      "skills": [
+        "ranking by area",
+        "command transform",
+        "centering"
+      ],
+      "staged_hint": "There are three candidate shapes, one rank command, one transform command, and one destination frame.",
+      "written_solution": "Ignore the two command cells. Rank the non-frame components by area, choose the requested rank, transform it by the second command (1 → id, 2=90° clockwise, 3 → flip vertically across a horizontal axis, 4 → flip horizontally across a vertical axis), and center the result inside the empty frame.",
+      "uses_new_primitive": false,
+      "program_name": "rule_h53",
+      "program_source": "def rule_h53(g):\n    rank_cmd=g[0][0]\n    tf_cmd=g[0][-1]\n    frame=None\n    for color,cells in components_nonzero(g, treat_colors_separately=True, exclude={(0,0),(0,len(g[0])-1)}):\n        if is_rect_border(cells):\n            frame=(color,cells)\n            break\n    candidates=[]\n    for color,cells in components_nonzero(g, treat_colors_separately=True, exclude={(0,0),(0,len(g[0])-1)}):\n        if frame and set(cells)==set(frame[1]):\n            continue\n        candidates.append((len(cells), color, cells))\n    candidates.sort(key=lambda t:(t[0], t[1]))\n    idx=min(rank_cmd-1, len(candidates)-1)\n    chosen=candidates[idx][2]\n    obj=grid_from_component(g, chosen)\n    obj=transform_h53(obj, tf_cmd)\n    frame_grid=grid_from_component(g, frame[1])\n    return center_in_frame(frame_grid, obj)",
+      "train": [
+        {
+          "input": [
+            "1000000000000002",
+            "0000000000000000",
+            "0022000000000000",
+            "0020000000888888",
+            "0000000000800008",
+            "0330000000800008",
+            "0333000000800008",
+            "0000440000800008",
+            "0000444400800008",
+            "0000000000800008",
+            "0000000000888888",
+            "0000000000000000"
+          ],
+          "output": [
+            "888888",
+            "800008",
+            "800008",
+            "802208",
+            "800208",
+            "800008",
+            "800008",
+            "888888"
+          ]
+        },
+        {
+          "input": [
+            "20000000000000003",
+            "00000000000000000",
+            "00440000000000000",
+            "00444400000000000",
+            "00000000000888888",
+            "00000000000800008",
+            "02200000000800008",
+            "02000000000800008",
+            "00003300000800008",
+            "00003330000800008",
+            "00000000000800008",
+            "00000000000888888",
+            "00000000000000000"
+          ],
+          "output": [
+            "888888",
+            "800008",
+            "800008",
+            "833308",
+            "833008",
+            "800008",
+            "800008",
+            "888888"
+          ]
+        },
+        {
+          "input": [
+            "300000000000004",
+            "000000000000000",
+            "000000000888888",
+            "000000000800008",
+            "033000000800008",
+            "033300000800008",
+            "000044000800008",
+            "000044440800008",
+            "002200000800008",
+            "002000000888888",
+            "000000000000000",
+            "000000000000000"
+          ],
+          "output": [
+            "888888",
+            "800008",
+            "800008",
+            "800448",
+            "844448",
+            "800008",
+            "800008",
+            "888888"
+          ]
+        },
+        {
+          "input": [
+            "200000000000001",
+            "002200000000000",
+            "002000000000000",
+            "000000000888888",
+            "000000000800008",
+            "044000000800008",
+            "044440000800008",
+            "000033000800008",
+            "000033300800008",
+            "000000000888888",
+            "000000000000000"
+          ],
+          "output": [
+            "888888",
+            "800008",
+            "833008",
+            "833308",
+            "800008",
+            "800008",
+            "888888"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "3000000000000002",
+          "0000000000000000",
+          "0330000000000000",
+          "0333000000888888",
+          "0000000000800008",
+          "0000000000800008",
+          "0022000000800008",
+          "0020440000800008",
+          "0000444400800008",
+          "0000000000800008",
+          "0000000000888888",
+          "0000000000000000"
+        ],
+        "output": [
+          "888888",
+          "800008",
+          "804408",
+          "804408",
+          "804008",
+          "804008",
+          "800008",
+          "888888"
+        ]
+      },
+      "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (rect-border? obj)\n      (let* ((bb (obj-bbox obj))\n             (h (+ (- (third bb) (first bb)) 1))\n             (w (+ (- (fourth bb) (second bb)) 1))\n             (border-size (- (* h w) (* (max 0 (- h 2)) (max 0 (- w 2))))))\n        (and (>= h 3) (>= w 3) (= (obj-size obj) border-size)\n             (all? (lambda (p)\n                     (or (= (first p) (first bb)) (= (first p) (third bb))\n                         (= (second p) (second bb)) (= (second p) (fourth bb))))\n                   (obj-cells obj)))))\n    (define (floor-half x)\n      (if (>= x 0) (quotient x 2) (- 0 (quotient (+ (- 0 x) 1) 2))))\n    (define (center frame-grid obj-grid)\n      (let* ((nz (filter-cells frame-grid (lambda (r c v) (not (= v 0)))))\n             (bb (bbox-of-cells nz))\n             (oh (rows obj-grid))\n             (ow (cols obj-grid))\n             (sr (+ (first bb) 1 (floor-half (- (- (third bb) (first bb) 1) oh))))\n             (sc (+ (second bb) 1 (floor-half (- (- (fourth bb) (second bb) 1) ow)))))\n        (for*/fold ([out frame-grid])\n                   ([r (in-range oh)]\n                    [c (in-range ow)])\n          (let ((v (at obj-grid r c)))\n            (if (not (= v 0)) (set-cell out (+ sr r) (+ sc c) v) out)))))\n    (let* ((rank-cmd (at g 0 0))\n           (tf-cmd (at g 0 (- (cols g) 1)))\n           (work (set-cell (set-cell g 0 0 0) 0 (- (cols g) 1) 0)))\n      (define frame (first (filter rect-border? (objects work 0))))\n      (define candidates\n        (sort (filter (lambda (obj) (not (equal? (obj-cells obj) (obj-cells frame))))\n                      (objects work 0))\n              (lambda (a b)\n                (if (= (obj-size a) (obj-size b))\n                    (< (obj-color a) (obj-color b))\n                    (< (obj-size a) (obj-size b))))))\n      (define chosen (list-ref candidates (min (- rank-cmd 1) (- (length candidates) 1))))\n      (define obj (subgrid work (obj-r1 chosen) (obj-c1 chosen) (obj-r2 chosen) (obj-c2 chosen)))\n      (define tf (cond [(= tf-cmd 2) (rotate-cw obj)]\n                       [(= tf-cmd 3) (flip-ud obj)]\n                       [(= tf-cmd 4) (flip-lr obj)]\n                       [else obj]))\n      (define frame-grid (subgrid work (obj-r1 frame) (obj-c1 frame) (obj-r2 frame) (obj-c2 frame)))\n      (center frame-grid tf))))"
+    },
+    {
+      "id": "H54",
+      "title": "Alternating Rotated Tiling",
+      "difficulty": "hard",
+      "skills": [
+        "periodic structure",
+        "rotation alternation",
+        "checkerboard logic"
+      ],
+      "staged_hint": "Extract the motif once, then tile by blocks rather than by individual cells.",
+      "written_solution": "Crop the corner motif, tile it over the whole output, and rotate every odd checkerboard tile 90° clockwise while leaving even tiles unchanged.",
+      "uses_new_primitive": false,
+      "program_name": "rule_h54",
+      "program_source": "def rule_h54(g):\n    motif=crop_nonzero(g)\n    n=len(motif)\n    rot=rotate_times(motif,1)\n    h,w=size(g)\n    out=blank(h,w)\n    for tr in range(0,h,n):\n        for tc in range(0,w,n):\n            tile = motif if ((tr//n + tc//n)%2==0) else rot\n            for r in range(n):\n                for c in range(n):\n                    out[tr+r][tc+c]=tile[r][c]\n    return out",
+      "train": [
+        {
+          "input": [
+            "120000000",
+            "012000000",
+            "201000000",
+            "000000000",
+            "000000000",
+            "000000000",
+            "000000000",
+            "000000000",
+            "000000000"
+          ],
+          "output": [
+            "120201120",
+            "012012012",
+            "201120201",
+            "201120201",
+            "012012012",
+            "120201120",
+            "120201120",
+            "012012012",
+            "201120201"
+          ]
+        },
+        {
+          "input": [
+            "330000000000",
+            "303000000000",
+            "033000000000",
+            "000000000000",
+            "000000000000",
+            "000000000000",
+            "000000000000",
+            "000000000000",
+            "000000000000",
+            "000000000000",
+            "000000000000",
+            "000000000000"
+          ],
+          "output": [
+            "330033330033",
+            "303303303303",
+            "033330033330",
+            "033330033330",
+            "303303303303",
+            "330033330033",
+            "330033330033",
+            "303303303303",
+            "033330033330",
+            "033330033330",
+            "303303303303",
+            "330033330033"
+          ]
+        },
+        {
+          "input": [
+            "450000000000",
+            "045000000000",
+            "504000000000",
+            "000000000000",
+            "000000000000",
+            "000000000000",
+            "000000000000",
+            "000000000000",
+            "000000000000"
+          ],
+          "output": [
+            "450504450504",
+            "045045045045",
+            "504450504450",
+            "504450504450",
+            "045045045045",
+            "450504450504",
+            "450504450504",
+            "045045045045",
+            "504450504450"
+          ]
+        },
+        {
+          "input": [
+            "120000000",
+            "012000000",
+            "201000000",
+            "000000000",
+            "000000000",
+            "000000000",
+            "000000000",
+            "000000000",
+            "000000000",
+            "000000000",
+            "000000000",
+            "000000000"
+          ],
+          "output": [
+            "120201120",
+            "012012012",
+            "201120201",
+            "201120201",
+            "012012012",
+            "120201120",
+            "120201120",
+            "012012012",
+            "201120201",
+            "201120201",
+            "012012012",
+            "120201120"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "330000000000000",
+          "303000000000000",
+          "033000000000000",
+          "000000000000000",
+          "000000000000000",
+          "000000000000000",
+          "000000000000000",
+          "000000000000000",
+          "000000000000000",
+          "000000000000000",
+          "000000000000000",
+          "000000000000000"
+        ],
+        "output": [
+          "330033330033330",
+          "303303303303303",
+          "033330033330033",
+          "033330033330033",
+          "303303303303303",
+          "330033330033330",
+          "330033330033330",
+          "303303303303303",
+          "033330033330033",
+          "033330033330033",
+          "303303303303303",
+          "330033330033330"
+        ]
+      },
+      "program_solution": "(rule!\n  (let* ((motif (crop-to-content g))\n         (n (rows motif))\n         (rot (rotate-cw motif)))\n    (grid-from-fn (rows g) (cols g)\n      (lambda (r c)\n        (let ((tile (if (= (modulo (+ (quotient r n) (quotient c n)) 2) 0) motif rot)))\n          (at tile (modulo r n) (modulo c n)))))))"
+    },
+    {
+      "id": "H55",
+      "title": "Per-Frame Endpoint Routing",
+      "difficulty": "hard",
+      "skills": [
+        "independent subproblems",
+        "containment",
+        "path tracing"
+      ],
+      "staged_hint": "Treat each frame as its own small puzzle. Connect only the endpoints that live inside the same frame.",
+      "written_solution": "For each rectangular frame, find the two same-colored endpoints inside it and draw a horizontal-then-vertical Manhattan path connecting them with that color, keeping the frame intact.",
+      "uses_new_primitive": false,
+      "program_name": "rule_h55",
+      "program_source": "def rule_h55(g):\n    out=clone(g)\n    frames=[]\n    for color,cells in components_nonzero(g, treat_colors_separately=True):\n        if is_rect_border(cells):\n            frames.append((color,cells,bbox(cells)))\n    for fcolor,cells,(r0,c0,r1,c1) in frames:\n        inside=collections.defaultdict(list)\n        for r in range(r0+1,r1):\n            for c in range(c0+1,c1):\n                v=g[r][c]\n                if v!=0 and v!=fcolor:\n                    inside[v].append((r,c))\n        for color,pts in inside.items():\n            if len(pts)==2:\n                for rr,cc in trace_hv(pts[0], pts[1]):\n                    out[rr][cc]=color\n    return out",
+      "train": [
+        {
+          "input": [
+            "00000000000000",
+            "08888800000000",
+            "08200800000000",
+            "08000800000000",
+            "08002800000000",
+            "08888800000000",
+            "00000008888880",
+            "00000008600080",
+            "00000008000080",
+            "00000008000680",
+            "00000008888880",
+            "00000000000000"
+          ],
+          "output": [
+            "00000000000000",
+            "08888800000000",
+            "08222800000000",
+            "08002800000000",
+            "08002800000000",
+            "08888800000000",
+            "00000008888880",
+            "00000008666680",
+            "00000008000680",
+            "00000008000680",
+            "00000008888880",
+            "00000000000000"
+          ]
+        },
+        {
+          "input": [
+            "0000000000000",
+            "0088888000000",
+            "0083008000000",
+            "0080038000000",
+            "0088888000000",
+            "0000000088880",
+            "0000000087080",
+            "0000000080080",
+            "0000000080780",
+            "0000000088880",
+            "0000000000000"
+          ],
+          "output": [
+            "0000000000000",
+            "0088888000000",
+            "0083338000000",
+            "0080038000000",
+            "0088888000000",
+            "0000000088880",
+            "0000000087780",
+            "0000000080780",
+            "0000000080780",
+            "0000000088880",
+            "0000000000000"
+          ]
+        },
+        {
+          "input": [
+            "000000000000000",
+            "000000000000000",
+            "088888000000000",
+            "080048000000000",
+            "080008000000000",
+            "084008000000000",
+            "088888000000000",
+            "000000008888880",
+            "000000008900080",
+            "000000008000080",
+            "000000008000980",
+            "000000008888880",
+            "000000000000000"
+          ],
+          "output": [
+            "000000000000000",
+            "000000000000000",
+            "088888000000000",
+            "084448000000000",
+            "084008000000000",
+            "084008000000000",
+            "088888000000000",
+            "000000008888880",
+            "000000008999980",
+            "000000008000980",
+            "000000008000980",
+            "000000008888880",
+            "000000000000000"
+          ]
+        },
+        {
+          "input": [
+            "000000000000",
+            "088880000000",
+            "085080000000",
+            "080580000000",
+            "088880000000",
+            "000000000000",
+            "000000888880",
+            "000000800280",
+            "000000800080",
+            "000000820080",
+            "000000888880",
+            "000000000000"
+          ],
+          "output": [
+            "000000000000",
+            "088880000000",
+            "085580000000",
+            "080580000000",
+            "088880000000",
+            "000000000000",
+            "000000888880",
+            "000000822280",
+            "000000820080",
+            "000000820080",
+            "000000888880",
+            "000000000000"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "00000000000000",
+          "08888880000000",
+          "08007080000000",
+          "08000080000000",
+          "08700080000000",
+          "08888880000000",
+          "00000000000000",
+          "00000008888880",
+          "00000008300080",
+          "00000008000080",
+          "00000008000380",
+          "00000008888880",
+          "00000000000000"
+        ],
+        "output": [
+          "00000000000000",
+          "08888880000000",
+          "08777080000000",
+          "08700080000000",
+          "08700080000000",
+          "08888880000000",
+          "00000000000000",
+          "00000008888880",
+          "00000008333380",
+          "00000008000380",
+          "00000008000380",
+          "00000008888880",
+          "00000000000000"
+        ]
+      },
+      "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (rect-border? obj)\n      (let* ((bb (obj-bbox obj))\n             (h (+ (- (third bb) (first bb)) 1))\n             (w (+ (- (fourth bb) (second bb)) 1))\n             (border-size (- (* h w) (* (max 0 (- h 2)) (max 0 (- w 2))))))\n        (and (>= h 3) (>= w 3) (= (obj-size obj) border-size)\n             (all? (lambda (p)\n                     (or (= (first p) (first bb)) (= (first p) (third bb))\n                         (= (second p) (second bb)) (= (second p) (fourth bb))))\n                   (obj-cells obj)))))\n    (define (step-range a b)\n      (if (<= a b) (range a (+ b 1)) (reverse (range b (+ a 1)))))\n    (define (trace a b)\n      (let* ((r1 (first a)) (c1 (second a)) (r2 (first b)) (c2 (second b))\n             (hpart (map (lambda (c) (list r1 c)) (step-range c1 c2)))\n             (vpart (map (lambda (r) (list r c2)) (rest (step-range r1 r2)))))\n        (append hpart vpart)))\n    (for/fold ([out g]) ([frame (in-list (filter rect-border? (objects g 0)))])\n      (let* ((bb (obj-bbox frame))\n             (inside-cells (filter (lambda (cell)\n                                     (let ((r (first cell)) (c (second cell)) (v (third cell)))\n                                       (and (> r (first bb)) (< r (third bb))\n                                            (> c (second bb)) (< c (fourth bb))\n                                            (not (= v 0)) (not (= v (obj-color frame))))))\n                                   (grid-cells g)))\n             (colors (remove-duplicates (map third inside-cells))))\n        (for/fold ([acc out]) ([color (in-list colors)])\n          (let ((pts (map (lambda (cell) (list (first cell) (second cell)))\n                          (filter (lambda (cell) (= (third cell) color)) inside-cells))))\n            (if (= (length pts) 2)\n                (paint-cells acc (trace (first pts) (second pts)) color)\n                acc)))))))"
+    },
+    {
+      "id": "H56",
+      "title": "Masked Submatrix Then Rotate",
+      "difficulty": "hard",
+      "skills": [
+        "compositional reasoning",
+        "matrix slicing",
+        "command transform"
+      ],
+      "staged_hint": "First extract the marked submatrix exactly as in a selection task. Only then apply the command transform.",
+      "written_solution": "Use the first column and top row to select rows and columns from the interior matrix, then rotate the extracted submatrix according to the top-left command: 1 → id, 2=90° clockwise, 3=180°, 4=270° clockwise.",
+      "uses_new_primitive": false,
+      "program_name": "rule_h56",
+      "program_source": "def rule_h56(g):\n    cmd=g[0][0]\n    rows=[r for r in range(1,len(g)) if g[r][0]==8]\n    cols=[c for c in range(1,len(g[0])) if g[0][c]==8]\n    sub=[[g[r][c] for c in cols] for r in rows]\n    if not sub:\n        sub=[[0]]\n    return transform_by_code(sub, cmd)",
+      "train": [
+        {
+          "input": [
+            "20808",
+            "81234",
+            "05678",
+            "89123",
+            "04567"
+          ],
+          "output": [
+            "12",
+            "34"
+          ]
+        },
+        {
+          "input": [
+            "38080",
+            "02468",
+            "81357",
+            "08642",
+            "87531",
+            "81111"
+          ],
+          "output": [
+            "11",
+            "37",
+            "51"
+          ]
+        },
+        {
+          "input": [
+            "408808",
+            "812345",
+            "867891",
+            "023456",
+            "878912"
+          ],
+          "output": [
+            "512",
+            "389",
+            "278"
+          ]
+        },
+        {
+          "input": [
+            "18808",
+            "09876",
+            "05432",
+            "81098",
+            "07654"
+          ],
+          "output": [
+            "108"
+          ]
+        }
+      ],
+      "test": {
+        "input": [
+          "380808",
+          "832145",
+          "065432",
+          "878987",
+          "811223"
+        ],
+        "output": [
+          "321",
+          "797",
+          "513"
+        ]
+      },
+      "program_solution": "(rule!\n  (let* ((cmd (at g 0 0))\n         (rs (filter (lambda (r) (= (at g r 0) 8)) (range 1 (rows g))))\n         (cs (filter (lambda (c) (= (at g 0 c) 8)) (range 1 (cols g))))\n         (sub (if (or (empty? rs) (empty? cs))\n                  (list (list 0))\n                  (for/list ([r (in-list rs)])\n                    (for/list ([c (in-list cs)]) (at g r c))))))\n    (cond [(= cmd 1) sub]\n          [(= cmd 2) (rotate-cw sub)]\n          [(= cmd 3) (rotate-180 sub)]\n          [else (rotate-ccw sub)])))"
+    }
+  ]
+}

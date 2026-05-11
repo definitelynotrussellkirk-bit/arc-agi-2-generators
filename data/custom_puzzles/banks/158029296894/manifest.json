@@ -1,0 +1,50 @@
+{
+  "bank": "158029296894",
+  "title": "Bank with richest per-task metadata",
+  "description": "The widest per-entry schema — id/title/difficulty/skills/written_solution/train/test/solver_name/scaffold/program_language/program_solution. Intended as the long-form reference with reasoning scaffolding.",
+  "schema_shape": "list[Entry]  (11 fields per entry)",
+  "source": "user-provided download 2026-04-16",
+  "solution_language": "python",
+  "files": {
+    "puzzles_json": "puzzles.json",
+    "solutions_py": "solutions.py",
+    "reference_md": "REFERENCE.md"
+  },
+  "stats": {
+    "n_puzzles": 21,
+    "n_train_pairs": 63,
+    "n_test_pairs": 21,
+    "difficulties": {
+      "easy": 7,
+      "medium": 7,
+      "hard": 7
+    },
+    "top_tags": [
+      "connected components",
+      "copy",
+      "template extraction",
+      "run detection",
+      "exact length",
+      "same-size recolor",
+      "2x2 object detection",
+      "border drawing",
+      "shape detection",
+      "singleton key"
+    ],
+    "common_fields": [
+      "difficulty",
+      "id",
+      "program_language",
+      "program_solution",
+      "scaffold",
+      "skills",
+      "solver_name",
+      "test",
+      "title",
+      "train",
+      "written_solution"
+    ]
+  },
+  "generated_at": "2026-05-10 11:31:43 -0400",
+  "legacy_bank": "2b497f0d24c5"
+}

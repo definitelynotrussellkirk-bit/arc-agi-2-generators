@@ -1,0 +1,233 @@
+[
+  {
+    "id": "E64",
+    "difficulty": "easy",
+    "title": "Column bridge fill",
+    "what_it_tests": "Find matching vertical endpoints and fill the blank segment between them.",
+    "staged_hint": "Work column by column. Only pay attention to colors that appear exactly twice in a column.",
+    "written_solution": "For each column, look for a color that appears exactly twice with only zeros between the two endpoints. Fill that whole vertical interval with the same color and leave everything else unchanged.",
+    "program_name": "solve_E64",
+    "program_source": "def solve_E64(g):\n    out=clone(g); h,w=dims(g)\n    for c in range(w):\n        by={}\n        for r in range(h):\n            v=g[r][c]\n            if v!=0:\n                by.setdefault(v,[]).append(r)\n        for color,rows in by.items():\n            if len(rows)==2:\n                a,b=min(rows),max(rows)\n                if all(g[r][c]==0 for r in range(a+1,b)):\n                    for r in range(a,b+1):\n                        out[r][c]=color\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (for/fold ((out g)) ((c (in-range (cols g)))) (for/fold ((acc out)) ((color (in-list (remove-duplicates (filter (lambda (v) (not (= v 0))) (col g c)))))) (let ((rs (filter (lambda (r) (= (at g r c) color)) (range (rows g))))) (if (and (= (length rs) 2) (all? (lambda (r) (= (at g r c) 0)) (range (+ (apply min rs) 1) (apply max rs)))) (paint-cells acc (map (lambda (r) (list r c)) (range (apply min rs) (+ (apply max rs) 1))) color) acc))))))"
+  },
+  {
+    "id": "E65",
+    "difficulty": "easy",
+    "title": "Ring-center fill",
+    "what_it_tests": "Detect hollow 3x3 monochrome rings and fill their center cell.",
+    "staged_hint": "Ignore the whole grid at first and just scan for 3x3 neighborhoods whose eight outer cells all match.",
+    "written_solution": "Whenever a zero cell is surrounded on all eight sides by the same non-background color, replace the center with that color. The surrounding ring stays the same.",
+    "program_name": "solve_E65",
+    "program_source": "def solve_E65(g):\n    out=clone(g); h,w=dims(g)\n    for r in range(1,h-1):\n        for c in range(1,w-1):\n            if g[r][c]!=0:\n                continue\n            neigh=[g[r+dr][c+dc] for dr in (-1,0,1) for dc in (-1,0,1) if not (dr==0 and dc==0)]\n            if neigh[0]!=0 and all(v==neigh[0] for v in neigh):\n                out[r][c]=neigh[0]\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (for*/fold ((out g)) ((r (in-range 1 (- (rows g) 1))) (c (in-range 1 (- (cols g) 1)))) (if (not (= (at g r c) 0)) out (let ((neigh (for*/list ((dr (in-list (list -1 0 1))) (dc (in-list (list -1 0 1))) #:when (not (and (= dr 0) (= dc 0)))) (at g (+ r dr) (+ c dc))))) (if (and (not (= (first neigh) 0)) (all? (lambda (v) (= v (first neigh))) neigh)) (set-cell out r c (first neigh)) out))))))"
+  },
+  {
+    "id": "E66",
+    "difficulty": "easy",
+    "title": "Mirror across the 9 anchor",
+    "what_it_tests": "Use a row-local pivot to reflect a pattern onto the opposite side.",
+    "staged_hint": "Treat each row separately. The 9 marks the mirror line for that row.",
+    "written_solution": "In any row containing a maroon(9), copy every nonzero cell to the symmetric position on the opposite side of the maroon(9), at the same distance. Keep the original cells and the maroon(9).",
+    "program_name": "solve_E66",
+    "program_source": "def solve_E66(g):\n    out=clone(g); h,w=dims(g)\n    for r in range(h):\n        if 9 not in g[r]:\n            continue\n        p=g[r].index(9)\n        for c,v in enumerate(g[r]):\n            if v not in (0,9):\n                cc=2*p-c\n                if 0<=cc<w:\n                    out[r][cc]=v\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (for/fold ((out g)) ((r (in-range (rows g)))) (let ((hits (filter (lambda (c) (= (at g r c) 9)) (range (cols g))))) (if (empty? hits) out (let ((p (first hits))) (for/fold ((acc out)) ((c (in-range (cols g)))) (let ((v (at g r c)) (cc (- (* 2 p) c))) (if (and (not (= v 0)) (not (= v 9)) (in-bounds? r cc (rows g) (cols g))) (set-cell acc r cc v) acc)))))))))"
+  },
+  {
+    "id": "E67",
+    "difficulty": "easy",
+    "title": "Complete the rectangle corner",
+    "what_it_tests": "Infer an axis-aligned rectangle from three same-colored corners.",
+    "staged_hint": "Group by color. Three cells may already tell you two rows and two columns.",
+    "written_solution": "For each color, three of the four corners of an axis-aligned rectangle are present. Add the missing fourth corner in the same color.",
+    "program_name": "solve_E67",
+    "program_source": "def solve_E67(g):\n    out=clone(g)\n    by={}\n    for r,row in enumerate(g):\n        for c,v in enumerate(row):\n            if v!=0:\n                by.setdefault(v,[]).append((r,c))\n    for color,cells in by.items():\n        if len(cells)==3:\n            rs=sorted({r for r,c in cells}); cs=sorted({c for r,c in cells})\n            if len(rs)==2 and len(cs)==2:\n                for rr in rs:\n                    for cc in cs:\n                        out[rr][cc]=color\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-colors-reading grid) (remove-duplicates (filter (lambda (v) (not (= v 0))) (map (lambda (p) (at grid (first p) (second p))) (grid-positions grid))))) (for/fold ((out g)) ((color (in-list (e8b-colors-reading g)))) (let* ((cells (find-color g color)) (rs (sort (remove-duplicates (map first cells)) <)) (cs (sort (remove-duplicates (map second cells)) <))) (if (and (= (length cells) 3) (= (length rs) 2) (= (length cs) 2)) (for*/fold ((acc out)) ((r (in-list rs)) (c (in-list cs))) (set-cell acc r c color)) out)))))"
+  },
+  {
+    "id": "E68",
+    "difficulty": "easy",
+    "title": "Row majority cleanup",
+    "what_it_tests": "Use within-row frequency to repair a single odd colored cell.",
+    "staged_hint": "Look only at nonzero rows and count colors instead of geometry.",
+    "written_solution": "In each row that contains exactly two nonzero colors, if one color appears once and the other appears multiple times, recolor the lone odd cell to the majority color.",
+    "program_name": "solve_E68",
+    "program_source": "def solve_E68(g):\n    out=clone(g)\n    for r,row in enumerate(g):\n        counts={}\n        for v in row:\n            if v!=0:\n                counts[v]=counts.get(v,0)+1\n        if len(counts)==2:\n            maj=max(counts, key=lambda k: counts[k])\n            minc=min(counts.values())\n            maxc=max(counts.values())\n            if minc==1 and maxc>1:\n                odd=[k for k,v in counts.items() if v==1][0]\n                for c,v in enumerate(row):\n                    if v==odd:\n                        out[r][c]=maj\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (for/fold ((out g)) ((r (in-range (rows g)))) (let* ((colors (remove-duplicates (filter (lambda (v) (not (= v 0))) (row g r)))) (counts (map (lambda (color) (count-where (lambda (v) (= v color)) (row g r))) colors))) (if (and (= (length colors) 2) (= (apply min counts) 1) (> (apply max counts) 1)) (let* ((major (first (filter (lambda (color) (= (count-where (lambda (v) (= v color)) (row g r)) (apply max counts))) colors))) (odd (first (filter (lambda (color) (= (count-where (lambda (v) (= v color)) (row g r)) 1)) colors)))) (for/fold ((acc out)) ((c (in-range (cols g)))) (if (= (at g r c) odd) (set-cell acc r c major) acc))) out)))))"
+  },
+  {
+    "id": "E69",
+    "difficulty": "easy",
+    "title": "Extend the diagonal chain",
+    "what_it_tests": "Continue a two-cell diagonal in the same direction by one step.",
+    "staged_hint": "Find colors that occur exactly twice and check whether those two cells are touching diagonally.",
+    "written_solution": "If a color forms a two-cell diagonal step, extend that diagonal one more cell in the same direction from the upper cell to the lower cell.",
+    "program_name": "solve_E69",
+    "program_source": "def solve_E69(g):\n    out=clone(g)\n    by={}\n    for r,row in enumerate(g):\n        for c,v in enumerate(row):\n            if v!=0:\n                by.setdefault(v,[]).append((r,c))\n    for color,cells in by.items():\n        if len(cells)==2:\n            (r1,c1),(r2,c2)=sorted(cells)\n            dr=r2-r1; dc=c2-c1\n            if abs(dr)==1 and abs(dc)==1:\n                rr,cc=r2+dr,c2+dc\n                if 0<=rr<len(g) and 0<=cc<len(g[0]):\n                    out[rr][cc]=color\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-list< a b) (cond ((empty? a) #f) ((< (first a) (first b)) #t) ((> (first a) (first b)) #f) (else (e8b-list< (rest a) (rest b))))) (define (e8b-colors-reading grid) (remove-duplicates (filter (lambda (v) (not (= v 0))) (map (lambda (p) (at grid (first p) (second p))) (grid-positions grid))))) (for/fold ((out g)) ((color (in-list (e8b-colors-reading g)))) (let ((cells (sort (find-color g color) e8b-list<))) (if (= (length cells) 2) (let* ((a (first cells)) (b (second cells)) (dr (- (first b) (first a))) (dc (- (second b) (second a))) (rr (+ (first b) dr)) (cc (+ (second b) dc))) (if (and (= (abs dr) 1) (= (abs dc) 1) (in-bounds? rr cc (rows g) (cols g))) (set-cell out rr cc color) out)) out)))))"
+  },
+  {
+    "id": "E70",
+    "difficulty": "easy",
+    "title": "Column recolor by header",
+    "what_it_tests": "Read a color legend from the top row and apply it columnwise.",
+    "staged_hint": "Treat the top row as metadata. The body only contributes shape, not final color.",
+    "written_solution": "Keep the header row. For every nonzero body cell, recolor it to the header color from the same column. Zeros stay zero.",
+    "program_name": "solve_E70",
+    "program_source": "def solve_E70(g):\n    out=clone(g); h,w=dims(g)\n    headers=g[0]\n    for r in range(1,h):\n        for c in range(w):\n            if g[r][c]!=0:\n                out[r][c]=headers[c] if headers[c]!=0 else g[r][c]\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (grid-from-fn (rows g) (cols g) (lambda (r c) (let ((v (at g r c)) (header (at g 0 c))) (if (and (> r 0) (not (= v 0)) (not (= header 0))) header v))))))"
+  },
+  {
+    "id": "M64",
+    "difficulty": "medium",
+    "title": "Sweep the component away from the anchor",
+    "what_it_tests": "Infer a direction from an anchor and extrude an entire component through space.",
+    "staged_hint": "Find the one shape and the one 9, then ask which side of the shape the anchor sits on.",
+    "written_solution": "The maroon(9) sits just outside one side of the shape. Determine the direction pointing away from the maroon(9) through the component, then repeatedly translate the whole component one step in that direction until it would leave the grid. Paint the full swept union and keep the maroon(9).",
+    "program_name": "solve_M64",
+    "program_source": "def solve_M64(g):\n    out=clone(g)\n    h,w=dims(g)\n    # component excluding 0 and 9, assume one color component\n    comps=[(v,cells) for v,cells in components_by_color(g, ignore=(0,9))]\n    assert len(comps)==1\n    color,cells=comps[0]\n    r0,r1,c0,c1=bbox(cells)\n    anchors=[(r,c) for r,row in enumerate(g) for c,v in enumerate(row) if v==9]\n    assert len(anchors)==1\n    ar,ac=anchors[0]\n    if ac < c0:\n        dr,dc = 0,1\n    elif ac > c1:\n        dr,dc = 0,-1\n    elif ar < r0:\n        dr,dc = 1,0\n    else:\n        dr,dc = -1,0\n    norm=list(cells)\n    k=1\n    while True:\n        shifted=[(r+dr*k,c+dc*k) for r,c in norm]\n        if any(not (0<=r<h and 0<=c<w) for r,c in shifted):\n            break\n        for r,c in shifted:\n            out[r][c]=color\n        k+=1\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (let* ((cells (filter (lambda (p) (let ((v (at g (first p) (second p)))) (and (not (= v 0)) (not (= v 9))))) (grid-positions g))) (bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb)) (anchor (first (find-color g 9))) (ar (first anchor)) (ac (second anchor)) (color (at g (first (first cells)) (second (first cells)))) (dir (cond ((< ac c0) (list 0 1)) ((> ac c1) (list 0 -1)) ((< ar r0) (list 1 0)) (else (list -1 0))))) (let loop ((k 1) (out g)) (let ((shifted (map (lambda (p) (list (+ (first p) (* (first dir) k)) (+ (second p) (* (second dir) k)))) cells))) (if (any? (lambda (p) (not (in-bounds? (first p) (second p) (rows g) (cols g)))) shifted) out (loop (+ k 1) (paint-cells out shifted color))))))))"
+  },
+  {
+    "id": "M65",
+    "difficulty": "medium",
+    "title": "Palette rank recolor",
+    "what_it_tests": "Sort components by size and recolor them using an ordered palette.",
+    "staged_hint": "The first row is not part of the scene; it is a list of target colors.",
+    "written_solution": "Read the nonzero colors in the top row as a palette. In the body, find all placeholder-color components, sort them from smallest to largest, and recolor them in palette order.",
+    "program_name": "solve_M65",
+    "program_source": "def solve_M65(g):\n    out=clone(g)\n    headers=[v for v in g[0] if v!=0]\n    comps=[cells for v,cells in components_by_color(g, ignore=(0,)) if v==8]\n    comps=sorted(comps, key=lambda cells: (len(cells), bbox(cells)))\n    for cells,color in zip(comps, headers):\n        for r,c in cells:\n            out[r][c]=color\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-list< a b) (cond ((empty? a) #f) ((< (first a) (first b)) #t) ((> (first a) (first b)) #f) (else (e8b-list< (rest a) (rest b))))) (let* ((headers (filter (lambda (v) (not (= v 0))) (first g))) (objs (sort (filter (lambda (obj) (= (obj-color obj) 8)) (objects g 0)) (lambda (a b) (or (< (obj-size a) (obj-size b)) (and (= (obj-size a) (obj-size b)) (e8b-list< (obj-bbox a) (obj-bbox b)))))))) (let loop ((rest-objs objs) (rest-headers headers) (out g)) (if (or (empty? rest-objs) (empty? rest-headers)) out (loop (rest rest-objs) (rest rest-headers) (paint-cells out (obj-cells (first rest-objs)) (first rest-headers))))))))"
+  },
+  {
+    "id": "M66",
+    "difficulty": "medium",
+    "title": "Two-row legend remap",
+    "what_it_tests": "Use an explicit source→target legend to remap colors in a scene.",
+    "staged_hint": "The first two rows form aligned pairs: top is source color, second row is target color.",
+    "written_solution": "Build a color mapping from the first two rows column by column. Then recolor the body using that mapping while leaving zeros and the legend rows unchanged.",
+    "program_name": "solve_M66",
+    "program_source": "def solve_M66(g):\n    out=clone(g)\n    mapping={}\n    w=len(g[0])\n    for c in range(w):\n        a,b=g[0][c],g[1][c]\n        if a!=0:\n            mapping[a]=b\n    for r in range(2,len(g)):\n        for c in range(w):\n            v=g[r][c]\n            if v in mapping:\n                out[r][c]=mapping[v]\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (define (t10-alist-ref pairs key default) (let ((hits (filter (lambda (p) (= (first p) key)) pairs))) (if (empty? hits) default (second (first hits))))) (let ((pairs (filter (lambda (p) (not (= (first p) 0))) (for/list ((c (in-range (cols g)))) (list (at g 0 c) (at g 1 c)))))) (grid-from-fn (rows g) (cols g) (lambda (r c) (let* ((v (at g r c)) (mapped (t10-alist-ref pairs v #f))) (if (and (>= r 2) mapped) mapped v)))))))"
+  },
+  {
+    "id": "M67",
+    "difficulty": "medium",
+    "title": "Transplant the framed interior",
+    "what_it_tests": "Extract a subgrid from one frame and center it inside another.",
+    "staged_hint": "Ignore the outer canvas and compare the two color-7 frames by size.",
+    "written_solution": "Find the smaller frame and copy its interior contents. Then place that interior, without scaling, centered inside the larger frame’s interior. Keep both frames.",
+    "program_name": "solve_M67",
+    "program_source": "def solve_M67(g):\n    out=clone(g)\n    frames=[cells for v,cells in components_by_color(g, ignore=(0,)) if v==7 and is_frame_component(cells)]\n    frames=sorted(frames, key=len)\n    small,big=frames[0],frames[1]\n    sr0,sr1,sc0,sc1=bbox(small)\n    br0,br1,bc0,bc1=bbox(big)\n    interior=[row[sc0+1:sc1] for row in g[sr0+1:sr1]]\n    ih,iw=len(interior), len(interior[0])\n    top=br0+1 + ((br1-br0-1)-ih)//2\n    left=bc0+1 + ((bc1-bc0-1)-iw)//2\n    overlay(out, interior, top, left, transparent=0)\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-list< a b) (cond ((empty? a) #f) ((< (first a) (first b)) #t) ((> (first a) (first b)) #f) (else (e8b-list< (rest a) (rest b))))) (define (e8b-paste grid pat top left) (for*/fold ((out grid)) ((r (in-range (rows pat))) (c (in-range (cols pat)))) (let ((v (at pat r c)) (rr (+ top r)) (cc (+ left c))) (if (and (not (= v 0)) (in-bounds? rr cc (rows out) (cols out))) (set-cell out rr cc v) out)))) (define (f14-same-cells? a b) (and (= (length a) (length b)) (all? (lambda (p) (member? p b)) a))) (define (f14-border-cells r0 c0 r1 c1) (for*/list ((r (in-range r0 (+ r1 1))) (c (in-range c0 (+ c1 1))) #:when (or (= r r0) (= r r1) (= c c0) (= c c1))) (list r c))) (define (f4-norm cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb))) (map (lambda (p) (list (- (first p) r0) (- (second p) c0))) cells))) (define (f4-norm-info cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb))) (list (f4-norm cells) (+ 1 (- r1 r0)) (+ 1 (- c1 c0))))) (define (f4-rect-frame? cells) (let* ((info (f4-norm-info cells)) (norm (first info)) (h (second info)) (w (third info)) (border (f14-border-cells 0 0 (- h 1) (- w 1)))) (and (>= h 3) (>= w 3) (f14-same-cells? norm border)))) (define (s7b-frame-boxes grid color) (map obj-bbox (sort (filter (lambda (obj) (and (= (obj-color obj) color) (f4-rect-frame? (obj-cells obj)))) (objects grid 0)) (lambda (a b) (e8b-list< (obj-bbox a) (obj-bbox b)))))) (define (s6b-frame-boxes grid color) (s7b-frame-boxes grid color)) (define (t10-floor-half n) (if (>= n 0) (quotient n 2) (- (quotient (+ (- n) 1) 2)))) (let* ((boxes (sort (s6b-frame-boxes g 7) (lambda (a b) (< (length (f14-border-cells (first a) (second a) (third a) (fourth a))) (length (f14-border-cells (first b) (second b) (third b) (fourth b))))))) (small (first boxes)) (big (second boxes)) (interior (subgrid g (+ (first small) 1) (+ (second small) 1) (- (third small) 1) (- (fourth small) 1))) (top (+ (first big) 1 (t10-floor-half (- (- (third big) (first big) 1) (rows interior))))) (left (+ (second big) 1 (t10-floor-half (- (- (fourth big) (second big) 1) (cols interior)))))) (e8b-paste g interior top left))))"
+  },
+  {
+    "id": "M68",
+    "difficulty": "medium",
+    "title": "BBox row/column cross-product",
+    "what_it_tests": "Move from object bboxes to a blank interaction grid.",
+    "staged_hint": "Red tells you rows; blue tells you columns.",
+    "written_solution": "Take the union of all rows covered by red(2)-object bounding boxes and the union of all columns covered by blue(1)-object bounding boxes. Output a background grid with cyan(8) at every intersection of an active row and an active column.",
+    "program_name": "solve_M68",
+    "program_source": "def solve_M68(g):\n    h,w=dims(g)\n    out=blank(h,w,0)\n    rows=set()\n    cols=set()\n    for color,cells in components_by_color(g, ignore=(0,)):\n        r0,r1,c0,c1=bbox(cells)\n        if color==2:\n            rows.update(range(r0,r1+1))\n        elif color==3:\n            cols.update(range(c0,c1+1))\n    for r in rows:\n        for c in cols:\n            out[r][c]=8\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (let* ((rows-hit (remove-duplicates (apply append (map (lambda (obj) (if (= (obj-color obj) 2) (range (first (obj-bbox obj)) (+ (third (obj-bbox obj)) 1)) (list))) (objects g 0))))) (cols-hit (remove-duplicates (apply append (map (lambda (obj) (if (= (obj-color obj) 3) (range (second (obj-bbox obj)) (+ (fourth (obj-bbox obj)) 1)) (list))) (objects g 0)))))) (grid-from-fn (rows g) (cols g) (lambda (r c) (if (and (member? r rows-hit) (member? c cols-hit)) 8 0))))))"
+  },
+  {
+    "id": "M69",
+    "difficulty": "medium",
+    "title": "Prototype lookup by key color",
+    "what_it_tests": "Retrieve a stored prototype shape and stamp it at a query anchor.",
+    "staged_hint": "The upper section is a library. The lower section asks for one entry from that library.",
+    "written_solution": "Above the separator row, each color defines an exemplar shape. Below the separator, a single key color selects one exemplar, and a cyan(8) marks where to place it. Copy the selected normalized exemplar to the anchor position in the lower section.",
+    "program_name": "solve_M69",
+    "program_source": "def solve_M69(g):\n    h,w=dims(g)\n    sep = next(r for r in range(h) if all(v==9 for v in g[r]))\n    top = g[:sep]\n    bottom = g[sep+1:]\n    # prototypes in top keyed by their nonzero color\n    comps=[(v,cells) for v,cells in components_by_color(top, ignore=(0,))]\n    protos={}\n    for color,cells in comps:\n        shp,(sh,sw),_ = normalize_cells(cells)\n        protos[color]=(shp,sh,sw)\n    key = next(v for row in bottom for v in row if v not in (0,8))\n    ar,ac = next((r,c) for r,row in enumerate(bottom) for c,v in enumerate(row) if v==8)\n    out=clone(g)\n    shp,sh,sw=protos[key]\n    for r,c in shp:\n        rr,cc=sep+1 + ar + r, ac + c\n        if 0<=rr<h and 0<=cc<w:\n            out[rr][cc]=key\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (define (t10-norm-cells cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb))) (list (map (lambda (p) (list (- (first p) r0) (- (second p) c0))) cells) (+ 1 (- r1 r0)) (+ 1 (- c1 c0)) r0 c0))) (let* ((sep (first (filter (lambda (r) (all? (lambda (v) (= v 9)) (row g r))) (range (rows g))))) (top (subgrid g 0 0 (- sep 1) (- (cols g) 1))) (bottom (subgrid g (+ sep 1) 0 (- (rows g) 1) (- (cols g) 1))) (key (first (filter (lambda (v) (not (member? v (list 0 8)))) (apply append bottom)))) (anchor (first (find-color bottom 8))) (info (t10-norm-cells (find-color top key))) (offs (first info))) (for/fold ((out g)) ((p (in-list offs))) (let ((rr (+ sep 1 (first anchor) (first p))) (cc (+ (second anchor) (second p)))) (if (in-bounds? rr cc (rows g) (cols g)) (set-cell out rr cc key) out))))))"
+  },
+  {
+    "id": "M70",
+    "difficulty": "medium",
+    "title": "Rectangle intersection mask",
+    "what_it_tests": "Compute overlap from two framed rectangles rather than from filled pixels.",
+    "staged_hint": "Think in terms of bounding boxes, not border pixels.",
+    "written_solution": "Find the bounding rectangles traced by the red(2) border and the green(3) border. Output a background grid with cyan(8) filling only the overlapping area of those two rectangles.",
+    "program_name": "solve_M70",
+    "program_source": "def solve_M70(g):\n    h,w=dims(g)\n    out=blank(h,w,0)\n    rects={}\n    for color in (2,3):\n        cells=[(r,c) for r,row in enumerate(g) for c,v in enumerate(row) if v==color]\n        rects[color]=bbox(cells)\n    a0,a1,b0,b1=rects[2]\n    c0,c1,d0,d1=rects[3]\n    r0,r1=max(a0,c0), min(a1,c1)\n    c0_,c1_=max(b0,d0), min(b1,d1)\n    if r0<=r1 and c0_<=c1_:\n        for r in range(r0,r1+1):\n            for c in range(c0_,c1_+1):\n                out[r][c]=8\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (let* ((bb2 (bbox-of-cells (find-color g 2))) (bb3 (bbox-of-cells (find-color g 3))) (r0 (max (first bb2) (first bb3))) (c0 (max (second bb2) (second bb3))) (r1 (min (third bb2) (third bb3))) (c1 (min (fourth bb2) (fourth bb3)))) (if (and (<= r0 r1) (<= c0 c1)) (paint-cells (empty-grid (rows g) (cols g) 0) (positions-in-rect r0 c0 r1 c1) 8) (empty-grid (rows g) (cols g) 0)))))"
+  },
+  {
+    "id": "H64",
+    "difficulty": "hard",
+    "title": "Infer the panel transform and apply it",
+    "what_it_tests": "Infer a geometric transform from one panel pair and apply it to a new panel.",
+    "staged_hint": "The first two panels teach the transform. The third panel is the query.",
+    "written_solution": "Split the input into three panels using the separator columns. Determine which geometric transform turns the first panel into the second, then apply that same transform to the third panel and output only the transformed query panel.",
+    "program_name": "solve_H64",
+    "program_source": "def solve_H64(g):\n    parts,_ = split_by_separator_cols(g, sep=9)\n    a,b,c = parts\n    cands = [\n        rotate_cw,\n        rotate180,\n        lambda x: rotate_cw(rotate180(x)),\n        flip_h,\n        flip_v,\n    ]\n    for fn in cands:\n        if fn(a) == b:\n            return fn(c)\n    return c",
+    "program_solution": "(rule! (let ((dummy 0)) (define (t10-split-by-sep-cols grid sep) (let loop ((c 0) (last 0) (acc (list))) (cond ((= c (cols grid)) (reverse (if (> c last) (cons (subgrid grid 0 last (- (rows grid) 1) (- c 1)) acc) acc))) ((all? (lambda (r) (= (at grid r c) sep)) (range (rows grid))) (loop (+ c 1) (+ c 1) (if (> c last) (cons (subgrid grid 0 last (- (rows grid) 1) (- c 1)) acc) acc))) (else (loop (+ c 1) last acc))))) (let* ((parts (t10-split-by-sep-cols g 9)) (a (first parts)) (b (second parts)) (query (third parts))) (cond ((equal? (rotate-cw a) b) (rotate-cw query)) ((equal? (rotate-180 a) b) (rotate-180 query)) ((equal? (rotate-cw (rotate-180 a)) b) (rotate-cw (rotate-180 query))) ((equal? (flip-lr a) b) (flip-lr query)) ((equal? (flip-ud a) b) (flip-ud query)) (else query)))))"
+  },
+  {
+    "id": "H65",
+    "difficulty": "hard",
+    "title": "Dispatch labeled components to target labels",
+    "what_it_tests": "Associate components with labels, then move them to matching destinations.",
+    "staged_hint": "Do not sort by color or position. The labels tell you the correspondence.",
+    "written_solution": "Each source component is tagged by a nearby label 1, 2, or 3. The bottom row contains target labels. Remove the source layout, preserve the bottom-row labels, and place each normalized component above the matching target label.",
+    "program_name": "solve_H65",
+    "program_source": "def solve_H65(g):\n    h,w=dims(g)\n    out=blank(h,w,0)\n    # preserve target labels on bottom row\n    target_cols={}\n    for c,v in enumerate(g[h-1]):\n        if v in (1,2,3):\n            out[h-1][c]=v\n            target_cols[v]=c\n    seen=set()\n    sources=[]\n    for r in range(h-1):\n        for c in range(w):\n            if g[r][c] in (1,2,3):\n                label=g[r][c]\n                # component starts somewhere to the right\n                for cc in range(c+1, min(w, c+4)):\n                    if g[r][cc] not in (0,1,2,3):\n                        cells=bfs_same_color(g, (r,cc), seen)\n                        sources.append((label,cells,g[r][cc]))\n                        break\n    for label,cells,color in sources:\n        shp,(sh,sw),_ = normalize_cells(cells)\n        base_col=target_cols[label]\n        top = h-1-sh\n        left = base_col\n        for r,c in shp:\n            rr,cc=top+r,left+c\n            if 0<=rr<h-1 and 0<=cc<w:\n                out[rr][cc]=color\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (define (t10-alist-ref pairs key default) (let ((hits (filter (lambda (p) (= (first p) key)) pairs))) (if (empty? hits) default (second (first hits))))) (define (t10-norm-cells cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb))) (list (map (lambda (p) (list (- (first p) r0) (- (second p) c0))) cells) (+ 1 (- r1 r0)) (+ 1 (- c1 c0)) r0 c0))) (define (t10-object-containing grid p) (first (filter (lambda (obj) (member? p (obj-cells obj))) (objects grid 0)))) (let* ((labels (list 1 2 3)) (targets (filter (lambda (p) (member? (first p) labels)) (for/list ((c (in-range (cols g)))) (list (at g (- (rows g) 1) c) c)))) (label-cells (filter (lambda (p) (and (< (first p) (- (rows g) 1)) (member? (at g (first p) (second p)) labels))) (grid-positions g))) (out0 (for/fold ((out (empty-grid (rows g) (cols g) 0))) ((p (in-list targets))) (set-cell out (- (rows g) 1) (second p) (first p))))) (for/fold ((out out0)) ((p (in-list label-cells))) (let* ((r (first p)) (c (second p)) (label (at g r c)) (hits (filter (lambda (cc) (not (member? (at g r cc) (list 0 1 2 3)))) (range (+ c 1) (min (cols g) (+ c 4)))))) (if (empty? hits) out (let* ((src (list r (first hits))) (obj (t10-object-containing g src)) (info (t10-norm-cells (obj-cells obj))) (offs (first info)) (sh (second info)) (target-col (t10-alist-ref targets label #f)) (top (- (- (rows g) 1) sh)) (left target-col) (color (at g (first src) (second src)))) (if (not target-col) out (for/fold ((acc out)) ((off (in-list offs))) (let ((rr (+ top (first off))) (cc (+ left (second off)))) (if (and (in-bounds? rr cc (rows g) (cols g)) (< rr (- (rows g) 1))) (set-cell acc rr cc color) acc)))))))))))"
+  },
+  {
+    "id": "H66",
+    "difficulty": "hard",
+    "title": "Quarter-turn orbit from a count header",
+    "what_it_tests": "Use a symbolic count to control how many rotated copies of a prototype appear.",
+    "staged_hint": "Separate three roles: the count cell, the pivot 9, and the prototype shape.",
+    "written_solution": "The top-left cell gives an integer count N (between 1 and 4 inclusive). Around the maroon(9) anchor, take the exemplar shape's offsets and union the first N 90° clockwise rotations of that exemplar. Output the orbit on a background grid, keeping the anchor.",
+    "program_name": "solve_H66",
+    "program_source": "def solve_H66(g):\n    h,w=dims(g)\n    n=g[0][0]\n    pivot=next((r,c) for r,row in enumerate(g) for c,v in enumerate(row) if v==9)\n    pr,pc=pivot\n    cells=[(r,c,v) for r,row in enumerate(g) for c,v in enumerate(row) if v not in (0,9) and not (r==0 and c==0)]\n    # assume one color\n    color = cells[0][2]\n    offsets=[(r-pr, c-pc) for r,c,v in cells]\n    def rot(dr,dc, k):\n        for _ in range(k):\n            dr,dc = dc,-dr\n        return dr,dc\n    out=blank(h,w,0)\n    out[pr][pc]=9\n    for k in range(n):\n        for dr,dc in offsets:\n            rr,cc = pr+rot(dr,dc,k)[0], pc+rot(dr,dc,k)[1]\n            if 0<=rr<h and 0<=cc<w:\n                out[rr][cc]=color\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (define (t10-rot-offset dr dc k) (if (= k 0) (list dr dc) (t10-rot-offset dc (- dr) (- k 1)))) (let* ((n (at g 0 0)) (pivot (first (find-color g 9))) (pr (first pivot)) (pc (second pivot)) (cells (for*/list ((r (in-range (rows g))) (c (in-range (cols g))) #:when (and (not (= (at g r c) 0)) (not (= (at g r c) 9)) (not (and (= r 0) (= c 0))))) (list r c (at g r c)))) (color (third (first cells))) (offsets (map (lambda (p) (list (- (first p) pr) (- (second p) pc))) cells))) (for*/fold ((out (set-cell (empty-grid (rows g) (cols g) 0) pr pc 9))) ((k (in-range n)) (off (in-list offsets))) (let* ((rot (t10-rot-offset (first off) (second off) k)) (rr (+ pr (first rot))) (cc (+ pc (second rot)))) (if (in-bounds? rr cc (rows g) (cols g)) (set-cell out rr cc color) out))))))"
+  },
+  {
+    "id": "H67",
+    "difficulty": "hard",
+    "title": "Seed-fill the wall compartments",
+    "what_it_tests": "Flood-fill regions defined by walls, preserving structure and seed colors.",
+    "staged_hint": "Treat 5 and 7 as barriers. Everything else inside a chamber belongs together.",
+    "written_solution": "Use the walls and outer frame to partition the grid into compartments. If a compartment contains exactly one seed color, fill all zeros in that compartment with that seed color while leaving the walls and seeds intact.",
+    "program_name": "solve_H67",
+    "program_source": "def solve_H67(g):\n    h,w=dims(g)\n    out=clone(g)\n    seen=set()\n    walls={5,7}\n    for r in range(h):\n        for c in range(w):\n            if g[r][c] in walls or (r,c) in seen:\n                continue\n            # region of non-wall cells\n            q=deque([(r,c)]); seen.add((r,c))\n            region=[]; colors=set()\n            while q:\n                x,y=q.popleft(); region.append((x,y))\n                if g[x][y] not in (0,5,7):\n                    colors.add(g[x][y])\n                for dx,dy in ((1,0),(-1,0),(0,1),(0,-1)):\n                    nx,ny=x+dx,y+dy\n                    if 0<=nx<h and 0<=ny<w and g[nx][ny] not in walls and (nx,ny) not in seen:\n                        seen.add((nx,ny)); q.append((nx,ny))\n            if len(colors)==1:\n                color=next(iter(colors))\n                for x,y in region:\n                    if out[x][y]==0:\n                        out[x][y]=color\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (define dirs4 (list (list -1 0) (list 1 0) (list 0 -1) (list 0 1))) (define (t10-open-region grid start walls) (let bfs ((queue (list start)) (seen (list start)) (cells (list))) (if (empty? queue) (reverse cells) (let* ((cur (first queue)) (nbrs (filter (lambda (p) (and (in-bounds? (first p) (second p) (rows grid) (cols grid)) (not (member? p seen)) (not (member? (at grid (first p) (second p)) walls)))) (map (lambda (d) (list (+ (first cur) (first d)) (+ (second cur) (second d)))) dirs4)))) (bfs (append (rest queue) nbrs) (append seen nbrs) (cons cur cells)))))) (for*/fold ((out g)) ((r (in-range (rows g))) (c (in-range (cols g)))) (if (not (= (at g r c) 0)) out (let* ((region (t10-open-region g (list r c) (list 5 7))) (colors (remove-duplicates (filter (lambda (v) (not (member? v (list 0 5 7)))) (map (lambda (p) (at g (first p) (second p))) region))))) (if (= (length colors) 1) (set-cell out r c (first colors)) out))))))"
+  },
+  {
+    "id": "H68",
+    "difficulty": "hard",
+    "title": "Execute the transform sequence",
+    "what_it_tests": "Interpret a symbolic operation list and compose multiple transforms.",
+    "staged_hint": "The top row is a program. The body is the data.",
+    "written_solution": "Read the nonzero entries in the first row as an ordered sequence of transforms: blue(1) → flip horizontal, red(2) → flip vertical, green(3) → 90° clockwise, yellow(4) → 180°. Crop the body to its nonzero bbox, apply the transforms in order, and output the resulting minimal grid.",
+    "program_name": "solve_H68",
+    "program_source": "def solve_H68(g):\n    ops=[v for v in g[0] if v!=0]\n    body=[row[:] for row in g[1:]]\n    body=crop_nonzero(body)\n    return apply_ops(body, ops)",
+    "program_solution": "(rule! (let ((dummy 0)) (define (nonzero-cells grid) (filter (lambda (p) (not (= (at grid (first p) (second p)) 0))) (grid-positions grid))) (define (crop-nonzero grid) (let ((cells (nonzero-cells grid))) (if (empty? cells) (list (list 0)) (let* ((bb (bbox-of-cells cells))) (subgrid grid (first bb) (second bb) (third bb) (fourth bb)))))) (define (t10-apply-ops grid ops) (let loop ((cur grid) (rest-ops ops)) (if (empty? rest-ops) cur (let ((op (first rest-ops))) (loop (cond ((= op 1) (flip-lr cur)) ((= op 2) (flip-ud cur)) ((= op 3) (rotate-cw cur)) ((= op 4) (rotate-180 cur)) (else cur)) (rest rest-ops)))))) (let* ((ops (filter (lambda (v) (not (= v 0))) (first g))) (body (subgrid g 1 0 (- (rows g) 1) (- (cols g) 1)))) (t10-apply-ops (crop-nonzero body) ops))))"
+  },
+  {
+    "id": "H69",
+    "difficulty": "hard",
+    "title": "Infer a color permutation from panels",
+    "what_it_tests": "Infer a symbolic recoloring rule from aligned example panels.",
+    "staged_hint": "Ignore geometry first: the supports already match. The hard part is the color mapping.",
+    "written_solution": "Split the input into three equal panels. The first and second panels have the same shape pattern but different colors; use corresponding positions to infer the color permutation, then recolor the third panel with that same mapping and output only the recolored third panel.",
+    "program_name": "solve_H69",
+    "program_source": "def solve_H69(g):\n    parts,_ = split_by_separator_cols(g, sep=9)\n    a,b,c = parts\n    mapping={}\n    h,w=dims(a)\n    for r in range(h):\n        for col in range(w):\n            va,vb=a[r][col], b[r][col]\n            if va!=0:\n                mapping[va]=vb\n    out=blank(h,w,0)\n    for r in range(h):\n        for col in range(w):\n            v=c[r][col]\n            if v!=0:\n                out[r][col]=mapping.get(v,v)\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (define (t10-alist-ref pairs key default) (let ((hits (filter (lambda (p) (= (first p) key)) pairs))) (if (empty? hits) default (second (first hits))))) (define (t10-split-by-sep-cols grid sep) (let loop ((c 0) (last 0) (acc (list))) (cond ((= c (cols grid)) (reverse (if (> c last) (cons (subgrid grid 0 last (- (rows grid) 1) (- c 1)) acc) acc))) ((all? (lambda (r) (= (at grid r c) sep)) (range (rows grid))) (loop (+ c 1) (+ c 1) (if (> c last) (cons (subgrid grid 0 last (- (rows grid) 1) (- c 1)) acc) acc))) (else (loop (+ c 1) last acc))))) (let* ((parts (t10-split-by-sep-cols g 9)) (a (first parts)) (b (second parts)) (query (third parts)) (pairs (filter (lambda (p) (not (= (first p) 0))) (for*/list ((r (in-range (rows a))) (c (in-range (cols a)))) (list (at a r c) (at b r c)))))) (grid-from-fn (rows a) (cols a) (lambda (r c) (let ((v (at query r c))) (if (= v 0) 0 (t10-alist-ref pairs v v))))))))"
+  },
+  {
+    "id": "H70",
+    "difficulty": "hard",
+    "title": "Sort, pack, and recolor the shape inventory",
+    "what_it_tests": "Combine object normalization, size ordering, palette assignment, and packing.",
+    "staged_hint": "There are four separate subproblems: extract, normalize, order, then place.",
+    "written_solution": "Use the top row as a palette. In the body, extract all placeholder-color components, normalize each one, sort them by size from largest to smallest, recolor them in palette order, and pack them left-to-right with one background column between shapes on the smallest possible background canvas.",
+    "program_name": "solve_H70",
+    "program_source": "def solve_H70(g):\n    palette=[v for v in g[0] if v!=0]\n    body=[row[:] for row in g[1:]]\n    comps=[cells for v,cells in components_by_color(body, ignore=(0,)) if v==8]\n    comps=sorted(comps, key=lambda cells: (-len(cells), bbox(cells)))\n    shapes=[]\n    maxh=0\n    for cells,color in zip(comps,palette):\n        shp,(sh,sw),_ = normalize_cells(cells)\n        shapes.append((shp,sh,sw,color))\n        maxh=max(maxh,sh)\n    totalw=sum(sw for _,_,sw,_ in shapes) + max(0,len(shapes)-1)\n    out=blank(maxh,totalw,0)\n    x=0\n    for shp,sh,sw,color in shapes:\n        top=maxh-sh\n        for r,c in shp:\n            out[top+r][x+c]=color\n        x += sw+1\n    return out",
+    "program_solution": "(rule! (let ((dummy 0)) (define (e8b-list< a b) (cond ((empty? a) #f) ((< (first a) (first b)) #t) ((> (first a) (first b)) #f) (else (e8b-list< (rest a) (rest b))))) (define (t10-norm-cells cells) (let* ((bb (bbox-of-cells cells)) (r0 (first bb)) (c0 (second bb)) (r1 (third bb)) (c1 (fourth bb))) (list (map (lambda (p) (list (- (first p) r0) (- (second p) c0))) cells) (+ 1 (- r1 r0)) (+ 1 (- c1 c0)) r0 c0))) (let* ((palette (filter (lambda (v) (not (= v 0))) (first g))) (body (subgrid g 1 0 (- (rows g) 1) (- (cols g) 1))) (objs (sort (filter (lambda (obj) (= (obj-color obj) 8)) (objects body 0)) (lambda (a b) (or (> (obj-size a) (obj-size b)) (and (= (obj-size a) (obj-size b)) (e8b-list< (obj-bbox a) (obj-bbox b))))))) (infos (let loop ((rest-objs objs) (rest-palette palette) (acc (list))) (if (or (empty? rest-objs) (empty? rest-palette)) (reverse acc) (let* ((info (t10-norm-cells (obj-cells (first rest-objs)))) (offs (first info)) (sh (second info)) (sw (third info))) (loop (rest rest-objs) (rest rest-palette) (cons (list offs sh sw (first rest-palette)) acc))))))) (let* ((maxh (apply max (map second infos))) (totalw (+ (apply + (map third infos)) (max 0 (- (length infos) 1))))) (let loop ((rest-infos infos) (x 0) (out (empty-grid maxh totalw 0))) (if (empty? rest-infos) out (let* ((info (first rest-infos)) (offs (first info)) (sh (second info)) (sw (third info)) (color (fourth info)) (top (- maxh sh)) (out2 (for/fold ((acc out)) ((p (in-list offs))) (set-cell acc (+ top (first p)) (+ x (second p)) color)))) (loop (rest rest-infos) (+ x sw 1) out2))))))))"
+  }
+]

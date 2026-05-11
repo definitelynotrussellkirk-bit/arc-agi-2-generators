@@ -1,0 +1,51 @@
+{
+  "bank": "15b62ae3970a",
+  "title": "arc_additional_puzzles_21_set15_bundle",
+  "description": "(no description — add to BANK_DESCRIPTIONS in scripts/regen_bank_manifests.py)",
+  "schema_shape": "unknown",
+  "source": "unknown",
+  "solution_language": "unknown",
+  "files": {
+    "puzzles_json": "puzzles.json",
+    "solutions_py": "solutions.py",
+    "reference_md": "REFERENCE.md"
+  },
+  "stats": {
+    "n_puzzles": 21,
+    "n_train_pairs": 84,
+    "n_test_pairs": 42,
+    "difficulties": {
+      "easy": 7,
+      "medium": 7,
+      "hard": 7
+    },
+    "top_tags": [
+      "chamber partitioning",
+      "same-size",
+      "cropping",
+      "wall handling",
+      "overlay",
+      "relational output",
+      "analogy",
+      "transform inference",
+      "seed propagation",
+      "local diagonal rule"
+    ],
+    "common_fields": [
+      "difficulty",
+      "id",
+      "program_name",
+      "program_solution",
+      "program_source",
+      "skills",
+      "staged_hint",
+      "test",
+      "title",
+      "train",
+      "uses_new_primitive",
+      "written_solution"
+    ]
+  },
+  "generated_at": "2026-05-10 11:31:43 -0400",
+  "legacy_bank": "faefcc01b5ab"
+}

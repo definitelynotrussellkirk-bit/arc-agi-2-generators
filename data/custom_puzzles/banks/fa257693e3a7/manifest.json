@@ -1,0 +1,50 @@
+{
+  "bank": "fa257693e3a7",
+  "title": "arc_puzzle_bank_seventeenth_21_bundle",
+  "description": "(no description — add to BANK_DESCRIPTIONS in scripts/regen_bank_manifests.py)",
+  "schema_shape": "unknown",
+  "source": "unknown",
+  "solution_language": "unknown",
+  "files": {
+    "puzzles_json": "puzzles.json",
+    "solutions_py": "solutions.py",
+    "reference_md": "REFERENCE.md"
+  },
+  "stats": {
+    "n_puzzles": 21,
+    "n_train_pairs": 84,
+    "n_test_pairs": 21,
+    "difficulties": {
+      "easy": 7,
+      "medium": 7,
+      "hard": 7
+    },
+    "top_tags": [
+      "same-size transform",
+      "connected components",
+      "object selection",
+      "recoloring",
+      "horizontal symmetry completion",
+      "copying structure",
+      "color grouping",
+      "rectangle completion",
+      "column-wise packing",
+      "order preservation"
+    ],
+    "common_fields": [
+      "difficulty",
+      "id",
+      "program_language",
+      "program_solution",
+      "scaffold",
+      "skills",
+      "solver_name",
+      "test",
+      "title",
+      "train",
+      "written_solution"
+    ]
+  },
+  "generated_at": "2026-05-10 11:31:43 -0400",
+  "legacy_bank": "1bf017e88b32"
+}

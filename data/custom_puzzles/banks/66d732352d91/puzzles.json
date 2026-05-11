@@ -1,0 +1,149 @@
+[
+  {
+    "id": "E15",
+    "name": "Recolor the endpoints of green paths",
+    "difficulty": "easy",
+    "written_solution": "Every green(3) cell with exactly one green(3) cardinal neighbor becomes red(2). green(3) cells with two or more green(3) neighbors stay green(3), and background stays unchanged.",
+    "program_solution": "(rule!\n  (grid-from-fn (rows g) (cols g)\n    (lambda (r c)\n      (if (and (= (at g r c) 3)\n               (= (count-where (lambda (d)\n                                 (let ((nr (+ r (first d))) (nc (+ c (second d))))\n                                   (and (in-bounds? nr nc (rows g) (cols g)) (= (at g nr nc) 3))))\n                               cardinal-deltas)\n                  1))\n          2\n          (at g r c)))))"
+  },
+  {
+    "id": "E16",
+    "name": "Fill the centers of red Xs",
+    "difficulty": "easy",
+    "written_solution": "Whenever a black(0) cell has red(2) diagonal neighbors in all four diagonal directions, fill that center cell with blue(1). Nothing else changes.",
+    "program_solution": "(rule!\n  (grid-from-fn (rows g) (cols g)\n    (lambda (r c)\n      (if (and (= (at g r c) 0)\n               (all? (lambda (d) (= (safe-at g (+ r (first d)) (+ c (second d)) 0) 2)) diagonal-deltas))\n          1\n          (at g r c)))))"
+  },
+  {
+    "id": "E17",
+    "name": "Recolor orange components that touch exactly one border",
+    "difficulty": "easy",
+    "written_solution": "Find every orange(7) component. If a component touches exactly one outer border of the grid, recolor the whole component to cyan(8). Components touching zero borders or two or more borders stay orange(7).",
+    "program_solution": "(rule!\n  (let ((h (rows g)) (w (cols g)))\n    (define (side-count obj)\n      (+ (if (= (obj-r1 obj) 0) 1 0)\n         (if (= (obj-r2 obj) (- h 1)) 1 0)\n         (if (= (obj-c1 obj) 0) 1 0)\n         (if (= (obj-c2 obj) (- w 1)) 1 0)))\n    (for/fold ([out g]) ([obj (filter (lambda (o) (and (= (obj-color o) 7) (= (side-count o) 1))) (objects g 0))])\n      (paint-cells out (obj-cells obj) 8))))"
+  },
+  {
+    "id": "E18",
+    "name": "Shift red singletons one cell to the right",
+    "difficulty": "easy",
+    "written_solution": "Every isolated red(2) singleton moves one cell to the right. Its old cell becomes black(0). In these examples the destination is always empty.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (isolated-red? p)\n      (and (= (at g (first p) (second p)) 2)\n           (= (count-where (lambda (d) (= (safe-at g (+ (first p) (first d)) (+ (second p) (second d)) 0) 2)) cardinal-deltas) 0)))\n    (define base\n      (grid-from-fn (rows g) (cols g)\n        (lambda (r c)\n          (if (and (= (at g r c) 2) (isolated-red? (list r c)))\n              0\n              (at g r c)))))\n    (foldl (lambda (p out)\n             (let ((r (first p)) (c (+ (second p) 1)))\n               (if (and (< c (cols g)) (= (at g r c) 0))\n                   (set-cell out r c 2)\n                   out)))\n           base\n           (filter isolated-red? (find-color g 2)))))"
+  },
+  {
+    "id": "E19",
+    "name": "Recolor blue T-junction centers",
+    "difficulty": "easy",
+    "written_solution": "A blue(1) cell becomes yellow(4) exactly when it has blue(1) neighbors in three of the four cardinal directions. Plus-shape centers with four neighbors do not change.",
+    "program_solution": "(rule!\n  (grid-from-fn (rows g) (cols g)\n    (lambda (r c)\n      (if (and (= (at g r c) 1)\n               (= (count-where (lambda (d) (= (safe-at g (+ r (first d)) (+ c (second d)) 0) 1)) cardinal-deltas) 3))\n          4\n          (at g r c)))))"
+  },
+  {
+    "id": "E20",
+    "name": "Recolor exact magenta dominoes",
+    "difficulty": "easy",
+    "written_solution": "Find every 4-connected magenta(6) component of size exactly 2. Recolor those size-2 dominoes to orange(7). Larger or smaller magenta(6) components stay magenta(6).",
+    "program_solution": "(rule!\n  (for/fold ([out g]) ([obj (filter (lambda (o) (and (= (obj-color o) 6) (= (obj-size o) 2))) (objects g 0))])\n    (paint-cells out (obj-cells obj) 7)))"
+  },
+  {
+    "id": "E21",
+    "name": "Complete 2x2 green almost-squares",
+    "difficulty": "easy",
+    "written_solution": "Whenever a 2x2 window contains exactly three green(3) cells and one black(0) cell, fill the missing corner with green(3).",
+    "program_solution": "(rule!\n  (let loop ((out g))\n    (let* ((hits (filter (lambda (p)\n                           (let* ((r (first p)) (c (second p))\n                                  (cells (list (list r c) (list (+ r 1) c) (list r (+ c 1)) (list (+ r 1) (+ c 1))))\n                                  (vals (map (lambda (q) (at out (first q) (second q))) cells)))\n                             (and (= (count-where (lambda (v) (= v 3)) vals) 3)\n                                  (= (count-where (lambda (v) (= v 0)) vals) 1))))\n                         (positions-in-rect 0 0 (- (rows g) 2) (- (cols g) 2)))))\n      (if (empty? hits)\n          out\n          (loop\n            (foldl (lambda (p acc)\n                     (let* ((r (first p)) (c (second p))\n                            (cells (list (list r c) (list (+ r 1) c) (list r (+ c 1)) (list (+ r 1) (+ c 1))))\n                            (zeros (filter (lambda (q) (= (at acc (first q) (second q)) 0)) cells)))\n                       (if (= (length zeros) 1)\n                           (set-cell acc (first (first zeros)) (second (first zeros)) 3)\n                           acc)))\n                   out hits))))))"
+  },
+  {
+    "id": "M15",
+    "name": "Solidify each object's bounding box",
+    "difficulty": "medium",
+    "written_solution": "For each connected nonzero object, compute its tight bbox and fill that entire rectangle with the object's own color.",
+    "program_solution": "(rule!\n  (for/fold ([out (empty-grid (rows g) (cols g) 0)]) ([obj (objects g 0)])\n    (paint-cells out (positions-in-rect (obj-r1 obj) (obj-c1 obj) (obj-r2 obj) (obj-c2 obj)) (obj-color obj))))"
+  },
+  {
+    "id": "M16",
+    "name": "XOR two shapes after top-left alignment",
+    "difficulty": "medium",
+    "written_solution": "Take the blue(1) object and the red(2) object. Crop each to its tight bbox and align both shapes to the top-left corner. Output cyan(8) in every cell occupied by exactly one of the two aligned shapes.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (has? p cells) (member? p cells))\n    (define s1 (normalize-cells (find-color g 1)))\n    (define s2 (normalize-cells (find-color g 2)))\n    (define b1 (bbox-of-cells s1))\n    (define b2 (bbox-of-cells s2))\n    (define out-h (max (if b1 (+ 1 (third b1)) 0) (if b2 (+ 1 (third b2)) 0)))\n    (define out-w (max (if b1 (+ 1 (fourth b1)) 0) (if b2 (+ 1 (fourth b2)) 0)))\n    (define res (append (filter (lambda (p) (not (has? p s2))) s1)\n                        (filter (lambda (p) (not (has? p s1))) s2)))\n    (if (empty? res)\n        (empty-grid 1 1 0)\n        (paint-cells (empty-grid out-h out-w 0) res 8))))"
+  },
+  {
+    "id": "M17",
+    "name": "Recolor components by size parity",
+    "difficulty": "medium",
+    "written_solution": "Each connected nonzero component is recolored by its size: odd-sized components become green(3) and even-sized components become cyan(8).",
+    "program_solution": "(rule!\n  (for/fold ([out (empty-grid (rows g) (cols g) 0)]) ([obj (objects g 0)])\n    (paint-cells out (obj-cells obj) (if (= (modulo (obj-size obj) 2) 1) 3 8))))"
+  },
+  {
+    "id": "M18",
+    "name": "Rotate the object 90° clockwise around the pivot",
+    "difficulty": "medium",
+    "written_solution": "Treat the red(2) cell as a anchor. Rotate every other nonzero cell 90° clockwise around that anchor and output only the rotated object on an otherwise black(0) grid.",
+    "program_solution": "(rule!\n  (let* ((pivot (first (find-color g 2)))\n         (pr (first pivot))\n         (pc (second pivot)))\n    (foldl (lambda (cell out)\n             (let* ((r (first cell)) (c (second cell)) (v (third cell))\n                    (dr (- r pr)) (dc (- c pc))\n                    (nr (+ pr dc)) (nc (- pc dr)))\n               (if (and (not (= v 0)) (not (= v 2)) (in-bounds? nr nc (rows g) (cols g)))\n                   (set-cell out nr nc v)\n                   out)))\n           (empty-grid (rows g) (cols g) 0)\n           (grid-cells g))))"
+  },
+  {
+    "id": "M19",
+    "name": "Fill the bounding rectangle of each color's markers",
+    "difficulty": "medium",
+    "written_solution": "For each non-background color separately, take all cells of that color and fill the tight bounding rectangle spanning them, using that same color.",
+    "program_solution": "(rule!\n  (for/fold ([out (empty-grid (rows g) (cols g) 0)]) ([color (in-list (non-bg-colors g 0))])\n    (let ((cells (find-color g color)))\n      (if (empty? cells)\n          out\n          (let ((bb (bbox-of-cells cells)))\n            (paint-cells out (positions-in-rect (first bb) (second bb) (third bb) (fourth bb)) color))))))"
+  },
+  {
+    "id": "M20",
+    "name": "Extract the object nearest the control marker",
+    "difficulty": "medium",
+    "written_solution": "Ignore the control marker 9. Among the remaining objects, choose the one whose nearest cell is closest in Manhattan distance to the marker. Output only that chosen object, cropped to its bbox.",
+    "program_solution": "(rule!\n  (let* ((marker (first (find-color g 9)))\n         (objs (objects (set-cell g (first marker) (second marker) 0) 0))\n         (best (first (sort objs\n                            (lambda (a b)\n                              (let ((da (apply min (map (lambda (p) (pos-manhattan p marker)) (obj-cells a))))\n                                    (db (apply min (map (lambda (p) (pos-manhattan p marker)) (obj-cells b)))))\n                                (cond [(not (= da db)) (< da db)]\n                                      [(not (= (obj-r1 a) (obj-r1 b))) (< (obj-r1 a) (obj-r1 b))]\n                                      [else (< (obj-c1 a) (obj-c1 b))]))))))\n         (cells (normalize-cells (obj-cells best)))\n         (bb (bbox-of-cells cells)))\n    (paint-cells (empty-grid (+ 1 (third bb)) (+ 1 (fourth bb)) 0) cells (obj-color best))))"
+  },
+  {
+    "id": "M21",
+    "name": "Complete each object to 180° symmetry in its own box",
+    "difficulty": "medium",
+    "written_solution": "For each connected object, look only inside its own bbox. Add the cells needed so that the object becomes 180-degree rotationally symmetric within that box.",
+    "program_solution": "(rule!\n  (for/fold ([out g]) ([obj (objects g 0)])\n    (foldl (lambda (p acc)\n             (let ((rr (- (+ (obj-r1 obj) (obj-r2 obj)) (first p)))\n                   (cc (- (+ (obj-c1 obj) (obj-c2 obj)) (second p))))\n               (set-cell acc rr cc (obj-color obj))))\n           out (obj-cells obj))))"
+  },
+  {
+    "id": "H15",
+    "name": "Control cell chooses OR, XOR, or AND",
+    "difficulty": "hard",
+    "written_solution": "Crop the blue(1) object and red(2) object to their own bounding boxes and align them to the top-left. The control cell selects the merge rule: 3 → OR, 4 → XOR, and 5 → AND. Paint the resulting aligned shape in cyan(8).",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (has? p cells) (member? p cells))\n    (define a (normalize-cells (find-color g 1)))\n    (define b (normalize-cells (find-color g 2)))\n    (define ba (bbox-of-cells a))\n    (define bb (bbox-of-cells b))\n    (define out-h (max (if ba (+ 1 (third ba)) 0) (if bb (+ 1 (third bb)) 0)))\n    (define out-w (max (if ba (+ 1 (fourth ba)) 0) (if bb (+ 1 (fourth bb)) 0)))\n    (define ctrl (at g 0 0))\n    (define res\n      (cond [(= ctrl 3) (remove-duplicates (append a b))]\n            [(= ctrl 4) (append (filter (lambda (p) (not (has? p b))) a)\n                                (filter (lambda (p) (not (has? p a))) b))]\n            [(= ctrl 5) (filter (lambda (p) (has? p b)) a)]\n            [else (list)]))\n    (if (empty? res)\n        (empty-grid 1 1 0)\n        (paint-cells (empty-grid out-h out-w 0) res 8))))"
+  },
+  {
+    "id": "H16",
+    "name": "Control cell chooses the template rotation",
+    "difficulty": "hard",
+    "written_solution": "Take the blue(1) template, crop it to its bbox, and rotate it according to the control cell: 2 → 0°, 3 → 90° clockwise, 4 → 180°, and 5 → 270° clockwise. Output the rotated template in cyan(8), cropped to fit.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (cell<? a b)\n      (or (< (first a) (first b))\n          (and (= (first a) (first b)) (< (second a) (second b)))))\n    (define (norm cells) (sort (normalize-cells cells) cell<?))\n    (define (rot cells) (norm (rotate-cells-cw cells)))\n    (define ctrl (find-first (lambda (v) (or (= v 2) (= v 3) (= v 4) (= v 5))) (apply append g)))\n    (define turns (cond [(= ctrl 2) 0] [(= ctrl 3) 1] [(= ctrl 4) 2] [else 3]))\n    (define cells\n      (let loop ((k turns) (x (norm (find-color g 1))))\n        (if (= k 0) x (loop (- k 1) (rot x)))))\n    (let ((bb (bbox-of-cells cells)))\n      (paint-cells (empty-grid (+ 1 (third bb)) (+ 1 (fourth bb)) 0) cells 8))))"
+  },
+  {
+    "id": "H17",
+    "name": "Fill each frame by the largest enclosed object",
+    "difficulty": "hard",
+    "written_solution": "Each gray(5) rectangular frame contains several small colored objects. For each frame, find the largest enclosed object by cell count and fill the entire interior of that frame with the winner's color, keeping the gray(5) border.",
+    "program_solution": "(rule!\n  (let ((out0 (grid-from-fn (rows g) (cols g) (lambda (r c) (if (= (at g r c) 5) 5 0)))))\n    (for/fold ([out out0]) ([frame (filter (lambda (o) (= (obj-color o) 5)) (objects g 0))])\n      (let* ((inside (bbox-interior-cells frame))\n             (inners (filter (lambda (o)\n                               (and (not (= (obj-color o) 5))\n                                    (all? (lambda (p)\n                                            (and (> (first p) (obj-r1 frame)) (< (first p) (obj-r2 frame))\n                                                 (> (second p) (obj-c1 frame)) (< (second p) (obj-c2 frame))))\n                                          (obj-cells o))))\n                             (objects g 0))))\n        (if (empty? inners)\n            out\n            (let ((best (first (sort inners (lambda (a b)\n                                             (cond [(not (= (obj-size a) (obj-size b))) (> (obj-size a) (obj-size b))]\n                                                   [else (> (obj-color a) (obj-color b))]))))))\n              (paint-cells out inside (obj-color best))))))))"
+  },
+  {
+    "id": "H18",
+    "name": "Voronoi-fill the chamber from its seeds",
+    "difficulty": "hard",
+    "written_solution": "Gray(5) cells are walls. Nonzero non-wall cells are colored seeds. Fill every reachable empty cell with the color of the nearest seed, measuring distance through open cells; when distances tie, the smaller color wins.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define seeds (filter (lambda (p) (let ((v (at g (first p) (second p)))) (and (not (= v 0)) (not (= v 5))))) (grid-positions g)))\n    (define (dist-from start)\n      (define dist (make-hash))\n      (define queue (list start))\n      (hash-set! dist start 0)\n      (define (bfs)\n        (unless (empty? queue)\n          (let* ((p (first queue)) (r (first p)) (c (second p)) (d0 (hash-ref dist p)))\n            (set! queue (rest queue))\n            (for ([d (in-list cardinal-deltas)])\n              (let ((nr (+ r (first d))) (nc (+ c (second d))))\n                (when (and (in-bounds? nr nc (rows g) (cols g))\n                           (not (= (at g nr nc) 5))\n                           (not (hash-has-key? dist (list nr nc))))\n                  (hash-set! dist (list nr nc) (+ d0 1))\n                  (set! queue (append queue (list (list nr nc)))))))\n            (bfs))))\n      (bfs)\n      dist)\n    (define seed-dists (map (lambda (p) (list p (at g (first p) (second p)) (dist-from p))) seeds))\n    (grid-from-fn (rows g) (cols g)\n      (lambda (r c)\n        (if (= (at g r c) 5)\n            5\n            (let* ((p (list r c))\n                   (cands (filter (lambda (sd) (hash-has-key? (third sd) p)) seed-dists)))\n              (if (empty? cands)\n                  0\n                  (second (first (sort cands\n                                       (lambda (a b)\n                                         (let ((da (hash-ref (third a) p)) (db (hash-ref (third b) p)))\n                                           (if (= da db) (< (second a) (second b)) (< da db))))))))))))))"
+  },
+  {
+    "id": "H19",
+    "name": "Extract the nth-largest object",
+    "difficulty": "hard",
+    "written_solution": "The top-left control cell gives a rank n. Ignore that control cell, sort the remaining objects by size from largest to smallest, take the nth object, and output it alone cropped to its bbox.",
+    "program_solution": "(rule!\n  (let* ((n (at g 0 0))\n         (g2 (set-cell g 0 0 0))\n         (objs (sort (objects g2 0)\n                     (lambda (a b)\n                       (cond [(not (= (obj-size a) (obj-size b))) (> (obj-size a) (obj-size b))]\n                             [(not (= (obj-r1 a) (obj-r1 b))) (< (obj-r1 a) (obj-r1 b))]\n                             [else (< (obj-c1 a) (obj-c1 b))]))))\n         (target (list-ref objs (- n 1)))\n         (cells (normalize-cells (obj-cells target)))\n         (bb (bbox-of-cells cells)))\n    (paint-cells (empty-grid (+ 1 (third bb)) (+ 1 (fourth bb)) 0) cells (obj-color target))))"
+  },
+  {
+    "id": "H20",
+    "name": "Complete 90° rotational symmetry around the pivot",
+    "difficulty": "hard",
+    "written_solution": "The red(2) cell is the rotation center. Every blue(1) cell must be completed into its full 4-way orbit under 90-degree rotations around that anchor. Keep the anchor and paint all rotated copies blue(1).",
+    "program_solution": "(rule!\n  (let* ((pivot (first (find-color g 2)))\n         (pr (first pivot))\n         (pc (second pivot)))\n    (foldl (lambda (p out)\n             (let* ((dr0 (- (first p) pr)) (dc0 (- (second p) pc))\n                    (rots (list (list dr0 dc0) (list dc0 (- dr0)) (list (- dr0) (- dc0)) (list (- dc0) dr0))))\n               (foldl (lambda (d acc)\n                        (let ((nr (+ pr (first d))) (nc (+ pc (second d))))\n                          (if (in-bounds? nr nc (rows g) (cols g))\n                              (set-cell acc nr nc 1)\n                              acc)))\n                      out rots)))\n           g (find-color g 1))))"
+  },
+  {
+    "id": "H21",
+    "name": "Fill each compartment with its majority marker color",
+    "difficulty": "hard",
+    "written_solution": "Gray(5) walls partition the grid into compartments. Inside each compartment, count the colored markers; then fill the entire compartment with the majority marker color, leaving the walls intact.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (passable? r c v) (not (= v 5)))\n    (define seen (make-hash))\n    (define comps (list))\n    (for ([p (in-list (grid-positions g))])\n      (let ((r (first p)) (c (second p)))\n        (when (and (not (hash-has-key? seen p)) (passable? r c (at g r c)))\n          (let ((comp (connected-region g r c passable?)))\n            (for ([q (in-list comp)]) (hash-set! seen q #t))\n            (set! comps (cons comp comps))))))\n    (for/fold ([out (grid-from-fn (rows g) (cols g) (lambda (r c) (if (= (at g r c) 5) 5 0)))]) ([comp comps])\n      (let* ((counts (map (lambda (color) (list color (count-where (lambda (p) (= (at g (first p) (second p)) color)) comp))) (list 2 3 4)))\n             (best (first (sort counts (lambda (a b) (if (= (second a) (second b)) (< (first a) (first b)) (> (second a) (second b))))))))\n        (if (= (second best) 0)\n            out\n            (paint-cells out comp (first best)))))))"
+  }
+]

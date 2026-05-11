@@ -1,0 +1,50 @@
+{
+  "bank": "a2dc1b8469da",
+  "title": "arc_puzzle_bank_fourteenth_21_bundle",
+  "description": "(no description — add to BANK_DESCRIPTIONS in scripts/regen_bank_manifests.py)",
+  "schema_shape": "unknown",
+  "source": "unknown",
+  "solution_language": "unknown",
+  "files": {
+    "puzzles_json": "puzzles.json",
+    "solutions_py": "solutions.py",
+    "reference_md": "REFERENCE.md"
+  },
+  "stats": {
+    "n_puzzles": 21,
+    "n_train_pairs": 84,
+    "n_test_pairs": 21,
+    "difficulties": {
+      "easy": 7,
+      "medium": 7,
+      "hard": 7
+    },
+    "top_tags": [
+      "same-size transform",
+      "panel parsing",
+      "same-color endpoint matching",
+      "rotation",
+      "row-wise segment detection",
+      "column-wise span detection",
+      "reflection across divider",
+      "bbox from sparse cues",
+      "rectangle border drawing",
+      "connected components"
+    ],
+    "common_fields": [
+      "difficulty",
+      "id",
+      "program_language",
+      "program_solution",
+      "scaffold",
+      "skills",
+      "solver_name",
+      "test",
+      "title",
+      "train",
+      "written_solution"
+    ]
+  },
+  "generated_at": "2026-05-10 11:31:43 -0400",
+  "legacy_bank": "b942d923cc60"
+}

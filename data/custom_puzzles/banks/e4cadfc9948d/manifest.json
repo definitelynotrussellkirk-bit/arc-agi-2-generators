@@ -1,0 +1,51 @@
+{
+  "bank": "e4cadfc9948d",
+  "title": "arc_additional_puzzles_21_set8",
+  "description": "(no description — add to BANK_DESCRIPTIONS in scripts/regen_bank_manifests.py)",
+  "schema_shape": "unknown",
+  "source": "unknown",
+  "solution_language": "unknown",
+  "files": {
+    "puzzles_json": "puzzles.json",
+    "solutions_py": "solutions.py",
+    "reference_md": "REFERENCE.md"
+  },
+  "stats": {
+    "n_puzzles": 21,
+    "n_train_pairs": 84,
+    "n_test_pairs": 42,
+    "difficulties": {
+      "easy": 7,
+      "medium": 7,
+      "hard": 7
+    },
+    "top_tags": [
+      "cropping",
+      "reflection",
+      "guide line",
+      "order preservation",
+      "dynamic output",
+      "matrix slicing",
+      "containment",
+      "command transform",
+      "same-color symmetry",
+      "endpoint pairing"
+    ],
+    "common_fields": [
+      "difficulty",
+      "id",
+      "program_name",
+      "program_solution",
+      "program_source",
+      "skills",
+      "staged_hint",
+      "test",
+      "title",
+      "train",
+      "uses_new_primitive",
+      "written_solution"
+    ]
+  },
+  "generated_at": "2026-05-10 11:31:43 -0400",
+  "legacy_bank": "f1134f81cd8e"
+}

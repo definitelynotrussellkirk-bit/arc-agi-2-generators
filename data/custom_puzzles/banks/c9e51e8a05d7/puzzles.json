@@ -1,0 +1,149 @@
+[
+  {
+    "id": "E22",
+    "name": "Mark the interior of straight blue segments",
+    "difficulty": "easy",
+    "written_solution": "Every blue(1) cell that lies strictly inside a straight horizontal or vertical blue(1) segment becomes red(2). Endpoints stay blue(1) and background stays unchanged.",
+    "program_solution": "(rule!\n  (grid-from-fn (rows g) (cols g)\n    (lambda (r c)\n      (let ((left (= (safe-at g r (- c 1) 0) 1))\n            (right (= (safe-at g r (+ c 1) 0) 1))\n            (up (= (safe-at g (- r 1) c 0) 1))\n            (down (= (safe-at g (+ r 1) c 0) 1)))\n        (if (and (= (at g r c) 1)\n                 (or (and left right (not up) (not down))\n                     (and up down (not left) (not right))))\n            2\n            (at g r c))))))"
+  },
+  {
+    "id": "E23",
+    "name": "Fill one-cell vertical green gaps",
+    "difficulty": "easy",
+    "written_solution": "Whenever two green(3) cells appear in the same column with exactly one empty cell between them, fill that middle cell with red(2). Everything else stays as it is.",
+    "program_solution": "(rule!\n  (grid-from-fn (rows g) (cols g)\n    (lambda (r c)\n      (if (and (> r 0) (< r (- (rows g) 1)) (= (at g r c) 0) (= (at g (- r 1) c) 3) (= (at g (+ r 1) c) 3))\n          2\n          (at g r c)))))"
+  },
+  {
+    "id": "E24",
+    "name": "Recolor yellow components that touch exactly two borders",
+    "difficulty": "easy",
+    "written_solution": "Find every yellow(4) component and count how many grid borders it touches. If it touches exactly two borders, recolor that whole component to cyan(8). Leave the other yellow(4) components unchanged.",
+    "program_solution": "(rule!\n  (let ((h (rows g)) (w (cols g)))\n    (define (side-count obj)\n      (+ (if (= (obj-r1 obj) 0) 1 0)\n         (if (= (obj-r2 obj) (- h 1)) 1 0)\n         (if (= (obj-c1 obj) 0) 1 0)\n         (if (= (obj-c2 obj) (- w 1)) 1 0)))\n    (for/fold ([out g]) ([obj (filter (lambda (o) (and (= (obj-color o) 4) (= (side-count o) 2))) (objects g 0))])\n      (paint-cells out (obj-cells obj) 8))))"
+  },
+  {
+    "id": "E25",
+    "name": "Shift magenta singletons down-right",
+    "difficulty": "easy",
+    "written_solution": "Every magenta(6) singleton moves one cell diagonally down-right. The original magenta(6) cells disappear, while the gray(5) obstacles stay fixed.",
+    "program_solution": "(rule!\n  (foldl (lambda (p out)\n           (let ((nr (+ (first p) 1)) (nc (+ (second p) 1)))\n             (if (in-bounds? nr nc (rows g) (cols g))\n                 (set-cell out nr nc 6)\n                 out)))\n         (paint-cells g (find-color g 6) 0)\n         (find-color g 6)))"
+  },
+  {
+    "id": "E26",
+    "name": "Recolor exact cyan line triominoes",
+    "difficulty": "easy",
+    "written_solution": "Look at each cyan(8) component. If it has exactly three cells and those three cells form a straight horizontal or vertical line, recolor that component to orange(7). Leave every other cyan(8) component unchanged.",
+    "program_solution": "(rule!\n  (for/fold ([out g]) ([obj (filter (lambda (o)\n                                      (and (= (obj-color o) 8)\n                                           (= (obj-size o) 3)\n                                           (or (= (obj-r1 o) (obj-r2 o)) (= (obj-c1 o) (obj-c2 o)))))\n                                    (objects g 0))])\n    (paint-cells out (obj-cells obj) 7)))"
+  },
+  {
+    "id": "E27",
+    "name": "Complete green 2x2 squares from diagonal pairs",
+    "difficulty": "easy",
+    "written_solution": "Whenever a 2x2 block contains two green(3) cells on one diagonal and the other two cells are empty, fill the missing two cells with green(3) to complete the square.",
+    "program_solution": "(rule!\n  (for*/fold ([out g]) ([r (in-range (- (rows g) 1))] [c (in-range (- (cols g) 1))])\n    (let ((a (at g r c)) (b (at g r (+ c 1))) (d (at g (+ r 1) c)) (e (at g (+ r 1) (+ c 1))))\n      (cond\n        [(and (= a 3) (= e 3) (= b 0) (= d 0))\n         (set-cell (set-cell out r (+ c 1) 3) (+ r 1) c 3)]\n        [(and (= b 3) (= d 3) (= a 0) (= e 0))\n         (set-cell (set-cell out r c 3) (+ r 1) (+ c 1) 3)]\n        [else out]))))"
+  },
+  {
+    "id": "E28",
+    "name": "Recolor the smallest red component",
+    "difficulty": "easy",
+    "written_solution": "Among all red(2) connected components, find the unique smallest one by cell count and recolor it to blue(1). The other red(2) components stay red(2).",
+    "program_solution": "(rule!\n  (let* ((candidates (filter (lambda (o) (= (obj-color o) 2)) (objects g 0)))\n         (target (first (sort candidates\n                              (lambda (a b)\n                                (cond [(not (= (obj-size a) (obj-size b))) (< (obj-size a) (obj-size b))]\n                                      [(not (= (obj-r1 a) (obj-r1 b))) (< (obj-r1 a) (obj-r1 b))]\n                                      [else (< (obj-c1 a) (obj-c1 b))]))))))\n    (paint-cells g (obj-cells target) 1)))"
+  },
+  {
+    "id": "M22",
+    "name": "Complete horizontal mirror symmetry in each box",
+    "difficulty": "medium",
+    "written_solution": "For every connected object, use its own tight bbox as a mirror box. Keep the original cells and add their left-right reflections inside that same box, in the same color.",
+    "program_solution": "(rule!\n  (for/fold ([out g]) ([obj (objects g 0)])\n    (foldl (lambda (p acc)\n             (set-cell acc (first p) (- (+ (obj-c1 obj) (obj-c2 obj)) (second p)) (obj-color obj)))\n           out (obj-cells obj))))"
+  },
+  {
+    "id": "M23",
+    "name": "Rotate each object 90° clockwise in its box",
+    "difficulty": "medium",
+    "written_solution": "Treat each object independently. Take its tight square bbox, rotate the object 90° clockwise inside that box, and output only the rotated version of each object.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (cell<? a b)\n      (or (< (first a) (first b))\n          (and (= (first a) (first b)) (< (second a) (second b)))))\n    (define (rot cells) (sort (normalize-cells (rotate-cells-cw cells)) cell<?))\n    (for/fold ([out (empty-grid (rows g) (cols g) 0)]) ([obj (objects g 0)])\n      (paint-cells out\n                   (map (lambda (p) (list (+ (obj-r1 obj) (first p)) (+ (obj-c1 obj) (second p))))\n                        (rot (obj-cells obj)))\n                   (obj-color obj)))))"
+  },
+  {
+    "id": "M24",
+    "name": "Move the object by the source-to-target vector",
+    "difficulty": "medium",
+    "written_solution": "There is one non-marker object plus a source marker red(2) and a destination marker green(3). Compute the vector from red(2) to green(3), translate the object by that vector, and remove the markers and the original object.",
+    "program_solution": "(rule!\n  (let* ((src (first (find-color g 2)))\n         (dst (first (find-color g 3)))\n         (dr (- (first dst) (first src)))\n         (dc (- (second dst) (second src))))\n    (foldl (lambda (cell out)\n             (let* ((r (first cell)) (c (second cell)) (v (third cell))\n                    (nr (+ r dr)) (nc (+ c dc)))\n               (if (and (not (= v 0)) (not (= v 2)) (not (= v 3)) (in-bounds? nr nc (rows g) (cols g)))\n                   (set-cell out nr nc v)\n                   out)))\n           (empty-grid (rows g) (cols g) 0)\n           (grid-cells g))))"
+  },
+  {
+    "id": "M25",
+    "name": "Extract the widest object",
+    "difficulty": "medium",
+    "written_solution": "Compare the objects by the width of their tight bounding boxes. Select the unique widest object, crop to its own bbox, and output just that cropped object.",
+    "program_solution": "(rule!\n  (let* ((target (first (sort (objects g 0)\n                              (lambda (a b)\n                                (let ((wa (obj-w a)) (wb (obj-w b)))\n                                  (if (= wa wb) (> (obj-size a) (obj-size b)) (> wa wb)))))))\n         (bb (obj-bbox target)))\n    (subgrid g (first bb) (second bb) (third bb) (fourth bb))))"
+  },
+  {
+    "id": "M26",
+    "name": "Union two shapes after top-left alignment",
+    "difficulty": "medium",
+    "written_solution": "Take the shape made by blue(1) and the shape made by red(2). Normalize both to their own top-left corners, overlay them, and output the union as green(3) in the minimal bbox.",
+    "program_solution": "(rule!\n  (let* ((union-cells (remove-duplicates (append (normalize-cells (find-color g 1)) (normalize-cells (find-color g 2)))))\n         (bb (bbox-of-cells union-cells)))\n    (if bb\n        (paint-cells (empty-grid (+ 1 (third bb)) (+ 1 (fourth bb)) 0) union-cells 3)\n        (empty-grid 1 1 0))))"
+  },
+  {
+    "id": "M27",
+    "name": "Complete main-diagonal symmetry in each box",
+    "difficulty": "medium",
+    "written_solution": "For each object, look at its tight square bbox and reflect the object across that box's main diagonal. Keep the original cells and add the reflected ones in the same color.",
+    "program_solution": "(rule!\n  (for/fold ([out g]) ([obj (objects g 0)])\n    (foldl (lambda (p acc)\n             (let ((nr (+ (obj-r1 obj) (- (second p) (obj-c1 obj))))\n                   (nc (+ (obj-c1 obj) (- (first p) (obj-r1 obj)))))\n               (set-cell acc nr nc (obj-color obj))))\n           out (obj-cells obj))))"
+  },
+  {
+    "id": "M28",
+    "name": "Complete 90° rotational symmetry in each box",
+    "difficulty": "medium",
+    "written_solution": "For each object, use its tight square bbox and add the 90°, 180°, and 270° rotations of the object's cells inside that same box. The result is the full 4-way rotational closure of each object.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (cell<? a b)\n      (or (< (first a) (first b))\n          (and (= (first a) (first b)) (< (second a) (second b)))))\n    (define (norm cells) (sort (normalize-cells cells) cell<?))\n    (define (rot cells) (norm (rotate-cells-cw cells)))\n    (for/fold ([out g]) ([obj (objects g 0)])\n      (let loop ((k 0) (shape (norm (obj-cells obj))) (acc out))\n        (if (= k 4)\n            acc\n            (loop (+ k 1)\n                  (rot shape)\n                  (paint-cells acc\n                               (map (lambda (p) (list (+ (obj-r1 obj) (first p)) (+ (obj-c1 obj) (second p)))) shape)\n                               (obj-color obj))))))))"
+  },
+  {
+    "id": "H22",
+    "name": "Control-select a rank, then transform and extract",
+    "difficulty": "hard",
+    "written_solution": "The top-left control cell chooses which object to select by size rank: 1 → smallest, 2 → middle, 3 → largest. The top-right control cell chooses the transformation: 4 → identity, 5 → horizontal mirror, 6=90° clockwise. Select the chosen object, apply the chosen transform, and output only that transformed object as a tight crop.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (cell<? a b)\n      (or (< (first a) (first b))\n          (and (= (first a) (first b)) (< (second a) (second b)))))\n    (define (norm cells) (sort (normalize-cells cells) cell<?))\n    (define (hmirror cells)\n      (let* ((n (norm cells)) (cmax (apply max (map second n))))\n        (norm (map (lambda (p) (list (first p) (- cmax (second p)))) n))))\n    (define rank (at g 0 0))\n    (define transform (at g 0 (- (cols g) 1)))\n    (define objs (sort (filter (lambda (o) (or (= (obj-color o) 7) (= (obj-color o) 8) (= (obj-color o) 9))) (objects g 0))\n                       (lambda (a b) (< (obj-size a) (obj-size b)))))\n    (define target (cond [(= rank 1) (first objs)]\n                         [(= rank 2) (list-ref objs (quotient (length objs) 2))]\n                         [else (last objs)]))\n    (define cells0 (norm (obj-cells target)))\n    (define cells (cond [(= transform 4) cells0]\n                        [(= transform 5) (hmirror cells0)]\n                        [else (norm (rotate-cells-cw cells0))]))\n    (let ((bb (bbox-of-cells cells)))\n      (paint-cells (empty-grid (+ 1 (third bb)) (+ 1 (fourth bb)) 0) cells (obj-color target)))))"
+  },
+  {
+    "id": "H23",
+    "name": "Fill chambers only when exactly one seed is present",
+    "difficulty": "hard",
+    "written_solution": "Walls are gray(5). Split the non-wall area into chambers. If a chamber contains exactly one colored seed, flood-fill the whole chamber with that seed's color. If it contains zero seeds or more than one seed, leave the chamber empty. Keep the walls unchanged.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (passable? r c v) (not (= v 5)))\n    (define seen (make-hash))\n    (define comps (list))\n    (for ([p (in-list (grid-positions g))])\n      (let ((r (first p)) (c (second p)))\n        (when (and (not (hash-has-key? seen p)) (passable? r c (at g r c)))\n          (let ((comp (connected-region g r c passable?)))\n            (for ([q (in-list comp)]) (hash-set! seen q #t))\n            (set! comps (cons comp comps))))))\n    (for/fold ([out (grid-from-fn (rows g) (cols g) (lambda (r c) (if (= (at g r c) 5) 5 0)))]) ([comp comps])\n      (let ((seeds (filter (lambda (p) (let ((v (at g (first p) (second p)))) (or (= v 1) (= v 2) (= v 3)))) comp)))\n        (if (= (length seeds) 1)\n            (paint-cells out comp (at g (first (first seeds)) (second (first seeds))))\n            out)))))"
+  },
+  {
+    "id": "H24",
+    "name": "Reflect blue seeds across both pivot axes",
+    "difficulty": "hard",
+    "written_solution": "The red(2) anchor 2 defines a horizontal and a vertical reflection axis through its row and column. For every blue(1) seed cell, add its reflections across the anchor row, the anchor column, and both at once. Keep the anchor unchanged.",
+    "program_solution": "(rule!\n  (let* ((pivot (first (find-color g 2)))\n         (pr (first pivot))\n         (pc (second pivot)))\n    (foldl (lambda (p out)\n             (let ((targets (list p (list (- (* 2 pr) (first p)) (second p))\n                                  (list (first p) (- (* 2 pc) (second p)))\n                                  (list (- (* 2 pr) (first p)) (- (* 2 pc) (second p))))))\n               (foldl (lambda (q acc)\n                        (if (pos-in-bounds? q (rows g) (cols g))\n                            (set-cell acc (first q) (second q) 1)\n                            acc))\n                      out targets)))\n           g (find-color g 1))))"
+  },
+  {
+    "id": "H25",
+    "name": "Subtract the aligned second shape from the first",
+    "difficulty": "hard",
+    "written_solution": "Extract the blue(1) shape and the red(2) shape, normalize both to their own top-left corners, and subtract the second from the first. Output the remaining cells as green(3) in a tight crop.",
+    "program_solution": "(rule!\n  (let* ((a (normalize-cells (find-color g 1)))\n         (b (normalize-cells (find-color g 2)))\n         (c (filter (lambda (p) (not (member? p b))) a)))\n    (if (empty? c)\n        (empty-grid 1 1 0)\n        (let* ((bb (bbox-of-cells c))\n               (norm (normalize-cells c))\n               (bb2 (bbox-of-cells norm)))\n          (paint-cells (empty-grid (+ 1 (third bb2)) (+ 1 (fourth bb2)) 0) norm 3)))))"
+  },
+  {
+    "id": "H26",
+    "name": "Copy the template to anchors with reflection controls",
+    "difficulty": "hard",
+    "written_solution": "The yellow(4) object is the template. Each anchor color selects how to copy it: 1 → identity, 2 → horizontal mirror, 3 → vertical mirror. For every anchor, place the corresponding transformed copy of the template with the anchor as the copy's top-left corner. The output contains only the copies, not the original template or the anchors.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (cell<? a b)\n      (or (< (first a) (first b))\n          (and (= (first a) (first b)) (< (second a) (second b)))))\n    (define (norm cells) (sort (normalize-cells cells) cell<?))\n    (define (hmirror cells)\n      (let* ((n (norm cells)) (cmax (apply max (map second n))))\n        (norm (map (lambda (p) (list (first p) (- cmax (second p)))) n))))\n    (define (vmirror cells)\n      (let* ((n (norm cells)) (rmax (apply max (map first n))))\n        (norm (map (lambda (p) (list (- rmax (first p)) (second p))) n))))\n    (define template (norm (find-color g 4)))\n    (foldl (lambda (anchor out)\n             (let* ((color (at g (first anchor) (second anchor)))\n                    (shape (cond [(= color 1) template] [(= color 2) (hmirror template)] [else (vmirror template)]))\n                    (placed (map (lambda (p) (list (+ (first anchor) (first p)) (+ (second anchor) (second p)))) shape)))\n               (paint-cells out placed 4)))\n           (empty-grid (rows g) (cols g) 0)\n           (filter (lambda (p) (let ((v (at g (first p) (second p)))) (or (= v 1) (= v 2) (= v 3)))) (grid-positions g)))))"
+  },
+  {
+    "id": "H27",
+    "name": "Extract the most deeply enclosed object",
+    "difficulty": "hard",
+    "written_solution": "Gray(5) rectangles are frames. For every non-frame object, count how many frames strictly enclose it. Select the object with the greatest enclosure depth and output only that object's tight crop.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define frames (filter (lambda (o) (= (obj-color o) 5)) (objects g 0)))\n    (define objs (filter (lambda (o) (not (= (obj-color o) 5))) (objects g 0)))\n    (define (depth obj)\n      (count-where (lambda (fr)\n                     (all? (lambda (p)\n                             (and (> (first p) (obj-r1 fr)) (< (first p) (obj-r2 fr))\n                                  (> (second p) (obj-c1 fr)) (< (second p) (obj-c2 fr))))\n                           (obj-cells obj)))\n                   frames))\n    (define target (first (sort objs (lambda (a b)\n                                       (let ((da (depth a)) (db (depth b)))\n                                         (if (= da db) (> (obj-size a) (obj-size b)) (> da db)))))))\n    (let* ((cells (normalize-cells (obj-cells target)))\n           (bb (bbox-of-cells cells)))\n      (paint-cells (empty-grid (+ 1 (third bb)) (+ 1 (fourth bb)) 0) cells (obj-color target)))))"
+  },
+  {
+    "id": "H28",
+    "name": "Paint color-matched row/column intersections",
+    "difficulty": "hard",
+    "written_solution": "Markers on the top row choose columns and markers on the left column choose rows. Paint an interior cell only when its row marker color matches its column marker color, and use that shared color at the intersection. Keep the border markers.",
+    "program_solution": "(rule!\n  (let* ((row-marks (filter (lambda (r) (let ((v (at g r 0))) (or (= v 1) (= v 2) (= v 3)))) (range 1 (rows g))))\n         (col-marks (filter (lambda (c) (let ((v (at g 0 c))) (or (= v 1) (= v 2) (= v 3)))) (range 1 (cols g)))))\n    (foldl (lambda (r out)\n             (foldl (lambda (c acc)\n                      (if (= (at g r 0) (at g 0 c))\n                          (set-cell acc r c (at g r 0))\n                          acc))\n                    out col-marks))\n           (grid-from-fn (rows g) (cols g)\n             (lambda (r c)\n               (if (or (and (= c 0) (member? r row-marks)) (and (= r 0) (member? c col-marks)))\n                   (at g r c)\n                   0)))\n           row-marks)))"
+  }
+]

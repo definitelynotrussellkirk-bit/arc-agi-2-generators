@@ -1,0 +1,149 @@
+[
+  {
+    "id": "E57",
+    "name": "Recolor exact 3x3 blue squares",
+    "difficulty": "easy",
+    "written_solution": "Find every blue(1) component that is a solid 3x3 square. Recolor the whole square to green(3). Leave all other blue(1) shapes unchanged.",
+    "program_solution": "(rule!\n  (for/fold ([out g]) ([obj (in-list (filter (lambda (o) (= (obj-color o) 1)) (objects g 0)))])\n    (if (and (= (obj-size obj) 9) (= (obj-h obj) 3) (= (obj-w obj) 3))\n        (paint-cells out (obj-cells obj) 3)\n        out)))"
+  },
+  {
+    "id": "E58",
+    "name": "Complete blue 2x2 squares from L-shapes",
+    "difficulty": "easy",
+    "written_solution": "Look at every 2x2 window. If it contains exactly three blue(1) cells and one background cell, fill the background cell with green(3). Leave existing blue(1) cells unchanged.",
+    "program_solution": "(rule!\n  (for*/fold ([out g]) ([r (in-range 0 (- (rows g) 1))] [c (in-range 0 (- (cols g) 1))])\n    (let* ((cells (list (list r c) (list r (+ c 1)) (list (+ r 1) c) (list (+ r 1) (+ c 1))))\n           (vals (map (lambda (p) (at g (first p) (second p))) cells))\n           (ones (count-where (lambda (v) (= v 1)) vals))\n           (zeros (filter (lambda (p) (= (at g (first p) (second p)) 0)) cells)))\n      (if (and (= ones 3) (= (length zeros) 1))\n          (set-cell out (first (first zeros)) (second (first zeros)) 3)\n          out))))"
+  },
+  {
+    "id": "E59",
+    "name": "Mark the centers of exact length-5 orange bars",
+    "difficulty": "easy",
+    "written_solution": "Find each orange(7) component that is a straight horizontal or vertical bar of exactly length 5. Recolor its middle cell to cyan(8). Leave all other orange(7) bars unchanged.",
+    "program_solution": "(rule!\n  (for/fold ([out g]) ([obj (in-list (filter (lambda (o) (and (= (obj-color o) 7) (= (obj-size o) 5))) (objects g 0)))])\n    (let* ((rs (remove-duplicates (map first (obj-cells obj))))\n           (cs (remove-duplicates (map second (obj-cells obj)))))\n      (cond [(and (= (length rs) 1) (= (length cs) 5))\n             (set-cell out (first rs) (list-ref (sort cs <) 2) 8)]\n            [(and (= (length cs) 1) (= (length rs) 5))\n             (set-cell out (list-ref (sort rs <) 2) (first cs) 8)]\n            [else out]))))"
+  },
+  {
+    "id": "E60",
+    "name": "Reflect singletons across the anti-diagonal",
+    "difficulty": "easy",
+    "written_solution": "For every nonzero cell, also place the same color at its reflection across the anti-diagonal of the square grid. Keep the original cells too.",
+    "program_solution": "(rule!\n  (let ((n (rows g)))\n    (for/fold ([out g]) ([cell (in-list (grid-cells g))])\n      (let ((r (first cell)) (c (second cell)) (v (third cell)))\n        (if (not (= v 0))\n            (set-cell out (- n 1 c) (- n 1 r) v)\n            out)))))"
+  },
+  {
+    "id": "E61",
+    "name": "Complete rectangles from three corner markers",
+    "difficulty": "easy",
+    "written_solution": "Each color marks three corners of an axis-aligned rectangle. Add the missing fourth corner in the same color.",
+    "program_solution": "(rule!\n  (for/fold ([out g]) ([color (in-list (filter (lambda (v) (not (= v 0))) (grid-colors g)))])\n    (let ((pts (find-color g color)))\n      (if (= (length pts) 3)\n          (let* ((rs (sort (remove-duplicates (map first pts)) <))\n                 (cs (sort (remove-duplicates (map second pts)) <)))\n            (if (and (= (length rs) 2) (= (length cs) 2))\n                (let* ((corners (for*/list ([r (in-list rs)] [c (in-list cs)]) (list r c)))\n                       (missing (filter (lambda (p) (not (member? p pts))) corners)))\n                  (if (= (length missing) 1)\n                      (set-cell out (first (first missing)) (second (first missing)) color)\n                      out))\n                out))\n          out))))"
+  },
+  {
+    "id": "E62",
+    "name": "Recolor exact blue 2x3 rectangles",
+    "difficulty": "easy",
+    "written_solution": "Find every blue(1) component that is a solid 2x3 or 3x2 rectangle. Recolor that whole rectangle to red(2). Leave other blue(1) shapes alone.",
+    "program_solution": "(rule!\n  (for/fold ([out g]) ([obj (in-list (filter (lambda (o) (= (obj-color o) 1)) (objects g 0)))])\n    (if (and (= (obj-size obj) 6)\n             (= (obj-size obj) (* (obj-h obj) (obj-w obj)))\n             (or (and (= (obj-h obj) 2) (= (obj-w obj) 3))\n                 (and (= (obj-h obj) 3) (= (obj-w obj) 2))))\n        (paint-cells out (obj-cells obj) 2)\n        out)))"
+  },
+  {
+    "id": "E63",
+    "name": "Fill the centers of red diamonds",
+    "difficulty": "easy",
+    "written_solution": "Whenever a background cell has red(2) cells directly above, below, left, and right of it, fill that center cell with yellow(4).",
+    "program_solution": "(rule!\n  (grid-from-fn (rows g) (cols g)\n    (lambda (r c)\n      (if (and (= (at g r c) 0)\n               (> r 0) (< r (- (rows g) 1)) (> c 0) (< c (- (cols g) 1))\n               (= (at g (- r 1) c) 2)\n               (= (at g (+ r 1) c) 2)\n               (= (at g r (- c 1)) 2)\n               (= (at g r (+ c 1)) 2))\n          4\n          (at g r c)))))"
+  },
+  {
+    "id": "M57",
+    "name": "Recolor solid rectangles by aspect ratio",
+    "difficulty": "medium",
+    "written_solution": "Treat each blue(1) solid rectangle as an object. Recolor squares to cyan(8), wider-than-tall rectangles to red(2), and taller-than-wide rectangles to green(3).",
+    "program_solution": "(rule!\n  (for/fold ([out g]) ([obj (in-list (filter (lambda (o) (= (obj-color o) 1)) (objects g 0)))])\n    (if (= (obj-size obj) (* (obj-h obj) (obj-w obj)))\n        (paint-cells out (obj-cells obj)\n                     (cond [(= (obj-h obj) (obj-w obj)) 8]\n                           [(> (obj-w obj) (obj-h obj)) 2]\n                           [else 3]))\n        out)))"
+  },
+  {
+    "id": "M58",
+    "name": "Fill the overlap of two marker-defined rectangles",
+    "difficulty": "medium",
+    "written_solution": "The two blue(1) markers are opposite corners of one rectangle, and the two red(2) markers are opposite corners of another. Fill the cells belonging to both implied rectangles with green(3) on a background canvas.",
+    "program_solution": "(rule!\n  (let ((p1 (find-color g 1))\n        (p2 (find-color g 2)))\n    (if (and (= (length p1) 2) (= (length p2) 2))\n        (let* ((r0b (min (first (first p1)) (first (second p1))))\n               (r1b (max (first (first p1)) (first (second p1))))\n               (c0b (min (second (first p1)) (second (second p1))))\n               (c1b (max (second (first p1)) (second (second p1))))\n               (r0r (min (first (first p2)) (first (second p2))))\n               (r1r (max (first (first p2)) (first (second p2))))\n               (c0r (min (second (first p2)) (second (second p2))))\n               (c1r (max (second (first p2)) (second (second p2))))\n               (ra (max r0b r0r))\n               (rb (min r1b r1r))\n               (ca (max c0b c0r))\n               (cb (min c1b c1r)))\n          (if (and (<= ra rb) (<= ca cb))\n              (paint-cells (empty-grid (rows g) (cols g) 0) (positions-in-rect ra ca rb cb) 3)\n              (empty-grid (rows g) (cols g) 0)))\n        (empty-grid (rows g) (cols g) 0))))"
+  },
+  {
+    "id": "M59",
+    "name": "Extract the unique translated shape",
+    "difficulty": "medium",
+    "written_solution": "All purple(6) objects are translated copies of shapes. Three belong to one shape class and one belongs to a different class. Extract the unique shape and crop it to its bbox.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (cell<? a b)\n      (or (< (first a) (first b))\n          (and (= (first a) (first b)) (< (second a) (second b)))))\n    (define (norm cells) (sort (normalize-cells cells) cell<?))\n    (define comps (filter (lambda (o) (= (obj-color o) 6)) (objects g 0)))\n    (define target\n      (find-first (lambda (obj)\n                    (= (count-where (lambda (other) (equal? (norm (obj-cells obj)) (norm (obj-cells other)))) comps) 1))\n                  comps))\n    (if target\n        (let* ((shape (norm (obj-cells target)))\n               (bb (bbox-of-cells shape)))\n          (paint-cells (empty-grid (+ 1 (third bb)) (+ 1 (fourth bb)) 0) shape 6))\n        (empty-grid 1 1 0))))"
+  },
+  {
+    "id": "M60",
+    "name": "Connect matched color pairs with L-paths",
+    "difficulty": "medium",
+    "written_solution": "Each non-background color appears exactly twice. For each color, connect the lexicographically earlier point to the later one by going horizontally first and then vertically. Output only those colored L-paths on a background grid.",
+    "program_solution": "(rule!\n  (let ((colors (remove-duplicates (map third (filter (lambda (cell) (not (= (third cell) 0))) (grid-cells g))))))\n    (define (l-path a b)\n      (let* ((r1 (first a)) (c1 (second a)) (r2 (first b)) (c2 (second b))\n             (stepc (if (>= c2 c1) 1 -1))\n             (stepr (if (>= r2 r1) 1 -1))\n             (hpart (map (lambda (c) (list r1 c)) (range c1 (+ c2 stepc) stepc)))\n             (vpart (map (lambda (r) (list r c2)) (range (+ r1 stepr) (+ r2 stepr) stepr))))\n        (append hpart vpart)))\n    (for/fold ([out (empty-grid (rows g) (cols g) 0)]) ([color (in-list colors)])\n      (let ((pts (sort (find-color g color)\n                       (lambda (a b) (or (< (first a) (first b))\n                                         (and (= (first a) (first b)) (< (second a) (second b))))))))\n        (if (= (length pts) 2)\n            (paint-cells out (l-path (first pts) (second pts)) color)\n            out)))))"
+  },
+  {
+    "id": "M61",
+    "name": "Count components by color into rows",
+    "difficulty": "medium",
+    "written_solution": "Count the connected components of blue(1), red(2), and green(3). Output a 3x6 grid where row 0 begins with that many 1s, row 1 begins with that many 2s, and row 2 begins with that many 3s.",
+    "program_solution": "(rule!\n  (grid-from-fn 3 6\n    (lambda (r c)\n      (let* ((color (+ r 1))\n             (n (length (filter (lambda (o) (= (obj-color o) color)) (objects g 0)))))\n        (if (< c n) color 0)))))"
+  },
+  {
+    "id": "M62",
+    "name": "Control-select and extract the matching rectangle",
+    "difficulty": "medium",
+    "written_solution": "The control cell in the top-left tells you which rectangle to extract: red(2)=horizontal, green(3)=vertical, blue(1)=square. Find the matching blue(1) rectangle elsewhere and output it cropped to its bbox.",
+    "program_solution": "(rule!\n  (let* ((control (at g 0 0))\n         (want (cond [(= control 2) 0] [(= control 3) 1] [else 2]))\n         (rects (filter (lambda (o) (and (= (obj-color o) 1)\n                                         (= (obj-size o) (* (obj-h o) (obj-w o)))))\n                        (objects g 0)))\n         (target (find-first (lambda (obj)\n                               (let ((kind (cond [(= (obj-h obj) (obj-w obj)) 2]\n                                                 [(> (obj-w obj) (obj-h obj)) 0]\n                                                 [else 1])))\n                                 (= kind want)))\n                             rects)))\n    (if target\n        (paint-cells (empty-grid (obj-h target) (obj-w target) 0) (normalize-cells (obj-cells target)) 1)\n        (empty-grid 1 1 0))))"
+  },
+  {
+    "id": "M63",
+    "name": "Recolor the median-area rectangle",
+    "difficulty": "medium",
+    "written_solution": "There are exactly three blue(1) solid rectangles with distinct areas. Recolor the rectangle with the middle area to cyan(8) and leave the smallest and largest unchanged.",
+    "program_solution": "(rule!\n  (let* ((rects (sort (filter (lambda (o) (and (= (obj-color o) 1)\n                                               (= (obj-size o) (* (obj-h o) (obj-w o)))))\n                              (objects g 0))\n                      (lambda (a b) (< (obj-size a) (obj-size b)))))\n         (target (list-ref rects (quotient (length rects) 2))))\n    (paint-cells g (obj-cells target) 8)))"
+  },
+  {
+    "id": "H57",
+    "name": "Trace the shortest path through the checkpoint",
+    "difficulty": "hard",
+    "written_solution": "Walls are gray(5), the start is red(2), the checkpoint is green(3), and the goal is yellow(4). Find the shortest path from start to checkpoint and then from checkpoint to goal, avoiding walls, and color the whole path cyan(8). Keep the walls.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define start (first (find-color g 2)))\n    (define check (first (find-color g 3)))\n    (define goal (first (find-color g 4)))\n    (define (path a b)\n      (define parent (make-hash))\n      (define seen (make-hash))\n      (define queue (list (cons (first a) (second a))))\n      (define goal-key (cons (first b) (second b)))\n      (define found #f)\n      (hash-set! seen (first queue) #t)\n      (let bfs ([step 0])\n        (unless (or found (empty? queue))\n          (let ((cur (first queue)))\n            (set! queue (rest queue))\n            (when (equal? cur goal-key) (set! found #t))\n            (unless found\n              (for ([d (in-list cardinal-deltas)])\n                (let ((nr (+ (car cur) (first d)))\n                      (nc (+ (cdr cur) (second d))))\n                  (when (and (in-bounds? nr nc (rows g) (cols g))\n                             (not (hash-has-key? seen (cons nr nc)))\n                             (not (= (at g nr nc) 5)))\n                    (hash-set! seen (cons nr nc) #t)\n                    (hash-set! parent (cons nr nc) cur)\n                    (set! queue (append queue (list (cons nr nc)))))))))\n          (bfs (+ step 1))))\n      (if (not found)\n          (list)\n          (let trace ([cur goal-key] [acc (list)])\n            (let ((next-acc (cons (list (car cur) (cdr cur)) acc)))\n              (if (equal? cur (cons (first a) (second a)))\n                  next-acc\n                  (trace (hash-ref parent cur) next-acc))))))\n    (let* ((base (grid-from-fn (rows g) (cols g) (lambda (r c) (if (= (at g r c) 5) 5 0))))\n           (p (append (path start check) (path check goal))))\n      (paint-cells base p 8))))"
+  },
+  {
+    "id": "H58",
+    "name": "Scale and rotate the template from controls",
+    "difficulty": "hard",
+    "written_solution": "The top-left control cell chooses the scale (1 or 2). The next control cell chooses the rotation (0, 90, 180, or 270 degrees). Extract the orange(7) template, apply both transforms, and stamp the result with its top-left corner at the cyan(8) anchor on an otherwise background canvas.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define scale (if (= (at g 0 0) 1) 1 2))\n    (define rot (cond [(= (at g 0 1) 3) 0] [(= (at g 0 1) 4) 1] [(= (at g 0 1) 5) 2] [else 3]))\n    (define anchor (first (find-color g 8)))\n    (define obj (first (filter (lambda (o) (= (obj-color o) 7)) (objects g 0))))\n    (define (scale-shape cells k)\n      (normalize-cells\n       (append* (map (lambda (p)\n                       (for*/list ([dr (in-range k)] [dc (in-range k)])\n                         (list (+ (* (first p) k) dr) (+ (* (second p) k) dc))))\n                     cells))))\n    (define (rot90 cells)\n      (let ((h (+ 1 (apply max (map first cells)))))\n        (normalize-cells (map (lambda (p) (list (second p) (- h 1 (first p)))) cells))))\n    (define (rotate cells k)\n      (let loop ([i 0] [cur cells])\n        (if (= i (modulo k 4)) cur (loop (+ i 1) (rot90 cur)))))\n    (define shape (rotate (scale-shape (normalize-cells (obj-cells obj)) scale) rot))\n    (paint-cells (empty-grid (rows g) (cols g) 0)\n                 (map (lambda (p) (list (+ (first anchor) (first p)) (+ (second anchor) (second p)))) shape)\n                 7)))"
+  },
+  {
+    "id": "H59",
+    "name": "Fill the chamber whose seed count matches the control",
+    "difficulty": "hard",
+    "written_solution": "Gray(5) cells are walls. The control value in the top-left tells you how many red(2) seeds a target chamber contains. Find the chamber with exactly that many red(2) seeds and fill all of its non-wall cells with cyan(8). Keep the walls.",
+    "program_solution": "(rule!\n  (let ((target-count (at g 0 0))\n        (seen (make-hash)))\n    (define out (grid-from-fn (rows g) (cols g) (lambda (r c) (if (= (at g r c) 5) 5 0))))\n    (for* ([r (in-range (rows g))] [c (in-range (cols g))])\n      (unless (or (hash-has-key? seen (cons r c)) (= (at g r c) 5) (and (= r 0) (= c 0)))\n        (hash-set! seen (cons r c) #t)\n        (when (or (= (at g r c) 0) (= (at g r c) 2))\n          (define queue (list (cons r c)))\n          (define cells (list))\n          (define seeds 0)\n          (let bfs ([step 0])\n            (unless (empty? queue)\n              (let ((cur (first queue)))\n                (set! queue (rest queue))\n                (set! cells (cons (list (car cur) (cdr cur)) cells))\n                (when (= (at g (car cur) (cdr cur)) 2) (set! seeds (+ seeds 1)))\n                (for ([d (in-list cardinal-deltas)])\n                  (let ((nr (+ (car cur) (first d)))\n                        (nc (+ (cdr cur) (second d))))\n                    (when (and (in-bounds? nr nc (rows g) (cols g))\n                               (not (hash-has-key? seen (cons nr nc)))\n                               (not (= (at g nr nc) 5))\n                               (not (and (= nr 0) (= nc 0))))\n                      (hash-set! seen (cons nr nc) #t)\n                      (set! queue (append queue (list (cons nr nc))))))))\n              (bfs (+ step 1))))\n          (when (= seeds target-count)\n            (set! out (paint-cells out cells 8))))))\n    out))"
+  },
+  {
+    "id": "H60",
+    "name": "Intersect the rotated template with the second shape",
+    "difficulty": "hard",
+    "written_solution": "Read the rotation control, rotate the blue(1) shape by that amount, normalize both it and the red(2) shape to the top-left, and output only their overlap in cyan(8), cropped to its bbox.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define rot (cond [(= (at g 0 0) 3) 0] [(= (at g 0 0) 4) 1] [(= (at g 0 0) 5) 2] [else 3]))\n    (define c1 (first (filter (lambda (o) (= (obj-color o) 1)) (objects g 0))))\n    (define c2 (first (filter (lambda (o) (= (obj-color o) 2)) (objects g 0))))\n    (define (cell<? a b)\n      (or (< (first a) (first b))\n          (and (= (first a) (first b)) (< (second a) (second b)))))\n    (define (norm cells) (sort (normalize-cells cells) cell<?))\n    (define (rot90 cells)\n      (let ((h (+ 1 (apply max (map first cells)))))\n        (norm (map (lambda (p) (list (second p) (- h 1 (first p)))) cells))))\n    (define (rotate cells k)\n      (let loop ([i 0] [cur cells])\n        (if (= i (modulo k 4)) cur (loop (+ i 1) (rot90 cur)))))\n    (define a (rotate (norm (obj-cells c1)) rot))\n    (define b (norm (obj-cells c2)))\n    (define inter (filter (lambda (p) (member? p b)) a))\n    (if (empty? inter)\n        (empty-grid 1 1 0)\n        (let* ((shape (norm inter))\n               (bb (bbox-of-cells shape)))\n          (paint-cells (empty-grid (+ 1 (third bb)) (+ 1 (fourth bb)) 0) shape 8)))))"
+  },
+  {
+    "id": "H61",
+    "name": "Encode total color areas as vertical bars",
+    "difficulty": "hard",
+    "written_solution": "Count how many cells of blue(1), red(2), and green(3) appear in the whole input. Output a 6x3 grid whose columns are bottom-aligned bars of heights equal to those totals, colored 1, 2, and 3 respectively.",
+    "program_solution": "(rule!\n  (let ((totals (map (lambda (color) (length (find-color g color))) (list 1 2 3))))\n    (grid-from-fn 6 3\n      (lambda (r c)\n        (let ((color (+ c 1))\n              (hgt (list-ref totals c)))\n          (if (>= r (- 6 hgt)) color 0))))))"
+  },
+  {
+    "id": "H62",
+    "name": "Select the median-area object and transpose it",
+    "difficulty": "hard",
+    "written_solution": "Among the purple(6) objects, choose the one with the middle area. Normalize it to the top-left, transpose its coordinates, and output the transposed shape cropped to its new bbox.",
+    "program_solution": "(rule!\n  (let* ((comps (sort (filter (lambda (o) (= (obj-color o) 6)) (objects g 0))\n                      (lambda (a b) (< (obj-size a) (obj-size b)))))\n         (target (list-ref comps (quotient (length comps) 2)))\n         (shape (normalize-cells (obj-cells target)))\n         (trans (normalize-cells (map (lambda (p) (list (second p) (first p))) shape)))\n         (bb (bbox-of-cells trans)))\n    (paint-cells (empty-grid (+ 1 (third bb)) (+ 1 (fourth bb)) 0) trans 6)))"
+  },
+  {
+    "id": "H63",
+    "name": "Recolor objects by normalized-shape frequency",
+    "difficulty": "hard",
+    "written_solution": "Group the blue(1) objects by normalized translation shape. Any shape class that appears once is unique and becomes cyan(8). Any shape class that appears more than once becomes red(2). Keep each object's geometry in place.",
+    "program_solution": "(rule!\n  (let ((dummy 0))\n    (define (cell<? a b)\n      (or (< (first a) (first b))\n          (and (= (first a) (first b)) (< (second a) (second b)))))\n    (define (norm cells) (sort (normalize-cells cells) cell<?))\n    (define comps (filter (lambda (o) (= (obj-color o) 1)) (objects g 0)))\n    (for/fold ([out g]) ([obj (in-list comps)])\n      (let ((freq (count-where (lambda (other) (equal? (norm (obj-cells obj)) (norm (obj-cells other)))) comps)))\n        (paint-cells out (obj-cells obj) (if (= freq 1) 8 2))))))"
+  }
+]

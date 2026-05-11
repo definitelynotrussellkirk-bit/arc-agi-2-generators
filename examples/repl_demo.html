@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ARC REPL — visual walkthrough</title>
+<style>
+  :root {
+    /* Canonical ARC palette (matches arc_repl/render.py). */
+    --c0: #000000;  /* black   */
+    --c1: #0074d9;  /* blue    */
+    --c2: #ff413a;  /* red     */
+    --c3: #2ecc40;  /* green   */
+    --c4: #ffdc00;  /* yellow  */
+    --c5: #aaaaaa;  /* grey    */
+    --c6: #f012be;  /* magenta */
+    --c7: #ff851b;  /* orange  */
+    --c8: #7fdbff;  /* cyan    */
+    --c9: #870c25;  /* maroon  */
+
+    --bg: #111418;
+    --panel: #1a1f25;
+    --line: #2a3038;
+    --fg: #d8dde4;
+    --muted: #8892a0;
+    --accent: #ff851b;
+    --pass: #2ecc40;
+    --fail: #ff413a;
+  }
+  body {
+    margin: 0; padding: 2em; background: var(--bg); color: var(--fg);
+    font-family: -apple-system, system-ui, sans-serif; line-height: 1.5;
+    max-width: 980px; margin-left: auto; margin-right: auto;
+  }
+  h1 { font-size: 1.6em; margin: 0 0 0.2em 0; }
+  h2 { font-size: 1.2em; margin: 2em 0 0.5em 0;
+       border-bottom: 1px solid var(--line); padding-bottom: 0.3em; }
+  .lede { color: var(--muted); margin-bottom: 1.5em; }
+  code, pre, .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+  code { color: var(--accent); background: var(--panel); padding: 1px 4px;
+         border-radius: 3px; font-size: 0.92em; }
+  a { color: var(--accent); }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 6px; padding: 1em 1.2em; margin: 1em 0;
+  }
+  .row {
+    display: flex; gap: 1.5em; align-items: flex-start; flex-wrap: wrap;
+    margin: 0.6em 0;
+  }
+  .pair { display: flex; align-items: center; gap: 0.4em; }
+  .arrow { color: var(--muted); font-size: 1.4em; }
+  .label { display: block; font-size: 0.8em; color: var(--muted);
+           text-align: center; margin-bottom: 4px; }
+
+  .grid {
+    display: inline-grid; gap: 0;
+    border: 2px solid var(--line); background: var(--line);
+  }
+  .grid .cell {
+    width: 22px; height: 22px;
+    border: 1px solid #000;
+    box-sizing: border-box;
+  }
+  .grid .cell[data-c="0"] { background: var(--c0); }
+  .grid .cell[data-c="1"] { background: var(--c1); }
+  .grid .cell[data-c="2"] { background: var(--c2); }
+  .grid .cell[data-c="3"] { background: var(--c3); }
+  .grid .cell[data-c="4"] { background: var(--c4); }
+  .grid .cell[data-c="5"] { background: var(--c5); }
+  .grid .cell[data-c="6"] { background: var(--c6); }
+  .grid .cell[data-c="7"] { background: var(--c7); }
+  .grid .cell[data-c="8"] { background: var(--c8); }
+  .grid .cell[data-c="9"] { background: var(--c9); }
+  .grid .cell.wrong { outline: 3px solid var(--fail); outline-offset: -3px; z-index: 1; }
+
+  pre.repl {
+    background: #0c0f12; border: 1px solid var(--line);
+    color: #e6e6e6; padding: 0.8em 1em; border-radius: 4px;
+    font-size: 0.85em; overflow-x: auto; white-space: pre; margin: 0.6em 0;
+  }
+  pre.repl .cmd  { color: var(--accent); }
+  pre.repl .pass { color: var(--pass); }
+  pre.repl .fail { color: var(--fail); }
+  pre.repl .ref  { color: #7fdbff; }
+  pre.repl .com  { color: var(--muted); }
+
+  table.macros {
+    border-collapse: collapse; width: 100%; font-size: 0.92em;
+    margin-top: 0.5em;
+  }
+  table.macros td, table.macros th {
+    padding: 0.4em 0.7em; border-bottom: 1px solid var(--line);
+    text-align: left; vertical-align: top;
+  }
+  table.macros th { color: var(--muted); font-weight: normal; font-size: 0.85em; }
+  table.macros td:first-child { white-space: nowrap; color: var(--accent);
+                                font-family: ui-monospace, monospace; }
+
+  .palette { display: flex; gap: 0.4em; align-items: center; flex-wrap: wrap; }
+  .swatch { display: inline-flex; align-items: center; gap: 0.3em;
+            font-size: 0.85em; color: var(--muted); }
+  .swatch .chip { width: 16px; height: 16px; border: 1px solid #000;
+                  display: inline-block; }
+</style>
+</head>
+<body>
+
+<h1>ARC REPL — visual walkthrough</h1>
+<p class="lede">
+  The REPL wraps an ARC task with S-expression macros for exploring it,
+  building a candidate rule, and verifying that rule against the train
+  pairs without leaving the prompt. Below: four examples showing the
+  workflow visually.
+</p>
+
+<div class="panel">
+  <strong>ARC palette.</strong>
+  <div class="palette" style="margin-top:0.4em">
+    <span class="swatch"><span class="chip" style="background:var(--c0)"></span>0 black</span>
+    <span class="swatch"><span class="chip" style="background:var(--c1)"></span>1 blue</span>
+    <span class="swatch"><span class="chip" style="background:var(--c2)"></span>2 red</span>
+    <span class="swatch"><span class="chip" style="background:var(--c3)"></span>3 green</span>
+    <span class="swatch"><span class="chip" style="background:var(--c4)"></span>4 yellow</span>
+    <span class="swatch"><span class="chip" style="background:var(--c5)"></span>5 grey</span>
+    <span class="swatch"><span class="chip" style="background:var(--c6)"></span>6 magenta</span>
+    <span class="swatch"><span class="chip" style="background:var(--c7)"></span>7 orange</span>
+    <span class="swatch"><span class="chip" style="background:var(--c8)"></span>8 cyan</span>
+    <span class="swatch"><span class="chip" style="background:var(--c9)"></span>9 maroon</span>
+  </div>
+</div>
+
+<!-- =================================================================
+     EXAMPLE 1 — flip-ud
+     ================================================================= -->
+<h2>1 · Diagnose, try, commit</h2>
+<p>Two training pairs. The rule is a vertical flip.</p>
+
+<div class="panel">
+  <div class="row">
+    <div class="pair">
+      <div>
+        <span class="label">train 0 · input</span>
+        <div class="grid" style="grid-template-columns:repeat(3,22px)">
+          <div class="cell" data-c="1"></div><div class="cell" data-c="0"></div><div class="cell" data-c="0"></div>
+          <div class="cell" data-c="0"></div><div class="cell" data-c="2"></div><div class="cell" data-c="0"></div>
+          <div class="cell" data-c="0"></div><div class="cell" data-c="0"></div><div class="cell" data-c="3"></div>
+        </div>
+      </div>
+      <span class="arrow">→</span>
+      <div>
+        <span class="label">output</span>
+        <div class="grid" style="grid-template-columns:repeat(3,22px)">
+          <div class="cell" data-c="0"></div><div class="cell" data-c="0"></div><div class="cell" data-c="3"></div>
+          <div class="cell" data-c="0"></div><div class="cell" data-c="2"></div><div class="cell" data-c="0"></div>
+          <div class="cell" data-c="1"></div><div class="cell" data-c="0"></div><div class="cell" data-c="0"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pair">
+      <div>
+        <span class="label">train 1 · input</span>
+        <div class="grid" style="grid-template-columns:repeat(3,22px)">
+          <div class="cell" data-c="5"></div><div class="cell" data-c="5"></div><div class="cell" data-c="0"></div>
+          <div class="cell" data-c="0"></div><div class="cell" data-c="0"></div><div class="cell" data-c="0"></div>
+          <div class="cell" data-c="0"></div><div class="cell" data-c="0"></div><div class="cell" data-c="7"></div>
+        </div>
+      </div>
+      <span class="arrow">→</span>
+      <div>
+        <span class="label">output</span>
+        <div class="grid" style="grid-template-columns:repeat(3,22px)">
+          <div class="cell" data-c="0"></div><div class="cell" data-c="0"></div><div class="cell" data-c="7"></div>
+          <div class="cell" data-c="0"></div><div class="cell" data-c="0"></div><div class="cell" data-c="0"></div>
+          <div class="cell" data-c="5"></div><div class="cell" data-c="5"></div><div class="cell" data-c="0"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<pre class="repl"><span class="com">; Inspect the task — shapes, color roles, per-pair diff bbox</span>
+<span class="cmd">&gt; (diagnose!)</span>
+Task diagnostics: 2 train pair(s), 1 test input(s)
+  train shapes: 3x3-&gt;3x3, 3x3-&gt;3x3
+  color roles across train:
+    c0: mixed     kept=7 lost=5 gained=5
+    c2: invariant kept=1 lost=0 gained=0   <span class="com">; c2 stays at (1,1)</span>
+
+<span class="com">; Try an idea WITHOUT committing — what if it's a vertical flip?</span>
+<span class="cmd">&gt; (try! (lambda (g) (flip-ud g)) 0)</span>
+TRY pair 0: <span class="pass">MATCH ✓</span>
+
+<span class="com">; Commit the rule and run it against every train pair</span>
+<span class="cmd">&gt; (rule! (flip-ud g))</span>
+<span class="ref">&amp;1</span> = rule set.
+<span class="cmd">&gt; (test-all!)</span>
+<span class="pass">ALL PASS (2/2)</span>
+
+<span class="com">; Produce + submit the test answer</span>
+<span class="cmd">&gt; (apply! 0)</span>
+<span class="ref">_1</span> = Grid(3x3) — applied rule to test 0
+<span class="cmd">&gt; (submit! _1)</span>
+SUBMITTED 1 test input(s)</pre>
+
+  <p style="margin-top:1em; color:var(--muted); font-size:0.9em">
+    <strong>The REPL's answer.</strong> Given the test input on the left,
+    <code>(apply! 0)</code> ran the committed rule and produced the grid
+    on the right — that's what <code>(submit! _1)</code> commits as the
+    pass@2 attempt.
+  </p>
+  <div class="row">
+    <div class="pair">
+      <div>
+        <span class="label">test 0 · input</span>
+        <div class="grid" style="grid-template-columns:repeat(3,22px)">
+          <div class="cell" data-c="8"></div><div class="cell" data-c="0"></div><div class="cell" data-c="0"></div>
+          <div class="cell" data-c="0"></div><div class="cell" data-c="9"></div><div class="cell" data-c="0"></div>
+          <div class="cell" data-c="0"></div><div class="cell" data-c="0"></div><div class="cell" data-c="4"></div>
+        </div>
+      </div>
+      <span class="arrow">→</span>
+      <div>
+        <span class="label">REPL output (<code>_1</code>)</span>
+        <div class="grid" style="grid-template-columns:repeat(3,22px)">
+          <div class="cell" data-c="0"></div><div class="cell" data-c="0"></div><div class="cell" data-c="4"></div>
+          <div class="cell" data-c="0"></div><div class="cell" data-c="9"></div><div class="cell" data-c="0"></div>
+          <div class="cell" data-c="8"></div><div class="cell" data-c="0"></div><div class="cell" data-c="0"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- =================================================================
+     EXAMPLE 2 — auto-scan / suggest
+     ================================================================= -->
+<h2>2 · Auto-scan and suggest</h2>
+<p>
+  Without any thinking, the REPL can recognise the rule. <code>(auto-scan!)</code>
+  runs every feature and ranks by informativeness; <code>(suggest!)</code> maps
+  the profile to candidate rules. Here the task is a consistent recolor
+  <code>1→7, 2→3</code>.
+</p>
+
+<div class="panel">
+  <div class="row">
+    <div class="pair">
+      <div>
+        <span class="label">train 0 · input</span>
+        <div class="grid" style="grid-template-columns:repeat(3,22px)">
+          <div class="cell" data-c="1"></div><div class="cell" data-c="1"></div><div class="cell" data-c="2"></div>
+          <div class="cell" data-c="0"></div><div class="cell" data-c="2"></div><div class="cell" data-c="1"></div>
+          <div class="cell" data-c="2"></div><div class="cell" data-c="0"></div><div class="cell" data-c="1"></div>
+        </div>
+      </div>
+      <span class="arrow">→</span>
+      <div>
+        <span class="label">output</span>
+        <div class="grid" style="grid-template-columns:repeat(3,22px)">
+          <div class="cell" data-c="7"></div><div class="cell" data-c="7"></div><div class="cell" data-c="3"></div>
+          <div class="cell" data-c="0"></div><div class="cell" data-c="3"></div><div class="cell" data-c="7"></div>
+          <div class="cell" data-c="3"></div><div class="cell" data-c="0"></div><div class="cell" data-c="7"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<pre class="repl"><span class="cmd">&gt; (auto-scan!)</span>
+<span class="ref">#1</span> = Auto-scan: 16 features ranked
+  [1] (1.00) consistent_mapping: consistent
+  [2] (0.72) shape_change: 2 items
+  [3] (0.70) diff: 13 total changes across 2 pairs
+  [4] (0.65) change_type: {'vanished': 0, 'appeared': 0, 'recolored': 13}
+  ...
+
+<span class="cmd">&gt; (suggest!)</span>
+Candidates:
+  [1] consistent color mapping: {1: 7, 2: 3} (0.95):
+        <span class="ref">(template! recolor_map {1: 7, 2: 3})</span>
+  [2] same color changes in every pair (0.60):
+        consistent transitions: {(2, 3), (1, 7)}
+
+<span class="cmd">&gt; (template! recolor_map {1 7 2 3})</span>
+<span class="cmd">&gt; (test-all!)</span>
+<span class="pass">ALL PASS (2/2)</span>
+<span class="cmd">&gt; (apply! 0)</span>
+<span class="ref">_1</span> = Grid(3x3) — applied rule to test 0</pre>
+
+  <div class="row">
+    <div class="pair">
+      <div>
+        <span class="label">test 0 · input</span>
+        <div class="grid" style="grid-template-columns:repeat(3,22px)">
+          <div class="cell" data-c="1"></div><div class="cell" data-c="2"></div><div class="cell" data-c="0"></div>
+          <div class="cell" data-c="0"></div><div class="cell" data-c="1"></div><div class="cell" data-c="2"></div>
+          <div class="cell" data-c="2"></div><div class="cell" data-c="1"></div><div class="cell" data-c="0"></div>
+        </div>
+      </div>
+      <span class="arrow">→</span>
+      <div>
+        <span class="label">REPL output (<code>_1</code>)</span>
+        <div class="grid" style="grid-template-columns:repeat(3,22px)">
+          <div class="cell" data-c="7"></div><div class="cell" data-c="3"></div><div class="cell" data-c="0"></div>
+          <div class="cell" data-c="0"></div><div class="cell" data-c="7"></div><div class="cell" data-c="3"></div>
+          <div class="cell" data-c="3"></div><div class="cell" data-c="7"></div><div class="cell" data-c="0"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- =================================================================
+     EXAMPLE 3 — layered failure diff
+     ================================================================= -->
+<h2>3 · Layered failure diff</h2>
+<p>
+  When a rule is <em>almost</em> right, the failure diff tells you exactly
+  which colors went wrong and which transition fired. Here the rule
+  should be <code>(recolor g 1 7)</code> but we set it to
+  <code>(recolor g 1 8)</code> on purpose.
+</p>
+
+<div class="panel">
+  <div class="row">
+    <div class="pair">
+      <div>
+        <span class="label">input</span>
+        <div class="grid" style="grid-template-columns:repeat(3,22px)">
+          <div class="cell" data-c="1"></div><div class="cell" data-c="0"></div><div class="cell" data-c="1"></div>
+          <div class="cell" data-c="0"></div><div class="cell" data-c="1"></div><div class="cell" data-c="0"></div>
+        </div>
+      </div>
+      <span class="arrow">→</span>
+      <div>
+        <span class="label">expected</span>
+        <div class="grid" style="grid-template-columns:repeat(3,22px)">
+          <div class="cell" data-c="7"></div><div class="cell" data-c="0"></div><div class="cell" data-c="7"></div>
+          <div class="cell" data-c="0"></div><div class="cell" data-c="7"></div><div class="cell" data-c="0"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pair">
+      <div>
+        <span class="label">got (wrong rule)</span>
+        <div class="grid" style="grid-template-columns:repeat(3,22px)">
+          <div class="cell wrong" data-c="8"></div><div class="cell" data-c="0"></div><div class="cell wrong" data-c="8"></div>
+          <div class="cell" data-c="0"></div><div class="cell wrong" data-c="8"></div><div class="cell" data-c="0"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<pre class="repl"><span class="com">; Wrong rule — recolor 1 → 8 instead of 1 → 7</span>
+<span class="cmd">&gt; (rule! (recolor g 1 8))</span>
+<span class="cmd">&gt; (test! 0)</span>
+<span class="ref">!1</span> = <span class="fail">FAIL</span> — pair 0: 3/6 differ
+  region: rows 0-1, cols 0-2
+  color 7: +3 at (0,0),(0,2),(1,1)
+  color 8: -3
+  recolors: <span class="fail">8→7(3)</span>            <span class="com">; the canonical "almost right" hint</span>
+
+<span class="com">; Fix it.</span>
+<span class="cmd">&gt; (rule! (recolor g 1 7))</span>
+<span class="cmd">&gt; (test! 0)</span>
+<span class="ref">!2</span> = <span class="pass">PASS</span> — pair 0 matches</pre>
+
+  <p style="margin-top:1em; color:var(--muted); font-size:0.9em">
+    The red outlines on the "got" grid above show the wrong cells —
+    that's the same information the layered diff produces in text form
+    (<code>color 7: +3 at (0,0),(0,2),(1,1)</code>).
+  </p>
+</div>
+
+
+<!-- =================================================================
+     EXAMPLE 4 — macros at a glance
+     ================================================================= -->
+<h2>4 · Macros at a glance</h2>
+
+<div class="panel">
+<table class="macros">
+<tr><th>Macro</th><th>What it does</th></tr>
+<tr><td>(diagnose!)</td>            <td>shapes, color roles, per-pair diff bbox + transitions</td></tr>
+<tr><td>(try! expr [N])</td>        <td>apply <code>expr</code> to pair <code>N</code>, compare to expected — no rule committed</td></tr>
+<tr><td>(try-all! expr)</td>        <td>same as <code>try!</code> over every pair, returns match/fail summary</td></tr>
+<tr><td>(peek! expr [N])</td>       <td>show size/colors/nonzero of intermediate values</td></tr>
+<tr><td>(rule! expr)</td>           <td>commit <code>expr</code> as the current rule (<code>g</code>/<code>h</code>/<code>w</code> auto-bound)</td></tr>
+<tr><td>(template! name args)</td>  <td>commit a parametric template (e.g. <code>recolor_map</code>, <code>fill_enclosed</code>)</td></tr>
+<tr><td>(test! N)</td>              <td>run current rule on pair <code>N</code>, layered diff on failure</td></tr>
+<tr><td>(test-all!)</td>            <td>run current rule on every train pair</td></tr>
+<tr><td>(test-until-fail!)</td>     <td>same, stop at first failure with full diff</td></tr>
+<tr><td>(auto-scan!)</td>           <td>run every feature, rank by informativeness</td></tr>
+<tr><td>(suggest!)</td>             <td>map the scan to candidate rules</td></tr>
+<tr><td>(diff! ref1 ref2)</td>      <td>bbox + transitions + ASCII mask of differing cells</td></tr>
+<tr><td>(compare! ref1 ref2)</td>   <td>one-line cell-count diff</td></tr>
+<tr><td>(render! task | pair N | diff N)</td>
+                                    <td>PNG to <code>/tmp/</code></td></tr>
+<tr><td>(apply! T)</td>             <td>apply rule to test input <code>T</code>, store as <code>_K</code></td></tr>
+<tr><td>(submit! _1 [_2 …])</td>    <td>commit test answers (pass@2 if <code>2n</code> refs)</td></tr>
+</table>
+</div>
+
+<p style="margin-top:2em; color:var(--muted); font-size:0.92em">
+  For a runnable version of every example above (and one more — a
+  <code>(render!)</code> walk that drops PNGs into <code>/tmp/</code>) see
+  <a href="repl_demo.py"><code>examples/repl_demo.py</code></a>.
+</p>
+
+</body>
+</html>

@@ -1,0 +1,38 @@
+{
+  "bank": "24a4a7a4b029",
+  "title": "Bank with E/M/H-keyed dict",
+  "description": "Variant where the top-level is a dict keyed E1..H7. Each entry carries title + staged_hint + written_solution + program_function. Useful for retrieval tasks that key on short IDs.",
+  "schema_shape": "dict[task_id → Entry]",
+  "source": "user-provided download 2026-04-16",
+  "solution_language": "python",
+  "files": {
+    "puzzles_json": "puzzles.json",
+    "solutions_py": "solutions.py",
+    "reference_md": "REFERENCE.md"
+  },
+  "stats": {
+    "n_puzzles": 21,
+    "n_train_pairs": 42,
+    "n_test_pairs": 21,
+    "difficulties": {
+      "easy": 7,
+      "medium": 7,
+      "hard": 7
+    },
+    "top_tags": [],
+    "common_fields": [
+      "difficulty",
+      "id",
+      "program_function",
+      "program_solution",
+      "staged_hint",
+      "test",
+      "tests",
+      "title",
+      "train",
+      "written_solution"
+    ]
+  },
+  "generated_at": "2026-05-10 11:31:43 -0400",
+  "legacy_bank": "99a87129d914"
+}
